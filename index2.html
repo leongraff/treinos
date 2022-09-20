@@ -1,0 +1,142 @@
+<html>
+<script>
+//usar o THIS aqui faz com que um objeto seja criado.
+    class Lancamento {
+            constructor (categoria,tipo,valor){
+                if(tipo !== "receita" && tipo !== "despesa"){
+                    throw new Error("Lançamento Inválido: Tipo deve ser receita ou despesa.")
+                }
+                if(valor <= 0){
+                    throw new Error("Lançamento Inválido: O valor precisa ser maior que zero.")
+                }
+                if(categoria === ""){
+                    throw new Error("Lançamento Inválido: A categoria é obrigatória.")
+                }
+                this.categoria = categoria
+                this.tipo = tipo
+                this.valor = valor
+            }
+    }
+    
+    novoLancamento = new Lancamento("Salário","receita",143000)
+        console.log(novoLancamento)
+    lancamento2 = new Lancamento("Aluguel","despesa",1500)
+        console.log(lancamento2)
+
+
+    function calcularRendimentos(valor){
+        rendimentos = valor * 0.05
+        return rendimentos
+    }    
+    function calcularJuros(valor){
+        juros = valor * 0.1
+        return juros
+    }        
+    
+
+    function calcularSaldo(mes, saldoInicial, lancamentos){
+        console.log(mes)
+        saldo = saldoInicial
+            for(lancamento of lancamentos) {
+                if (lancamento.tipo === "receita"){
+                    saldo += lancamento.valor    
+                } else {(lancamento.tipo==="despesa")
+                    saldo -= lancamento.valor   
+                }
+        }
+            negativo = saldo < 0
+            if(negativo){
+                juros = calcularJuros(saldo)
+                saldo = saldo + juros
+                console.log("NEGATIVOU")
+            } else {
+                calcularRendimentos(saldo)
+                saldo = saldo + rendimentos
+                console.log("RENDEU")
+        }   
+            
+        return saldo
+    }
+        
+
+        saldoInicial = 0    
+
+        lancamentosJaneiro = [
+        { categoria:"Salário",tipo:"receita", valor: 3000},
+        { categoria:"Aluguel",tipo:"despesa", valor: 1000},
+        { categoria:"Conta de luz",tipo:"despesa", valor: 100},
+        { categoria:"Conta de água",tipo:"despesa", valor: 100},
+        { categoria:"Transporte",tipo:"despesa", valor: 100},
+        { categoria:"Alimentação",tipo:"despesa", valor: 400},
+        { categoria:"Condomínio",tipo:"despesa", valor: 100},
+        { categoria:"Farmácia",tipo:"despesa", valor: 100}
+        ]
+        
+        saldo1 = calcularSaldo("Janeiro",2500,lancamentosJaneiro)
+        console.log(saldo1)
+
+        lancamentosFevereiro = [
+        { categoria:"Salário",tipo:"receita",valor: 3000},
+        { categoria:"Aluguel",tipo:"despesa",valor: 1031},
+        { categoria:"Conta de luz",tipo:"despesa",valor: 145},
+        { categoria:"Conta de água",tipo:"despesa",valor: 512},
+        { categoria:"Transporte",tipo:"despesa",valor: 112},
+        { categoria:"Alimentação",tipo:"despesa",valor: 430},
+        { categoria:"Condomínio",tipo:"despesa",valor: 230},
+        { categoria:"Farmácia",tipo:"despesa",valor: 289}
+        ]
+        saldo2 = calcularSaldo("Fevereiro",saldoInicial,lancamentosFevereiro)
+        console.log(saldo2)
+
+
+        lancamentosMarco = [
+        { categoria:"Salário",tipo:"receita", valor: 3000},
+        { categoria:"Aluguel",tipo:"despesa", valor: 203},
+        { categoria:"Conta de luz",tipo:"despesa", valor: 421},
+        { categoria:"Conta de água",tipo:"despesa", valor: 500},
+        { categoria:"Transporte",tipo:"despesa", valor: 1024},
+        { categoria:"Alimentação",tipo:"despesa", valor: 450},
+        { categoria:"Condomínio",tipo:"despesa", valor: 304},
+        { categoria:"Farmácia",tipo:"despesa", valor: 124},
+        ]
+        saldo3 = calcularSaldo("Março",saldoInicial,lancamentosMarco)
+        console.log(saldo3)
+        acumulaAno = saldo2 + saldo3
+        console.log("Acumulado no Ano")
+        console.log(acumulaAno)
+
+        console.log("Quantidade de Lançamentos em Janeiro",lancamentosJaneiro.length)
+        lancamentosJaneiro.push({categoria:"Prostitutas",tipo:"despesa",valor:300})
+        //lancamentosJaneiro = {categoria:"Financeamento",tipo:"despesa",valor:100}
+        lancamentosJaneiro.push({categoria:"Financeamento",tipo:"despesa",valor:100})
+        
+        for (lancamento of lancamentosJaneiro){
+            console.log(lancamento.categoria,lancamento.valor)
+        }
+        saldo1 = calcularSaldo("janeiro", saldoInicial, lancamentosJaneiro)
+        console.log(saldo1)
+        console.log("Mês de Janeiro",saldo1)
+        acumulaAno = saldo1 + saldo2 + saldo3
+        console.log("Acumulado no Ano")
+        console.log(acumulaAno)
+
+// QUANDO É IGUAL ===
+// QUANDO É OPERADOR DE ATRIBUIÇÃO =
+// QUANDO É DIFERENTE !==
+
+
+        for(lancamento of lancamentosFevereiro){
+            console.log(lancamento.categoria,lancamento.valor)
+    }
+        // cria-se aqui um objeto/pessoa
+
+        nome = "Leon Graff"
+        idade = 25
+        email = "zdomergue@gmail.com"
+        casado = false
+
+        pessoa = {nome: "leon graff", idade: 25, email:"zdomergue@gmail.com",casado:false}
+        console.log(pessoa)
+
+    </script>
+</html>

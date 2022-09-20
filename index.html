@@ -1,0 +1,88 @@
+<html>
+<script>
+
+    function arredondar(valor){
+        return Math.round(valor*100)/100
+    }
+
+    function calcularJuros (valor){
+        juros = arredondar(valor * 0.1)
+        return juros
+    }
+
+    function calcularRendimentos (valor){
+        rendimentos = arredondar(valor * 0.005)
+        console.log(rendimentos)
+        return rendimentos
+    }
+    
+    function calcularSaldo (mes, saldoInicial, salario, aluguel, entretenimento, jiu, facul, gasolina, carro, alimentacao){
+        console.log(mes)
+        saldo = saldoInicial + salario - aluguel - entretenimento - jiu - facul - gasolina - carro - alimentacao
+        estaNegativo = saldo < 0
+        if(estaNegativo){
+            juros = calcularJuros(saldo)
+            saldo = saldo + juros
+        } else {
+            rendimentos = calcularRendimentos(saldo)
+            saldo = saldo + rendimentos
+        }
+        return saldo
+
+    }
+
+    //JANEIRO
+
+    salario1 = 8000
+    aluguel1 = 1180
+    entretenimento1 = 400
+    jiu1 = 140
+    facul1 = 270
+    carro1 = 900
+    gasolina1 = 600
+    alimentacao1 = 400
+    saldo1 = calcularSaldo("Janeiro", 0, salario1,aluguel1, entretenimento1, gasolina1, jiu1, facul1, gasolina1, carro1)
+    console.log(saldo1)
+
+    //FEVEREIRO
+
+    salario2 = 7000
+    aluguel2 = 2000
+    entretenimento2 = 500
+    jiu2 = 150
+    carro2 = 900
+    gasolina2 = 700
+    alimentacao2 = 500
+    facul2 = 270
+    saldo2 = calcularSaldo("Fevereiro", 0, salario2,jiu2,facul2,gasolina2,alimentacao2,carro2,entretenimento2,aluguel2)
+    console.log(saldo2)
+
+    function calcularSaldo (mes, saldoInicial, salario, aluguel, entretenimento, jiu, facul, gasolina, carro, alimentacao){
+        console.log(mes)
+        saldo = saldoInicial + salario - aluguel - entretenimento - jiu - facul - gasolina - carro - alimentacao
+        estaNegativo = saldo < 0
+        if(estaNegativo){
+            juros = calcularJuros(saldo)
+            saldo = saldo + juros
+        } else {
+            rendimentos = calcularRendimentos(saldo)
+            saldo = saldo + rendimentos
+        }
+        return saldo
+
+    }
+
+//março
+
+    salario3 = 7000
+    aluguel3 = 3000
+    entretenimento3 = 500
+    jiu3 = 150
+    carro3 = 900
+    gasolina3 = 700
+    alimentacao3 = 500
+    facul3 = 370
+    saldo3 = calcularSaldo("Fevereiro", 0, salario3,jiu3,facul3,gasolina3,alimentacao3,carro3,entretenimento3,aluguel3)
+    console.log(saldo3)
+</script>
+</html>

@@ -1,0 +1,178 @@
+ Inicio
+    Se((CORelFicCod2 <> CORelFicCod1) e (DERelFicRef2 <> DERelFicRef1)){ 
+      RelFicCod = CORelFicCod2;
+      RelFicRef = DERelFicRef2;
+     }     
+    Fim;
+    Inicio
+    Se((CORelFicCod3 <> CORelFicCod2) e (DERelFicRef3 <> DERelFicRef2)) 
+      RelFicCod = CORelFicCod3;
+      RelFicRef = DERelFicRef3;
+      VaPara PxmCmp;  
+  Fim;
+  Inicio
+  Se((CORelFicCod4 <> CORelFicCod3) e (DERelFicRef4 <> DERelFicRef3)) 
+      RelFicCod = CORelFicCod4;
+      RelFicRef = DERelFicRef4;
+      VaPara PxmCmp; 
+  Fim;
+  Inicio
+  Se((CORelFicCod5 <> CORelFicCod4) e (DERelFicRef5 <> DERelFicRef4)) 
+      RelFicCod = CORelFicCod5;
+      RelFicRef = DERelFicRef5;
+      VaPara PxmCmp; 
+  Fim;
+  Inicio
+  Se((CORelFicCod6 <> CORelFicCod5) e (DERelFicRef6 <> DERelFicRef5))                  
+      RelFicCod = CORelFicCod6;
+      RelFicRef = DERelFicRef6;
+      VaPara PxmCmp; 
+  Fim;
+  Inicio
+  Se((CORelFicCod7 <> CORelFicCod6) e (DERelFicRef7 <> DERelFicRef7)) 
+      RelFicCod = CORelFicCod7;
+      RelFicRef = DERelFicRef7;
+      VaPara PxmCmp; 
+  Fim;
+  Inicio
+  Se((CORelFicCod8 <> CORelFicCod7) e (DERelFicRef8 <> DERelFicRef7)) 
+      RelFicCod = CORelFicCod8;
+      RelFicRef = DERelFicRef8;
+      VaPara PxmCmp;  
+  Fim;
+  Inicio
+  Se((CORelFicCod9 <> CORelFicCod8) e (DERelFicRef9 <> DERelFicRef8)) 
+      RelFicCod = CORelFicCod9;
+      RelFicRef = DERelFicRef9;
+      VaPara PxmCmp;  
+  Fim;
+  Inicio
+  Se((CORelFicCod10 <> CORelFicCod9) e (DERelFicRef10 <> DERelFicRef9)) 
+      RelFicCod = CORelFicCod10;
+      RelFicRef = DERelFicRef10;
+      VaPara PxmCmp; 
+  Fim;
+  Inicio
+  Se((CORelFicCod11 <> CORelFicCod10) e (DERelFicRef11 <> DERelFicRef10)) 
+      RelFicCod = CORelFicCod11;
+      RelFicRef = DERelFicRef11;
+      VaPara PxmCmp;
+  Fim;
+  Inicio
+  Se((CORelFicCod12 <> CORelFicCod11) e (DERelFicRef12 <> DERelFicRef11)) 
+      RelFicCod = CORelFicCod12;
+      RelFicRef = DERelFicRef12;
+      VaPara PxmCmp;  
+  Fim;
+
+
+
+Definir Numero xcodeve;
+Definir Numero x;
+Definir Alfa deseveant;
+
+PosEve = 0;
+x = 0;
+tipeveant = 0;
+codeveant = 0;
+deseveant = "";
+
+@ RetornaMesData(ENPerIni, xPerIni);   @
+
+Enquanto (x < FimEve)
+Inicio
+
+    BuscaProxEvento();
+   @  Verifica codigo do evento     @
+   
+    CodEveAnt = RelFicCod;
+    DesEveAnt = RelFicDes;
+    FACodEve = codeveant;     
+    
+    Inicio
+    Se((RelFicCod <> CORelFicCod1) e (RelFicRef <> DERelFicRef1))
+        CORelFicCod1 = RelFicCod;
+        DERelFicRef1 = RelFicRef;          
+    Fim;
+    Inicio
+    Se((CORelFicCod2 <> CORelFicCod1) e (DERelFicRef2 <> DERelFicRef1)){ 
+      RelFicCod = CORelFicCod2;
+      RelFicRef = DERelFicRef2;
+      VaPara PxmCmp;
+      }     
+    Fim;
+    Inicio
+    Se((CORelFicCod3 <> CORelFicCod2) e (DERelFicRef3 <> DERelFicRef2)){ 
+      RelFicCod = CORelFicCod3;
+      RelFicRef = DERelFicRef3;
+      VaPara PxmCmp;
+      }  
+  Fim;
+  Inicio
+  Se((CORelFicCod4 <> CORelFicCod3) e (DERelFicRef4 <> DERelFicRef3)){ 
+      RelFicCod = CORelFicCod4;
+      RelFicRef = DERelFicRef4;
+      VaPara PxmCmp;
+      } 
+  Fim;
+  Inicio
+  Se((CORelFicCod5 <> CORelFicCod4) e (DERelFicRef5 <> DERelFicRef4)){ 
+      RelFicCod = CORelFicCod5;
+      RelFicRef = DERelFicRef5;
+      VaPara PxmCmp;
+      } 
+  Fim;
+  Inicio
+  Se((CORelFicCod6 <> CORelFicCod5) e (DERelFicRef6 <> DERelFicRef5)){                  
+      RelFicCod = CORelFicCod6;
+      RelFicRef = DERelFicRef6;
+      VaPara PxmCmp;
+      } 
+  Fim;
+  Inicio
+  Se((CORelFicCod7 <> CORelFicCod6) e (DERelFicRef7 <> DERelFicRef7)){ 
+      RelFicCod = CORelFicCod7;
+      RelFicRef = DERelFicRef7;
+      VaPara PxmCmp;
+      } 
+  Fim;
+  Inicio
+  Se((CORelFicCod8 <> CORelFicCod7) e (DERelFicRef8 <> DERelFicRef7)){ 
+      RelFicCod = CORelFicCod8;
+      RelFicRef = DERelFicRef8;
+      VaPara PxmCmp;
+      }  
+  Fim;
+  Inicio
+  Se((CORelFicCod9 <> CORelFicCod8) e (DERelFicRef9 <> DERelFicRef8)){ 
+      RelFicCod = CORelFicCod9;
+      RelFicRef = DERelFicRef9;
+      VaPara PxmCmp;
+      }  
+  Fim;
+  Inicio
+  Se((CORelFicCod10 <> CORelFicCod9) e (DERelFicRef10 <> DERelFicRef9)){ 
+      RelFicCod = CORelFicCod10;
+      RelFicRef = DERelFicRef10;
+      VaPara PxmCmp;
+      } 
+  Fim;
+  Inicio
+  Se((CORelFicCod11 <> CORelFicCod10) e (DERelFicRef11 <> DERelFicRef10)){ 
+      RelFicCod = CORelFicCod11;
+      RelFicRef = DERelFicRef11;
+      VaPara PxmCmp;
+      }
+  Fim;
+  Inicio
+  Se((CORelFicCod12 <> CORelFicCod11) e (DERelFicRef12 <> DERelFicRef11)){ 
+      RelFicCod = CORelFicCod12;
+      RelFicRef = DERelFicRef12;
+      VaPara PxmCmp;
+      }  
+  Fim;
+    
+    PxmCmp:
+    x = x + 1;
+Fim;  
+

@@ -1,0 +1,16 @@
+Definir Cursor Cur_R044CAL;
+Definir Cursor Cur_R034FUN;
+Definir Cursor Cur_R008EVC;
+D
+
+
+@ Definir Numero xTabEve;@@
+Definir Numero xCodCal;
+Definir Numero xNumCad;
+Definir Numero xNumEmp;
+ 
+
+Cur_R008EVC.SQL "SELECT R008EVC.CodEve,R008EVC.DesEve,R008EVC.ValCal FROM R008EVC     \
+                 WHERE R008EVC.TabEve=:ETabEve  AND     \
+                 R008EVC.CodCal=:ECodCal"
+

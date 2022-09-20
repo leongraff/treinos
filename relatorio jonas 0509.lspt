@@ -1,0 +1,142 @@
+Definir Cursor Cur_R046VER;
+Definir Alfa xNomFun;
+Definir Numero xNumEmp;
+Definir Numero xNumCad;
+Definir Numero xTipCol;
+
+Definir Numero DesNumCad;
+Definir Alfa DesNomFun;
+
+Definir Numero CodCodEve1;
+Definir Numero CodCodEve2;
+Definir Numero CodCodEve3;
+Definir Numero CodCodEve4;
+Definir Numero CodCodEve5;
+Definir Numero CodCodEve6;
+
+Definir Numero DesValEve1;
+Definir Numero DesValEve2;
+Definir Numero DesValEve3;
+Definir Numero DesValEve4;
+Definir Numero DesValEve5;
+Definir Numero DesValEve6;
+
+Definir Alfa DesCodEve1;
+Definir Alfa DesCodEve2;
+Definir Alfa DesCodEve3;
+Definir Alfa DesCodEve4;
+Definir Alfa DesCodEve5;
+Definir Alfa DesCodEve6;
+
+xNumCad = 0;
+
+Cur_R046VER.SQL "SELECT R046VER.CodEve,R046VER.ValEve,R046VER.NumCad,R034FUN.NumEmp,R034Fun.NomFun,R034FUN.TipCol FROM R046VER,R034FUN WHERE  \ 
+                                                R034FUN.NumEmp=1 AND \
+                                                R034FUN.TipCol=1 AND \
+                                                R034FUN.NumCad=R046VER.NumCad ORDER BY NumCad ASC";
+
+
+Cur_R046VER.AbrirCursor()
+Se(Cur_R046VER.Achou)
+xNumCad = Cur_R046VER.NumCad;
+Inicio
+    Enquanto(NumCad < 100){
+        
+        DesNumCad = 0;
+        DesNomFun = "";
+       
+        DesValEve1 = 0;
+        DesValEve2 = 0;
+        DesValEve3 = 0;
+        DesValEve4 = 0;
+        DesValEve5 = 0;
+        DesValEve6 = 0;
+        
+        CodCodEve1 = 0;
+        CodCodEve2 = 0;
+        CodCodEve3 = 0;
+        CodCodEve4 = 0;
+        CodCodEve5 = 0;
+        CodCodEve6 = 0;
+        
+        DesCodEve1 = "";
+        DesCodEve2 = "";
+        DesCodEve3 = "";
+        DesCodEve4 = "";
+        DesCodEve5 = "";
+        DesCodEve6 = "";
+
+        Inicio
+        DesNumCad = xNumCad;
+        DesNomFun = xNomFun;
+        Se(R046VER.CodEve=1){
+            DesValEve1 = R046VER.ValEve;
+            CodCodEve1 = 1;
+            DesCodEve1 = "Horas Normais";
+
+
+        Se(R046VER.CodEve=4){
+            DesValEve2 = R046VER.ValEve;
+            CodCodEve2 = 4;
+            DesCodEve2 = "Horas Repouso";
+        }
+
+
+
+        Se(R046VER.CodEve=163){
+            DesValEve3 = R046VER.ValEve;
+            CodCodEve3 = 163;
+            DesCodEve3 = "Troco do Mês";
+        }
+
+
+
+        Se(R046VER.CodEve=92){
+            DesValEve4 = R046VER.ValEve;
+            CodCodEve4 = 92;
+            DesCodEve4 = "Vale Refeição";
+        }
+
+
+
+        Se(R046VER.CodEve=302){
+            DesValEve5 = R046VER.ValEve;
+            CodCodEve5 = 302;
+            DesCodEve5 = "INSS";
+        }
+
+
+        Se(R046VER.CodEve=280){
+            DesValEve6 = R046VER.ValEve;
+            CodCodEve6 = 280;
+            DesCodEve6 = "Mensalidade Sindicato";
+        }  
+         
+        Fim;
+    xNumCad++;
+    }
+Fim;
+Cur_R046VER.FecharCursor();
+
+
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
