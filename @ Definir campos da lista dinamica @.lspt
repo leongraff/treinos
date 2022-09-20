@@ -1,0 +1,26 @@
+@ Definir campos da lista dinamica @
+Definir Lista vLisIte;
+vLisIte.DefinirCampos();
+vLisIte.AdicionarCampo("DesIpc", Alfa);     @ Descrição do Item da Adição @
+vLisIte.AdicionarCampo("SeqAdi", Numero);   @ Sequencia do Item na Adição @
+vLisIte.AdicionarCampo("SeqIpc", Numero);   @ Sequencia do Item na Nota @
+vLisIte.AdicionarCampo("QtdRec", Numero);   @ Quantidade Recebida @
+vLisIte.AdicionarCampo("UniMed", Alfa);     @ Unidade de Medida do item da Adição @
+vLisIte.AdicionarCampo("PreUni", Numero);   @ Valor unitário do item da Adição @
+vLisIte.EfetivarCampos();
+vLisIte.Chave("SeqAdi, SeqIpc");            @ Seta a chave da lista dinamica @
+Se(xTagIni = "<descricaoMercadoria")
+Inicio
+  Definir Alfa xCplIpc;
+  
+  xCplIpc = xTagFim;
+  SubstAlfa("&#xD;", "", xCplIpc);
+  LimpaEspacosDireita(xCplIpc);
+  copiarAlfa(xCplIpc,1,100);
+  xDesNfc = xCplIpc; 
+
+  vLisIte.Adicionar();
+  vLisIte.DesIpc = xDesNfc;
+  vLisIte.Gravar();
+        
+Fim;

@@ -1,0 +1,58 @@
+Definir Cursor Cur_R016HIE;
+Definir Alfa aCodLoc;
+Definir Alfa bCodLoc;
+
+aCodLoc = EAbrLoc;
+
+Concatena(', aCodLoc,%', bCodLoc);
+
+Cur_R016HIE.SQL "SELECT R016HIE.CODLOC FROM R016HIE WHERE \
+                R016HIE.TABORG ='1'                 AND    \
+                R016HIE.CODLOC=:bCodLoc;"
+
+Cur_R016HIE.AbrirCursor();
+Enquanto(Cur_R016HIE.Achou);
+Inicio
+    Formula001 = bCodLoc;
+Fim;
+Cur_R016HIE.FecharCursor;B
+    
+
+Definir Cursor Cur_R016HIE;
+Definir Numero xCodLoc;
+Definir Alfa aux_EAbrLoc;
+
+xCodLoc = xCodLoc+ "%";
+
+
+Cur_R016HIE.SQL "SELECT CodLoc FROM R016HIE    \
+                where R016HIE.TabOrg='1' and       \
+                R016.CodLoc LIKE:xCodLoc;"      
+                  
+Cur_R016HIE.AbrirCursor();
+Enquanto(Cur_R016HIE.Achou);
+Inicio
+    Formula001 = bCodLoc;
+Fim;
+Cur_R016HIE.FecharCursor;
+    
+
+Definir Cursor Cur_R016HIE;
+Definir Alfa xTabOrg;
+Definir Alfa xCodLoc;
+Definir Alfa aux_EAbrLoc;
+
+xCodLoc = xCodLoc+ "%";
+
+xTabOrg = "1";
+
+Cur_R016HIE.SQL "SELECT CodLoc FROM R016HIE    \
+                where R016HIE.TabOrg=:xTabOrg and       \
+                R016HIE.CodLoc LIKE:xCodLoc";      
+                  
+Cur_R016HIE.AbrirCursor();
+Enquanto(Cur_R016HIE.Achou)
+Inicio
+    Formula001 = bCodLoc;
+Fim;
+Cur_R016HIE.FecharCursor();

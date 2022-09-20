@@ -1,0 +1,44 @@
+Definir Cursor Cur_R016HIE;
+Definir Alfa auxEAbrLoc;
+Definir Alfa aCodLoc;
+
+
+
+MontaComandoLike(R016HIE.CodLoc,EAbrLoc,auxEAbrLoc);
+
+Cur_R016HIE.SQL "SELECT R016HIE.CodLoc FROM R016HIE \
+                WHERE RO16HIE.TABORG ='1'      AND  \
+                R016HIE.CODLOC = :EAbrLoc__Inserir(:auxEAbrLoc)";
+
+Cur_R016HIE.AbrirCursor();
+Enquanto(Cur_R016HIE.Achou)
+Inicio    
+
+    aCodLoc = Cur_R016HIE;
+
+Fim;
+Cur_R016HIE.FecharCursor();
+
+
+
+Definir Cursor Cur_R016HIE;
+Definir Alfa aux_EAbrLoc;
+Definir Alfa aCodLoc;
+Definir Alfa bCodLoc;
+
+bCodLoc = EAbrLoc;
+
+MontaComandoLike(R016HIE.CodLoc,EAbrLoc,aux_EAbrLoc);
+
+Cur_R016HIE.SQL "SELECT R016HIE.CodLoc FROM R016HIE \
+                WHERE RO16HIE.TABORG ='1'      AND  \
+                R016HIE.CODLOC =:bCodLoc __Inserir(:aux_EAbrLoc)";
+
+Cur_R016HIE.AbrirCursor();
+Enquanto(Cur_R016HIE.Achou)
+Inicio    
+
+    aCodLoc = Cur_R016HIE;
+
+Fim;
+Cur_R016HIE.FecharCursor();

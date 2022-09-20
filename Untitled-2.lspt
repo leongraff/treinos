@@ -1,0 +1,185 @@
+
+Definir Numero xcodeve;
+Definir Numero x;
+Definir Numero xperini;
+Definir Numero mescmp;
+Definir Numero xintmes;
+Definir Alfa EAbrEve;
+Definir Alfa EAbrNat; 
+Definir Alfa deseveant;
+Definir Alfa EListarRef;
+Definir Alfa xImprimiu_1;
+Definir Alfa xImprimiu_2;
+
+/* Tratamento da impressão das seções Adicionais de 
+   cabeçalho dos meses ADICIONAL_11 e 12 */
+
+   Definir Numero impevecol;
+
+
+PosEve = 0;
+x = 0;
+tipeveant = 0;
+codeveant = 0;
+deseveant = "";
+
+Enquanto (x < FimEve)   
+Inicio
+
+  BuscaProxEvento();
+
+
+  RetornaMesData(ENPerIni, xPerIni);
+  RetornaMesData(RelFicCmp, xMesCmp);
+
+  TipEveAnt = RelFicTip;   
+  CodEveAnt = RelFicCod;
+  DesEveAnt = RelFicDes;
+  FACodEve = codeveant;
+  
+  Se (xperini = xmescmp)
+  Inicio            
+  CORelFicCod1 = RelFicCod;
+  DERelFicRef1 = RelFicDes;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;    
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+  CORelFicCod2 = RelFicCod;
+  DERelFicRef2 = RelFicDes;
+    VaPara PrxCmp;
+  Fim; 
+  Senao
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+  CORelFicCod3 = RelFicCod;
+  DERelFicRef3 = RelFicDes;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+  CORelFicCod4 = RelFicCod;
+  DERelFicRef4 = RelFicDes;
+    VaPara PrxCmp;   
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+      xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+  CORelFicCod5 = RelFicCod;
+  DERelFicRef5= RelFicDes;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+  CORelFicCod6 = RelFicCod;
+  DERelFicRef6 = RelFicDes;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+  CORelFicCod7 = RelFicCod; 
+  DERelFicRef7 = RelFicDes;
+    VaPara PrxCmp;
+  Fim; 
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+  CORelFicCod8 = RelFicCod;
+  DERelFicRef8 = RelFicDes;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+  CORelFicCod9 = RelFicCod;
+  DERelFicRef9 = RelFicDes;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+  CORelFicCod10 = RelFicCod;
+  DERelFicRef10 = RelFicDes;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+  CORelFicCod11 = RelFicCod;
+  DERelFicRef11 = RelFicDes;
+    VaPara PrxCmp; 
+  Fim;
+  Senao 
+    xPerIni = xPerIni + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+  CORelFicCod12 = RelFicCod;
+  DERelFicRef12 = RelFicDes;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xPerIni = xPerIni + 1;       
+  Se (xperini = 13)
+    xperini = 1;
+  
+  PrxCmp: 
+  x = x + 1;
+Fim;

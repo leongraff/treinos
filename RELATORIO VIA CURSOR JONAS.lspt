@@ -1,0 +1,78 @@
+Definir Alfa xDesEve;
+Definir Cursor Cur_R046VER;
+Definir Numero ECodCal;
+Definir Numero xNumEmp;
+Definir Numero xNumCad;
+Definir Numero xTipCol;
+Definir Numero xCodEve;
+Definir Numero xCodCal;
+Definir Numero nCodEve;
+
+xCodCal = ECodCal;
+xTipCol = ETipCol;
+xNumEmp = ENumEmp;
+xNumCad = ENumCad;
+
+Cur_R046VER.SQL "SELECT R046VER.CodEve FROM R046VER WHERE R046VER.TipCol=:xTipCol  AND \                \
+                       R046VER.NumEmp=:xNumEmp            AND      \
+                       R046VER.NumCad=:xNumCad            AND      \
+                       R046VER.CodCal=:xCodCal ORDER BY R046VER.CodEve DESC";
+xCodEve = 0;
+Cur_R046VER.AbrirCursor();
+Enquanto (Cur_R046VER.Achou)
+Inicio
+
+    R046VER.CodEve = xCodEve;
+    xCodEve = CORelFicCod1;
+Cur_R046VER.Proximo();
+R046VER.CodEve = xCodEve;
+    xCodEve = CORelFicCod2;
+Cur_R046VER.Proximo();
+R046VER.CodEve = xCodEve;
+    xCodEve = CORelFicCod3;
+Cur_R046VER.Proximo();
+R046VER.CodEve = xCodEve;
+    xCodEve = CORelFicCod4;
+Cur_R046VER.Proximo();
+R046VER.CodEve = xCodEve;
+    xCodEve = CORelFicCod5;
+Cur_R046VER.Proximo();
+R046VER.CodEve = xCodEve;
+    xCodEve = CORelFicCod6;
+Cur_R046VER.Proximo();
+R046VER.CodEve = xCodEve;
+    xCodEve = CORelFicCod7;
+Cur_R046VER.Proximo();
+R046VER.CodEve = xCodEve;
+    xCodEve = CORelFicCod8;
+Cur_R046VER.Proximo();
+R046VER.CodEve = xCodEve;
+    xCodEve = CORelFicCod9;
+Cur_R046VER.Proximo();
+R046VER.CodEve = xCodEve;
+    xCodEve = CORelFicCod10;
+Cur_R046VER.Proximo();
+R046VER.CodEve = xCodEve;
+    xCodEve = CORelFicCod11;
+Cur_R046VER.Proximo();
+R046VER.CodEve = xCodEve;
+    xCodEve = CORelFicCod12;
+Cur_R046VER.Proximo();
+Fim;
+Cur_R046VER.FecharCursor();
+
+
+
+
+Definir Numero xCodEve1;
+Definir Numero xCodEve2;
+Definir Numero xCodEve3;
+Definir Numero xCodEve4;
+Definir Numero xCodEve5;
+Definir Numero xCodEve6;
+Definir Numero xCodEve7;
+Definir Numero xCodEve8;
+Definir Numero xCodEve9;
+Definir Numero xCodEve10;
+Definir Numero xCodEve11;
+Definir Numero xCodEve12;

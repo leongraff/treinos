@@ -1,0 +1,116 @@
+Definir Numero xCodCal;
+Definir Numero aux1;
+Definir Numero x;
+Definir Cursor Cur_R046VER;
+Definir Numero xNumCad;
+
+xCodCal = ECodCal;
+Cur_R046VER.SQL "select r008evc.codeve from r008evc order by r008evc.codeve asc"; @@
+Cur_R046ver.sql "select r046ver.codeve from r046ver where r046ver.numcad=:
+xnumcad order by \
+                r046ver.codeve,r046ver.numcad asc"
+Cur_R046VER.AbrirCursor()
+Se(xnumcad=0){
+  xnumcad = 1;
+}
+CalTotFolha(1,1,xnumcad,0);
+Cur_r046ver.AbrirCursor()
+Enquanto((Cur_R046VER.Achou)e(xnumcad<50))
+       Enquanto(Cur_R046ver.Achou)@@
+                Inicio
+                y = Cur_R046ver.CodEve;
+                x = Cur_R046VER.CodEve;   
+                aux1 = ValEta[x];
+                Se((aux1 > 0) e (x = y)){
+                    ListaSecao("Adicional_1");
+                }
+                Cur_R046ver.Proximo()
+                Cur_R046VER.Proximo()
+                Fim;
+
+xnumcad++;
+
+Cur_R046VER.FecharCursor(); 
+
+
+
+
+@@ ---------------------- xxxxxxx ----------------------- @@
+
+
+
+
+Definir Numero xCodCal;
+Definir Numero aux1;
+Definir Numero x;
+Definir Cursor Cur_R046VER;
+Definir Numero xNumCad;
+
+xCodCal = ECodCal;
+Cur_R046VER.SQL "select r008evc.codeve from r008evc order by r008evc.codeve asc";
+Cur_R046VER.AbrirCursor()
+Se(xnumcad=0){
+  xnumcad = 1;
+}
+CalTotFolha(1,1,xnumcad,0);
+
+Enquanto((Cur_R046VER.Achou)e(xnumcad<50))
+        Inicio
+        x = Cur_R046VER.CodEve;   
+        aux1 = ValEta[x];
+        Se(aux1 > 1){
+            ListaSecao("Adicional_1");
+        }
+        Cur_R046VER.Proximo()
+        Fim;
+
+xnumcad++;
+
+Cur_R046VER.FecharCursor(); 
+
+---------------------------------------------
+
+
+Definir Numero xCodCal;
+Definir Numero aux1;
+Definir Numero x;
+Definir Cursor Cur_R046VER;
+Definir Numero xNumCad;
+Definir Alfa xnomfun;
+
+xCodCal = ECodCal;
+Cur_R046VER.SQL "select r046ver.codeve from r046ver where \
+                r046ver.tipcol=1        and \
+                r046ver.numemp=1        and \
+                r046ver.numcad=:xnumcad and \
+                r046ver.codcal=282 order by \
+                r046ver.codeve asc";
+Cur_R034FUN.SQL "SELECT R034FUN.NOMFUN FROM R034FUN WHERE \
+                R034FUN.NUMEMP=1 AND \
+                R034FUN.TIPCOL=1 AND \
+                R034FUN.NUMCAD=:xnumcad ORDER BY R034FUN.NUMCAD ASC"
+
+Cur_R046VER.AbrirCursor()
+Cur_R034FUN.AbrirCursor()
+
+CalTotFolha(1,1,xnumcad,0);
+
+Inicio
+Enquanto(Cur_R034FUN.Achou)
+Enquanto(Cur_R046VER.Achou)
+        Inicio
+        xnomfun = Cur_R034FUN.NomFun;  
+        x = Cur_R046VER.CodEve;   
+        aux1 = ValEta[x];
+
+        Se(aux1 > 1){
+            ListaSecao("Adicional_1");
+        }
+        Cur_R046VER.Proximo()
+        Fim;
+Fim;
+xnumcad++;
+
+AcbFim:
+Cur_R034FUN.FecharCursor();
+Cur_R046VER.FecharCursor(); 

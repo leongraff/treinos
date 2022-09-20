@@ -1,0 +1,95 @@
+Se((CORelFicCod4 = 0) e (DERelFicRef4 = "")){
+    CORelFicCod4 = RelFicCod;
+    DERelFicRef4 = RelFicDes;          
+    VaPara PxmCmp;    
+}
+
+  
+
+    Se((CORelFicCod5 = 0) e (DERelFicRef5 = "")){
+        CORelFicCod5 = RelFicCod;
+        DERelFicRef5 = RelFicDes;          
+        VaPara PxmCmp;    
+      }
+
+
+
+    Senao Se((CORelFicCod6 = 0) e (DERelFicRef6 = "")){
+      CORelFicCod6 = RelFicCod;
+      DERelFicRef6 = RelFicDes;          
+      VaPara PxmCmp;    
+      }
+
+
+    Senao Se((CORelFicCod7 = 0) e (DERelFicRef7 = "")){
+      CORelFicCod7 = RelFicCod;
+      DERelFicRef7 = RelFicDes;          
+      VaPara PxmCmp;    
+      }
+
+    
+
+    Senao Se((CORelFicCod8 = 0) e (DERelFicRef8 = "")){
+      CORelFicCod8 = RelFicCod;
+      DERelFicRef8 = RelFicDes;          
+      VaPara PxmCmp;    
+      }
+
+    Senao Se((CORelFicCod9 = 0) e (DERelFicRef9 = "")){
+      CORelFicCod9 = RelFicCod;
+      DERelFicRef9 = RelFicDes;          
+      VaPara PxmCmp;    
+      }
+  
+    
+
+    Senao Se((CORelFicCod10 = 0) e (DERelFicRef10 = "")){
+      CORelFicCod10 = RelFicCod;
+      DERelFicRef10 = RelFicDes;          
+      VaPara PxmCmp;    
+      }
+  
+ 
+    Senao Se((CORelFicCod11= 0) e (DERelFicRef11 = "")){
+      CORelFicCod11 = RelFicCod;
+      DERelFicRef11 = RelFicDes;          
+      VaPara PxmCmp;    
+      }
+ 
+
+    Senao Se((CORelFicCod12 = 0) e (DERelFicRef12 = "")){ 
+      CORelFicCod12 = RelFicCcRef12 = RelFicD
+    DERelFicVal1 = 0;
+    DERelFicVal2 = 0;
+    DERelFicVal3 = 0;
+    DERelFicVal4 = 0;
+    DERelFicVal5 = 0;
+    DERelFicVal6 = 0;
+    DERelFicVal7 = 0;
+    DERelFicRef8 = 0;
+    DERelFicRef9 = 0;
+    DERelFicVal10 = 0;
+    DERelFicVal11 = 0;
+    DERelFicVal12 = 0;
+
+    CORelFicCod1 = 0;
+    CORelFicCod2 = 0;
+    CORelFicCod3 = 0;
+    CORelFicCod4 = 0;
+    CORelFicCod5 = 0;
+    CORelFicCod6 = 0;
+    CORelFicCod7 = 0;
+    CORelFicCod8 = 0;
+    CORelFicCod9 = 0;
+    CORelFicCod10 = 0;
+    CORelFicCod11 = 0;
+    CORelFicCod12 = 0;
+
+
+    Definir Numero DERelFicVal1;
+    Definir Numero DERelFicVal2;
+    Definir Numero DERelFicVal3;
+    Definir Numero DERelFicVal4;
+    Definir Numero DERelFicVal5;
+    Definir Numero DERelFicVal6;
+    Definir Numero DERelFicVal7;

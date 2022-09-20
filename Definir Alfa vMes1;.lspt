@@ -1,0 +1,682 @@
+Definir Alfa vMes1;
+Definir Alfa vMes2;
+Definir Alfa vMes3;
+Definir Alfa vMes4;
+Definir Alfa vMes5;
+Definir Alfa vMes6;
+Definir Alfa vMes7;
+Definir Alfa vMes8;
+Definir Alfa vMes9;
+Definir Alfa vMes10;
+Definir Alfa vMes11;
+Definir Alfa vMes12;
+
+
+AlteraControle("DEMes1", "Descrição", vMes1);
+AlteraControle("DEMes2", "Descrição", vMes2);
+AlteraControle("DEMes3", "Descrição", vMes3);
+AlteraControle("DEMes4", "Descrição", vMes4);
+AlteraControle("DEMes5", "Descrição", vMes5);
+AlteraControle("DEMes6", "Descrição", vMes6);
+AlteraControle("DEMes7", "Descrição", vMes7);
+AlteraControle("DEMes8", "Descrição", vMes8);
+AlteraControle("DEMes9", "Descrição", vMes9);
+AlteraControle("DEMes10", "Descrição", vMes10);
+AlteraControle("DEMes11", "Descrição", vMes11);
+AlteraControle("DEMes12", "Descrição", vMes12);
+
+@@======= eventos =======@@
+
+
+
+
+
+
+Definir Numero xcodeve;
+Definir Numero x;
+Definir Numero xperini;
+Definir Numero mescmp;
+Definir Numero xintmes;
+Definir Alfa EAbrEve;
+Definir Alfa EAbrNat; 
+Definir Alfa deseveant;
+Definir Alfa EListarRef;
+Definir Alfa xImprimiu_1;
+Definir Alfa xImprimiu_2;
+/* Tratamento da impressão das seções Adicionais de 
+   cabeçalho dos meses ADICIONAL_11 e 12 */
+Definir Numero impevecol;
+
+xImprimiu_1 = "N";
+xImprimiu_2 = "N";
+
+Se (FlagEventos = 0)  
+  Cancel(1);  /* Nao contem nenhum evento */
+
+ListaSecao("Adicional_10");
+
+PosEve = 0;
+x = 0;
+tipeveant = 0;
+codeveant = 0;
+deseveant = "";
+
+Enquanto (x < FimEve)   
+Inicio
+  /* Tratamento da impressão das seções Adicionais de 
+    cabeçalho dos meses ADICIONAL_11 e 12 */
+  ImpEveCol = 1;
+  
+  BuscaProxEvento();
+
+  /* Se se o evento esta na abrangencia */
+  VerNumAbr(RelFicCod, EAbrEve, xRetorno);
+  Se (xRetorno = 0)
+    VaPara PrxCmp;
+    
+  VerNumAbr(RelFicNat, EAbrNat, xRetorno);
+  Se (xRetorno = 0)
+    VaPara PrxCmp;
+
+  RetornaMesData(ENPerIni, xPerIni);
+  RetornaMesData(RelFicCmp, xMesCmp);
+
+  /* Verifica codigo do evento */
+  Se ((RelFicCod <> codeveant) e (codeveant <> 0))
+  Inicio          
+    ListaSecao ("Adicional_2");
+
+    Se (EListarRef = "S") 
+      ListaSecao("Adicional_7");   /* Referencias */
+
+    CORelFicCod1 = 0; 
+    CORelFicCod2 = 0;
+    CORelFicCod3 = 0; 
+    CORelFicCod4 = 0;
+    CORelFicCod5 = 0;
+    CORelFicCod6 = 0;
+    CORelFicCod7 = 0;
+    CORelFicCod8 = 0;
+    CORelFicCod9 = 0;
+    CORelFicCod10 = 0;
+    CORelFicCod11 = 0;
+    CORelFicCod12 = 0; 
+    
+    DERelFicRef1 = 0;
+    DERelFicRef2 = 0;
+    DERelFicRef3 = 0;
+    DERelFicRef4 = 0;
+    DERelFicRef5 = 0;
+    DERelFicRef6 = 0;
+    DERelFicRef7 = 0;
+    DERelFicRef8 = 0;
+    DERelFicRef9 = 0;
+    DERelFicRef10 = 0;
+    DERelFicRef11 = 0;
+    DERelFicRef12 = 0;
+  Fim; 
+  
+  Se (RelFicTip <> tipeveant)
+  Inicio
+    Se (tipeveant <> 0)
+      ListaSecao ("Adicional_5");
+
+    /* Tratamento da impressão das seções Adicionais de 
+       cabeçalho dos meses ADICIONAL_11 e 12 */
+    ImpEveCol = 0;
+    ListaSecao ("Adicional_1");
+    ImpEveCol = 1;
+  Fim; 
+  
+  TipEveAnt = RelFicTip;   
+  CodEveAnt = RelFicCod;
+  DesEveAnt = RelFicDes;
+  FACodEve = codeveant;
+  
+  Se (xperini = xmescmp)
+  Inicio            
+    FAValMe1 = RelFicVal;
+    FRefEve1 = RelFicRef;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;    
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe2 = RelFicVal;
+    FRefEve2 = RelFicRef;
+    VaPara PrxCmp;
+  Fim; 
+  Senao
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe3 = RelFicVal;
+    FRefEve3 = RelFicRef;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe4 = RelFicVal;
+    FRefEve4 = RelFicRef;
+    VaPara PrxCmp;   
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+      xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe5 = RelFicVal;
+    FRefEve5 = RelFicRef;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe6 = RelFicVal;
+    FRefEve6 = RelFicRef;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe7 = RelFicVal; 
+    FRefEve7 = RelFicRef;
+    VaPara PrxCmp;
+  Fim; 
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe8 = RelFicVal;
+    FRefEve8 = RelFicRef;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe9 = RelFicVal;
+    FRefEve9 = RelFicRef;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe10 = RelFicVal;
+    FRefEve10 = RelFicRef;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe11 = RelFicVal;
+    FRefEve11 = RelFicRef;
+    VaPara PrxCmp; 
+  Fim;
+  Senao 
+    xPerIni = xPerIni + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe12 = RelFicVal;
+    FRefEve12 = RelFicRef;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xPerIni = xPerIni + 1;       
+  Se (xperini = 13)
+    xperini = 1;
+  
+  PrxCmp: 
+  x = x + 1;
+Fim;
+ListaSecao("Adicional_2");
+
+Se (EListarRef = "S") 
+  ListaSecao("Adicional_7"); /* Referências */
+
+ListaSecao ("Adicional_5");
+
+FAValMe1 = 0;
+FAValMe2 = 0;
+FAValMe3 = 0; 
+FAValMe4 = 0;
+FAValMe5 = 0;
+FAValMe6 = 0;
+FAValMe7 = 0;
+FAValMe8 = 0;
+FAValMe9 = 0;
+FAValMe10 = 0;
+FAValMe11 = 0;
+FAValMe12 = 0; 
+
+Definir Numero xcodeve;
+Definir Numero x;
+Definir Numero xperini;
+Definir Numero mescmp;
+Definir Numero xintmes;
+Definir Alfa EAbrEve;
+Definir Alfa EAbrNat; 
+Definir Alfa deseveant;
+Definir Alfa EListarRef;
+Definir Alfa xImprimiu_1;
+Definir Alfa xImprimiu_2;
+/* Tratamento da impressão das seções Adicionais de 
+   cabeçalho dos meses ADICIONAL_11 e 12 */
+Definir Numero impevecol;
+
+xImprimiu_1 = "N";
+xImprimiu_2 = "N";
+
+Se (FlagEventos = 0)  
+  Cancel(1);  /* Nao contem nenhum evento */
+
+ListaSecao("Adicional_10");
+
+PosEve = 0;
+x = 0;
+tipeveant = 0;
+codeveant = 0;
+deseveant = "";
+
+Enquanto (x < FimEve)   
+Inicio
+  /* Tratamento da impressão das seções Adicionais de 
+    cabeçalho dos meses ADICIONAL_11 e 12 */
+  ImpEveCol = 1;
+  
+  BuscaProxEvento();
+
+  /* Se se o evento esta na abrangencia */
+  VerNumAbr(RelFicCod, EAbrEve, xRetorno);
+  Se (xRetorno = 0)
+    VaPara PrxCmp;
+    
+  VerNumAbr(RelFicNat, EAbrNat, xRetorno);
+  Se (xRetorno = 0)
+    VaPara PrxCmp;
+
+  RetornaMesData(ENPerIni, xPerIni);
+  RetornaMesData(RelFicCmp, xMesCmp);
+
+  /* Verifica codigo do evento */
+  Se ((RelFicCod <> codeveant) e (codeveant <> 0))
+  Inicio          
+    ListaSecao ("Adicional_2");
+
+    Se (EListarRef = "S") 
+      ListaSecao("Adicional_7");   /* Referencias */
+
+    FAValMe1 = 0; 
+    FAValMe2 = 0;
+    FAValMe3 = 0; 
+    FAValMe4 = 0;
+    FAValMe5 = 0;
+    FAValMe6 = 0;
+    FAValMe7 = 0;
+    FAValMe8 = 0;
+    FAValMe9 = 0;
+    FAValMe10 = 0;
+    FAValMe11 = 0;
+    FAValMe12 = 0; 
+    
+    FRefEve1 = 0;
+    FRefEve2 = 0;
+    FRefEve3 = 0;
+    FRefEve4 = 0;
+    FRefEve5 = 0;
+    FRefEve6 = 0;
+    FRefEve7 = 0;
+    FRefEve8 = 0;
+    FRefEve9 = 0;
+    FRefEve10 = 0;
+    FRefEve11 = 0;
+    FRefEve12 = 0;
+  Fim; 
+  
+  Se (RelFicTip <> tipeveant)
+  Inicio
+    Se (tipeveant <> 0)
+      ListaSecao ("Adicional_5");
+
+    /* Tratamento da impressão das seções Adicionais de 
+       cabeçalho dos meses ADICIONAL_11 e 12 */
+    ImpEveCol = 0;
+    ListaSecao ("Adicional_1");
+    ImpEveCol = 1;
+  Fim; 
+  
+  TipEveAnt = RelFicTip;   
+  CodEveAnt = RelFicCod;
+  DesEveAnt = RelFicDes;
+  FACodEve = codeveant;
+  
+  Se (xperini = xmescmp)
+  Inicio            
+    FAValMe1 = RelFicVal;
+    FRefEve1 = RelFicRef;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;    
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe2 = RelFicVal;
+    FRefEve2 = RelFicRef;
+    VaPara PrxCmp;
+  Fim; 
+  Senao
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe3 = RelFicVal;
+    FRefEve3 = RelFicRef;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe4 = RelFicVal;
+    FRefEve4 = RelFicRef;
+    VaPara PrxCmp;   
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+      xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe5 = RelFicVal;
+    FRefEve5 = RelFicRef;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe6 = RelFicVal;
+    FRefEve6 = RelFicRef;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe7 = RelFicVal; 
+    FRefEve7 = RelFicRef;
+    VaPara PrxCmp;
+  Fim; 
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe8 = RelFicVal;
+    FRefEve8 = RelFicRef;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe9 = RelFicVal;
+    FRefEve9 = RelFicRef;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe10 = RelFicVal;
+    FRefEve10 = RelFicRef;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xperini = xperini + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe11 = RelFicVal;
+    FRefEve11 = RelFicRef;
+    VaPara PrxCmp; 
+  Fim;
+  Senao 
+    xPerIni = xPerIni + 1;       
+
+  Se (xperini = 13)
+    xperini = 1;
+  
+  Se (xPerIni = xmescmp)
+  Inicio            
+    FAValMe12 = RelFicVal;
+    FRefEve12 = RelFicRef;
+    VaPara PrxCmp;
+  Fim;
+  Senao 
+    xPerIni = xPerIni + 1;       
+  Se (xperini = 13)
+    xperini = 1;
+  
+  PrxCmp: 
+  x = x + 1;
+Fim;
+ListaSecao("Adicional_2");
+
+Se (EListarRef = "S") 
+  ListaSecao("Adicional_7"); /* Referências */
+
+ListaSecao ("Adicional_5");
+
+FAValMe1 = 0;
+FAValMe2 = 0;
+FAValMe3 = 0; 
+FAValMe4 = 0;
+FAValMe5 = 0;
+FAValMe6 = 0;
+FAValMe7 = 0;
+FAValMe8 = 0;
+FAValMe9 = 0;
+FAValMe10 = 0;
+FAValMe11 = 0;
+FAValMe12 = 0; 
+
+FRefEve1 =  0;
+FRefEve2 =  0;
+FRefEve3 =  0;
+FRefEve4 =  0;
+FRefEve5 =  0;
+FRefEve6 =  0;
+FRefEve7 =  0;
+FRefEve8 =  0;
+FRefEve9 =  0;
+FRefEve10 = 0;         
+FRefEve11 = 0;
+FRefEve12 = 0;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Definir Numero Codigo_TabEve;
+
+Inicio
+  /* Converte referências em minutos para calcular o total
+     e posteriormente a média */
+  RetRefMin(Codigo_TabEve, FACodEve, FRefEve1, FRefEve1);
+  RetRefMin(Codigo_TabEve, FACodEve, FRefEve2, FRefEve2);
+  RetRefMin(Codigo_TabEve, FACodEve, FRefEve3, FRefEve3);
+  RetRefMin(Codigo_TabEve, FACodEve, FRefEve4, FRefEve4);
+  RetRefMin(Codigo_TabEve, FACodEve, FRefEve5, FRefEve5);
+  RetRefMin(Codigo_TabEve, FACodEve, FRefEve6, FRefEve6);
+  RetRefMin(Codigo_TabEve, FACodEve, FRefEve7, FRefEve7);
+  RetRefMin(Codigo_TabEve, FACodEve, FRefEve8, FRefEve8);
+  RetRefMin(Codigo_TabEve, FACodEve, FRefEve9, FRefEve9);
+  RetRefMin(Codigo_TabEve, FACodEve, FRefEve10, FRefEve10);
+  RetRefMin(Codigo_TabEve, FACodEve, FRefEve11, FRefEve11);
+  RetRefMin(Codigo_TabEve, FACodEve, FRefEve12, FRefEve12);
+
+  FATotRef = FRefEve1 + FRefEve2 + FRefEve3 + FRefEve4 + FRefEve5 + FRefEve6 + 
+             FRefEve7 + FRefEve8 + FRefEve9 + FRefEve10 + FRefEve11 + FRefEve12; 
+
+  FAMedRef = FATotRef / IntMes;
+
+  /* Se for referência de hora xTotRef vai estar em minutos, tendo que ser transformado para horas */
+  Se (TipHorMov = 1)
+  Inicio
+    /* Alterar a máscara para hora centesimal ou normal */
+    Se (CentesimalTime = 1)
+    Inicio
+      AlteraControle("FRefEve1", "Edição Campo", "#C#zzzzzhh:mm");
+      AlteraControle("FRefEve2", "Edição Campo", "#C#zzzzzhh:mm");
+      AlteraControle("FRefEve3", "Edição Campo", "#C#zzzzzhh:mm");
+      AlteraControle("FRefEve4", "Edição Campo", "#C#zzzzzhh:mm");
+      AlteraControle("FRefEve5", "Edição Campo", "#C#zzzzzhh:mm");
+      AlteraControle("FRefEve6", "Edição Campo", "#C#zzzzzhh:mm");
+      AlteraControle("FRefEve7", "Edição Campo", "#C#zzzzzhh:mm");
+      AlteraControle("FRefEve8", "Edição Campo", "#C#zzzzzhh:mm");
+      AlteraControle("FRefEve9", "Edição Campo", "#C#zzzzzhh:mm");
+      AlteraControle("FRefEve10", "Edição Campo", "#C#zzzzzhh:mm");
+      AlteraControle("FRefEve11", "Edição Campo", "#C#zzzzzhh:mm");
+      AlteraControle("FRefEve12", "Edição Campo", "#C#zzzzzhh:mm");
+
+    Fim; 
+    Senao
+    Inicio
+      AlteraControle("FRefEve1", "Edição Campo", "zzzzzhh:mm");
+      AlteraControle("FRefEve2", "Edição Campo", "zzzzzhh:mm");
+      AlteraControle("FRefEve3", "Edição Campo", "zzzzzhh:mm");
+      AlteraControle("FRefEve4", "Edição Campo", "zzzzzhh:mm");
+      AlteraControle("FRefEve5", "Edição Campo", "zzzzzhh:mm");
+      AlteraControle("FRefEve6", "Edição Campo", "zzzzzhh:mm");
+      AlteraControle("FRefEve7", "Edição Campo", "zzzzzhh:mm");
+      AlteraControle("FRefEve8", "Edição Campo", "zzzzzhh:mm");
+      AlteraControle("FRefEve9", "Edição Campo", "zzzzzhh:mm");
+      AlteraControle("FRefEve10", "Edição Campo", "zzzzzhh:mm");
+      AlteraControle("FRefEve11", "Edição Campo", "zzzzzhh:mm");
+      AlteraControle("FRefEve12", "Edição Campo", "zzzzzhh:mm");
+);
+    Fim;  
+  Fim;
+  Senao
+  Inicio
+    AlteraControle("FRefEve1", "Edição Campo", "#-2#ZZZ.ZZZ.ZZ9,99");
+    AlteraControle("FRefEve2", "Edição Campo", "#-2#ZZZ.ZZZ.ZZ9,99");
+    AlteraControle("FRefEve3", "Edição Campo", "#-2#ZZZ.ZZZ.ZZ9,99");
+    AlteraControle("FRefEve4", "Edição Campo", "#-2#ZZZ.ZZZ.ZZ9,99");
+    AlteraControle("FRefEve5", "Edição Campo", "#-2#ZZZ.ZZZ.ZZ9,99");
+    AlteraControle("FRefEve6", "Edição Campo", "#-2#ZZZ.ZZZ.ZZ9,99");
+    AlteraControle("FRefEve7", "Edição Campo", "#-2#ZZZ.ZZZ.ZZ9,99");
+    AlteraControle("FRefEve8", "Edição Campo", "#-2#ZZZ.ZZZ.ZZ9,99");
+    AlteraControle("FRefEve9", "Edição Campo", "#-2#ZZZ.ZZZ.ZZ9,99");
+    AlteraControle("FRefEve10", "Edição Campo", "#-2#ZZZ.ZZZ.ZZ9,99");
+    AlteraControle("FRefEve11", "Edição Campo", "#-2#ZZZ.ZZZ.ZZ9,99");
+    AlteraControle("FRefEve12", "Edição Campo", "#-2#ZZZ.ZZZ.ZZ9,99");
+
+  Fim;       
+Fim;
+
+
+
+
+
+

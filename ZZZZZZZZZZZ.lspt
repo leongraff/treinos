@@ -1,0 +1,26 @@
+Definir Lista Lst;
+Lst.DefinirCampos();
+Lst.AdicionarCampo("Colaborador",alfa)
+Lst.EfetivarCampos();
+Definir Cursor Cur;
+Lst.Chave*("Colaborador")
+Cur.SQL "select NumEmp,TipCol,NumCad,NomFun from R034FUN"
+Cur.AbrirCursor();
+enquanto(Cur.Achou)
+{Lst.Adicionar();
+Lst.Empresa = Cur.NumEmp;
+Se(Cur.TipCol = 1)
+Lst.Tipo = "Colaborador";
+senao 
+Se (Cur.TipCol = 2) 
+    Lst.Tipo = "Parceiro";
+senao
+Se (Cur.TipCol = 3) 
+    Lst.Tipo = "Terceiro";
+senao
+Lst.Tipo = "<desconhecido>";
+Lst.Cadastro = Cur.NumCad;
+Lst.Nome = Cur.ValSal;
+Lst.Afastamento = Cur.DatAfa;
+Lst.Gravar();
+Cur.Proximo();        
