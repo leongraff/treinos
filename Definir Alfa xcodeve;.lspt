@@ -1,0 +1,36 @@
+Definir Alfa xcodeve;
+Definir Alfa xNomFun;
+Definir Alfa y;
+Definir Alfa CodEve;
+
+Definir Numero xCodCal;
+Definir Numero x;
+Definir Numero aux1;
+Definir Numero xNumCad;
+
+Definir Cursor Cur_R046VER;
+
+Cur_R046VER.SQL "select r046ver.codeve from r046ver where \
+                r046ver.tipcol=1        and \
+                r046ver.numemp=1        and \
+                r046ver.numcad=:xnumcad and \
+                r046ver.codcal=282 order by \
+                r046ver.codeve asc";
+
+Cur_R046VER.AbrirCursor()
+
+CalTotFolha(1,1,xNumCad,0);
+Enquanto(xnumcad < 50)
+    Inicio
+        Enquanto(Cur_R046VER.Achou)
+        x = Cur_R046VER.CodEve;
+        aux1 = ValEta[x];
+        
+        intparaalfa(x,xcodeve);
+        CodEve = CodEve + " = " + xcodeve + " ; ";
+                
+        intparaalfa(aux1,y);
+        
+
+    Fim;    
+xnumcad++;

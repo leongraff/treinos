@@ -1,6 +1,13 @@
 /* criar uma celular que corra para o lado largando os eventos em um colaborador separados apenas com ponto
 e virgula e todos na mesma celular */
 
-
-Definir
-Definir
+definir alfa texto;
+definir alfa a;
+x=0;
+enquanto(x < 20){
+intparaalfa(x, a);
+texto = texto + ";"+a;
+x++;
+}
+valstr = texto;
+cancel(2);
