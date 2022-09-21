@@ -1,0 +1,103 @@
+/* criar uma celular que corra para o lado largando os eventos em um colaborador separados apenas com ponto
+e virgula e todos na mesma celular */
+
+definir alfa texto;
+definir alfa a;
+Definir Cursor Cur_R046VER;
+
+Cur_R046VER.SQL "SELECT CODEVE FROM R046VER WHERE CODCAL=282 group by codeve"
+Cur_R046VER.SQL(AbrirCursor)
+x = Cur_R046VER;
+enquanto(x < 20){
+intparaalfa(x, a);
+texto = texto + ";"+ a;
+x++;
+}
+valstr = texto;
+cancel(2);
+
+@@ --------------------------------------------------------------------------------- @@
+
+definir alfa texto;
+definir alfa a;
+Definir Cursor Cur_R046VER;
+
+Cur_R046VER.SQL "SELECT CODEVE FROM R046VER WHERE CODCAL=282 and numemp=1 group by codeve"
+Cur_R046VER.AbrirCursor()
+enquanto(Cur_R046VER.Achou)
+  Inicio
+  intparaalfa(Cur_R046VER.CodEve, a);
+  texto = texto + ";"+ a;
+  Cur_R046VER.Proximo()
+  Fim;
+valstr = texto;
+cancel(2);
+
+
+
+definir alfa texto1;
+definir alfa a;
+definir numero aux1;
+Definir Cursor Cur_R041VER;
+Definir numero xnumcad;
+Cur_R041VER.SQL "SELECT CODEVE FROM R046VER WHERE CODCAL=282 and numcad=:xnumcad and numemp=1 group by codeve"
+CalTotFolha(1,1,xnumcad,0);
+Cur_R041VER.AbrirCursor()
+enquanto((Cur_R041VER.Achou)e(xnumcad<50)) 
+  Inicio
+  x = Cur_R041VER.CodEve;   
+  aux1 = ValEta[x];
+  intparaalfa(aux1, a);
+  texto1 = texto1 + ";"+ a;
+  Cur_R041VER.Proximo()
+  Fim;
+texto1 = "";
+xnumcad++;  
+valstr = texto1;
+cancel(2);
+Cur_R041VER.FecharCursor();
+
+--------------------------------------------------------------
+
+
+definir alfa texto1;
+definir alfa b;
+definir numero aux1;
+Definir Cursor Cur_R041VER;
+Definir numero xnumcad;
+Definir Cursor Cur_R034FUN;
+Definir Alfa xnomfun;
+Cur_R041VER.SQL "SELECT CODEVE FROM R046VER WHERE CODCAL=282 and numemp=1 group by codeve";
+Cur_R034FUN.SQL "SELECT NOMFUN FROM R034FUN WHERE NUMCAD=:xnumcad and numemp=1";
+Cur_R034FUN.AbrirCursor();
+Se(Cur_R034FUN.Achou){
+xnomfun = Cur_R034FUN.NomFun;
+}  
+CalTotFolha(1,1,xnumcad,0);
+texto1 = "";
+x = 0;
+Cur_R041VER.AbrirCursor()
+enquanto((Cur_R041VER.Achou)e(xnumcad<50)) 
+  Inicio
+  x = Cur_R041VER.CodEve;   
+  aux1 = ValEta[x];
+  intparaalfa(aux1, b);
+  texto1 = texto1 + ";"+ b;
+  Cur_R041VER.Proximo()
+  Fim;
+xnumcad++;
+Cur_R034FUN.FecharCursor();  
+Cur_R041VER.FecharCursor();
+
+
+
+
+
+
+
+
+
+
+
+
+

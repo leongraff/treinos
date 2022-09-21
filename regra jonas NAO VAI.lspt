@@ -59,7 +59,7 @@ Enquanto((Cur_R046VER.Achou)e(xnumcad<50))
         x = Cur_R046VER.CodEve;   
         aux1 = ValEta[x];
         Se(aux1 > 1){
-            ListaSecao("Adicional_1");
+
         }
         Cur_R046VER.Proximo()
         Fim;
@@ -116,12 +116,3 @@ Cur_R034FUN.FecharCursor();
 Cur_R046VER.FecharCursor(); 
 
 @@ ------------------------------------------------------------------------- @@
-Definir alfa texto;
-Definir alfa a;
-Definir numero x;
-
-x=0;
-
-Enquanto(x<20){
-texto
-}

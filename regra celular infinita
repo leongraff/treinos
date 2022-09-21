@@ -3,10 +3,16 @@ e virgula e todos na mesma celular */
 
 definir alfa texto;
 definir alfa a;
+Definir Cursor Cur_R046VER;
+
+Cur_R046VER.SQL "SELECT CODEVE FROM R046VER WHERE CODCAL=282 group by codeve"
+
+
+
 x=0;
 enquanto(x < 20){
 intparaalfa(x, a);
-texto = texto + ";"+a;
+texto = texto + ";"+ a;
 x++;
 }
 valstr = texto;
