@@ -90,9 +90,76 @@ Cur_R034FUN.FecharCursor();
 Cur_R041VER.FecharCursor();
 
 
+definir alfa texto1;
+definir alfa b;
+definir numero aux1;
+Definir Cursor Cur_R041VER;
+Definir numero xnumcad;
+Definir Cursor Cur_R034FUN;
+Definir Numero x;
+Definir Alfa xnomfun;
+x = 1;
+
+Cur_R041VER.SQL "SELECT CODEVE FROM R046VER WHERE CODCAL=282 and numemp=1 group by codeve";
+Cur_R034FUN.SQL "SELECT NOMFUN FROM R034FUN WHERE NUMCAD=:xnumcad and numemp=1";
+
+Cur_R034FUN.AbrirCursor();
+Se(Cur_R034FUN.Achou){
+xnomfun = Cur_R034FUN.NomFun;
+}  
+Se(xnumcad=0){
+  xnumcad = 1;
+}
+CalTotFolha(1,1,xnumcad,0);
+texto1 = "";
+
+Cur_R041VER.AbrirCursor()
+
+enquanto((Cur_R041VER.Achou)e(xnumcad<50)) 
+  Inicio
+    
+  x = Cur_R041VER.CodEve;
+
+  aux1 = ValEta[x];
+  intparaalfa(aux1, b);
+      
+  texto1 = texto1 + ";"+ b;
+     
+  Cur_R041VER.Proximo()
+  Fim;
+xnumcad++;
+Cur_R008EVC.FecharCursor();
+Cur_R034FUN.FecharCursor();  
+Cur_R041VER.FecharCursor();
+
+-------------------------------------------------------
+
+Ravenna11
+
+definir alfa texto1;
+definir alfa a;
+definir numero aux1;
+Definir Cursor Cur_R041VER;
+Definir numero xnumcad;
+Cur_R041VER.SQL "SELECT CODEVE FROM R046VER WHERE CODCAL=282 and numcad=:xnumcad and numemp=1 group by codeve"
+CalTotFolha(1,1,xnumcad,0);
+Cur_R041VER.AbrirCursor()
+enquanto((Cur_R041VER.Achou)e(xnumcad<50)) 
+  Inicio
+  x = Cur_R041VER.CodEve;   
+  aux1 = ValEta[x];
+  intparaalfa(aux1, a);
+  texto1 = texto1 + ";"+ a;
+  Cur_R041VER.Proximo()
+  Fim;
+xnumcad++;  
+valstr = texto1;
+cancel(2);
+Cur_R041VER.FecharCursor();
 
 
-
+valstr = texto1;
+cancel(2);
 
 
 
