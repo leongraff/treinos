@@ -147,7 +147,7 @@ Cur_R041VER.AbrirCursor()
 enquanto((Cur_R041VER.Achou)e(xnumcad<50)) 
   Inicio
   x = Cur_R041VER.CodEve;   
-  aux1 = ValEta[x];
+  aux1 = ValEta[x];gi
   intparaalfa(aux1, a);
   texto1 = texto1 + ";"+ a;
   Cur_R041VER.Proximo()

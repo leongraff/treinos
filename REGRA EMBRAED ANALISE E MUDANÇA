@@ -1,0 +1,188 @@
+
+/*xRefAux = (RefEvt / 2) + Basref;
+ValEvt = ValEvt / 220 * xRefAux; */
+
+/* REGRA 416 EVENTO 417 EMBRAED */
+CodEvt = 422;
+BusEvt = 1;
+xRefEvt422 = RefEv2;
+
+CodEvt = 427;
+BusEvt = 1;
+xValEvt427 = ValEv2;
+
+Se ((xValEvt427 = 0) e (Basref > 0))
+INICIO
+  xRefAux = (RefEvt / Basref) * xRefEvt422;
+  
+  Se (RefEvt > 0)
+    ValEvt = ValEvt / RefEvt * xRefAux;
+FIM;
+
+@@========================================================@@
+/* REGRA 422  EVENTO 422 TAREFA */
+
+xBalvas = 0;
+xValMov = 0;
+xRefEvt = 0;
+xRefEvtAux = 0;
+xValEvtAux = 0;
+
+@=== VALOR HORA E VALOR DO MOVIMENTO ===@
+xValbas = BasEvt;
+xValMov = ValMov;
+
+@=== ENCONTRA REFERENCIA DO EVENTO ===@
+xRefEvt = xValMov / xValbas;
+@xRefEvt = xRefEvt + 0.04;@
+
+@=== ATRIBUI VARIAVEIS ===@
+xNumEmp = R034FUN.NUMEMP;
+xTipCol = R034FUN.TIPCOL;
+xNumCad = R034FUN.NUMCAD;
+xCodEvt = CodEvt;
+xCodCal = CodCal;
+
+@=== FAZ O CALCULO E ATUALIZA O MOVIMENTO COM A REFERENCIA ===@
+xRefEvtAux = xRefEvt * 60;
+@xRefEvtAux = xRefEvtAux + 3;@
+
+@=== FAZ RECALCULO DO VALOR PARA FAZER DIFERENÇA DOS CENTAVOS ===@
+Definir Alfa aValbas;
+Definir Alfa aValbasM;
+Definir Alfa aValbasD;
+aValbas = "";
+aValbasM = "";
+aValbasD = "";
+xValbasM = 0;
+xValbasD = 0;
+xValbas2 = 0;
+
+ConverteMascara (1, xValbas, aValbas, "99999,99");
+aValbasM = aValbas;
+aValbasD = aValbas;
+CopiarAlfa (aValbasM, 1, 5);
+CopiarAlfa (aValbasD, 7, 2);
+
+AlfaParaInt (aValbasM, xValbasM);
+AlfaParaInt (aValbasD, xValbasD);
+xValbasD = xValbasD / 100;
+xValbas2 = xValbasM + xValbasD;  
+xValEvtAux = xValbas2 * xRefEvt;
+
+
+@=== QUANDO SALÁRIO CALCULADO FICAR MENOR QUE O IMPORTADO ===@
+Se ((xRefEvtAux > 0) E (xValEvtAux < ValMov))
+INICIO
+ 
+  Enquanto (xValEvtAux < ValMov)
+  INICIO
+    xRefEvt = xRefEvt + 0.001;
+    xRefEvtAux = xRefEvt * 60;
+    @xValEvtAux = xValbas2 * xRefEvt;@
+    xValEvtAux = xValbas * xRefEvt;
+  FIM;
+  @============================================================================@
+  Definir Alfa aRefEvt;
+  Definir Alfa aRefEvtM;
+  Definir Alfa aRefEvtD;
+  aRefEvt = "";
+  aRefEvtM = "";
+  aRefEvtD = "";
+  xRefEvtM = 0;
+  xRefEvtD = 0;
+  xRefEvt2 = 0;
+  
+  ConverteMascara (1, xRefEvt, aRefEvt, "99999,99");
+  aRefEvtM = aRefEvt;
+  aRefEvtD = aRefEvt;
+  CopiarAlfa (aRefEvtM, 1, 5);
+  CopiarAlfa (aRefEvtD, 7, 2);
+  
+  AlfaParaInt (aRefEvtM, xRefEvtM);
+  AlfaParaInt (aRefEvtD, xRefEvtD);
+  xRefEvtD = xRefEvtD / 100;
+  xRefEvt2 = xRefEvtM + xRefEvtD;
+  
+  xValEvtAux = xRefEvt2 * xValbas; 
+  @============================================================================@ 
+  
+  ExecSQL"UPDATE R044MOV SET REFEVE = :xRefEvtAux WHERE NUMEMP = :XNUMEMP AND TIPCOL = :XTIPCOL AND NUMCAD = :XNUMCAD \
+        AND CODEVE = :XCODEVT AND CODCAL = :XCODCAL"; 
+FIM;
+@=== QUANDO SALÁRIO CALCULADO FICAR MENOR QUE O IMPORTADO ===@
+Senao
+Se ((xRefEvtAux > 0) E (xValEvtAux > ValMov))
+INICIO
+ 
+  Enquanto (xValEvtAux > ValMov)
+  INICIO
+    xRefEvt = xRefEvt - 0.001;
+    xRefEvtAux = xRefEvt * 60;
+    @xValEvtAux = xValbas2 * xRefEvt;@
+    xValEvtAux = xValbas * xRefEvt;
+  FIM;
+  
+  Enquanto (xValEvtAux < ValMov)
+  INICIO
+    xRefEvt = xRefEvt + 0.001;
+    xRefEvtAux = xRefEvt * 60;
+    @xValEvtAux = xValbas2 * xRefEvt;@
+    xValEvtAux = xValbas * xRefEvt;
+  FIM;
+  
+  @============================================================================@
+  Definir Alfa aRefEvt;
+  Definir Alfa aRefEvtM;
+  Definir Alfa aRefEvtD;
+  aRefEvt = "";
+  aRefEvtM = "";
+  aRefEvtD = "";
+  xRefEvtM = 0;
+  xRefEvtD = 0;
+  xRefEvt2 = 0;
+  
+  ConverteMascara (1, xRefEvt, aRefEvt, "99999,99");
+  aRefEvtM = aRefEvt;
+  aRefEvtD = aRefEvt;
+  CopiarAlfa (aRefEvtM, 1, 5);
+  CopiarAlfa (aRefEvtD, 7, 2);
+  
+  AlfaParaInt (aRefEvtM, xRefEvtM);
+  AlfaParaInt (aRefEvtD, xRefEvtD);
+  xRefEvtD = xRefEvtD / 100;
+  xRefEvt2 = xRefEvtM + xRefEvtD;
+  
+  xValEvtAux = xRefEvt2 * xValbas; 
+  @============================================================================@
+  
+  ExecSQL"UPDATE R044MOV SET REFEVE = :xRefEvtAux WHERE NUMEMP = :XNUMEMP AND TIPCOL = :XTIPCOL AND NUMCAD = :XNUMCAD \
+        AND CODEVE = :XCODEVT AND CODCAL = :XCODCAL"; 
+FIM;
+
+
+RefEvt = xRefEvt;
+ValEvt = xValEvtAux + 0.10;
+
+/*CodEvt = 418;
+BusEvt = 1;
+xValEvt418 = ValEv2;
+
+ExecSQL"UPDATE R044MOV SET REFEVE = 0 WHERE NUMEMP = :XNUMEMP AND TIPCOL = :XTIPCOL AND NUMCAD = :XNUMCAD \
+        AND CODEVE = :XCODEVT AND CODCAL = :XCODCAL";
+
+Se (xValEvt418 > 0)
+INICIO
+  ExecSQL"UPDATE R044MOV SET REFEVE = :xRefEvtAux WHERE NUMEMP = :XNUMEMP AND TIPCOL = :XTIPCOL AND NUMCAD = :XNUMCAD \
+        AND CODEVE = :XCODEVT AND CODCAL = :XCODCAL"; 
+  
+  RefEvt = xRefEvt;
+  ValEvt = xValEvtAux;
+FIM;
+Senao
+INICIO
+  ExecSQL"UPDATE R044MOV SET REFEVE = 220 WHERE NUMEMP = :XNUMEMP AND TIPCOL = :XTIPCOL AND NUMCAD = :XNUMCAD \
+        AND CODEVE = :XCODEVT AND CODCAL = :XCODCAL";
+  @RefEvt = xRefEvt;@
+  ValEvt = ValMov;
+FIM;*/ 
