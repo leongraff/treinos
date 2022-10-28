@@ -1,0 +1,78 @@
+Definir Data xDatPonte;
+Definir Data xDatPonteAUx;
+Definir Data xContDiasLimite;
+Definir Cursor Cur_R034FUN;
+Definir Numero xNumCad;
+Definir Numero xNumEmp;
+Definir Numero xTipCol;
+
+xDatPonte = R064PON.DiaHo1;
+xDatPonteAux = xDatPonte - 1;
+xContDias = 0;
+xCodHorAnt = 0;
+
+
+RetornaHorario(R064PON.NumEmp, R064PON.TipCol, R064PON.NumCad, xDatPonte, "s", xCodHorPonte);
+
+xNumCad = R064PON.NumCad;
+xNumEmp = R064PON.NumEmp;
+xTipCol = R064PON.TipCol;
+
+Cur_R034FUN.SQl "SELECT DATADM FROM R034FUN WHERE R034FUN.NUMEMP=:xNumEmp AND \
+                R034FUN.TipCol=:xTipCol AND \
+                R034FUN.NumCad=:xNumCad"; 
+
+Se ((xCodHorPonte = 9996) ou (xCodHorPonte = 9999))
+Cur_R034FUN.AbrirCursor()
+xDatAdm = Cur_R034FUN.DatAdm;
+INICIO
+  Enquanto((xCodHorAnt <> 9996) e (xCodHorAnt <> 9999) e (xDatPonteAux <> xDatAdm)) 
+  INICIO
+    RetornaHorario(R064PON.NumEmp, R064PON.TipCol, R064PON.NumCad, xDatPonteAux, "S", xCodHorAnt);
+    xContDias++;   
+    xDatPonteAux--;
+      
+  FIM;
+  
+  Se(xContDias >= 7)
+    Mensagem(Erro,"Colaborador não pode trabalhar 7 dias consecutivos sem FOLGA/DSR!");
+FIM;
+
+Mensagem(Retorna,"Verificar FOLGAS/DSR futuras para que a escala de trabalho não fique inconsistente![&OK]");
+
+
+
+================== regra tiago inalterada ============================================
+
+
+
+
+
+
+
+
+Definir Data xDatPonte;
+Definir Data xDatPonteAUx;
+
+xDatPonte = R064PON.DiaHo1;
+xDatPonteAux = xDatPonte - 1;
+xContDias = 0;
+xCodHorAnt = 0;
+
+RetornaHorario(R064PON.NumEmp, R064PON.TipCol, R064PON.NumCad, xDatPonte, "s", xCodHorPonte);
+
+Se ((xCodHorPonte = 9996) ou (xCodHorPonte = 9999)) 
+INICIO
+  Enquanto((xCodHorAnt <> 9996) e (xCodHorAnt <> 9999)) 
+  INICIO
+    RetornaHorario(R064PON.NumEmp, R064PON.TipCol, R064PON.NumCad, xDatPonteAux, "S", xCodHorAnt);
+    xContDias++;
+    
+    xDatPonteAux--;  
+  FIM;
+  
+  Se(xContDias >= 7)
+    Mensagem(Erro,"Colaborador não pode trabalhar 7 dias consecutivos sem FOLGA/DSR!");
+FIM;
+
+Mensagem(Retorna,"Verificar FOLGAS/DSR futuras para que a escala de trabalho não fique inconsistente![&OK]");

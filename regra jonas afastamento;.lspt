@@ -1,0 +1,119 @@
+@ Flag FDirVal 1 - Recebe 0 - Não Recebe @
+@ O Recebe e Não Recebe aqui significa imprimir e não imprimir @
+Definir Numero xNumEmp;
+Definir Numero xTipCol;
+Definir Numero xNumCad;
+Definir Numero xCodCal;
+
+Definir Alfa ELisVal;
+
+Definir Data xDatAfaFim;
+Definir Data xDatAfaIni;
+Definir Data xDat Zer;
+
+Definir Cursor Cur_R038AFA;
+Definir Cursor Cur_R046Ver;
+
+xNumEmp = R034FUN.NumEmp;
+xTipCol = R034FUN.TipCol;
+xNumCad = R034FUN.NumCad;
+xCodCal = CodCal;
+
+FDirVal = 1;
+
+XDatAfaIni = IniCmp;
+xDatAfaFim = FimCmp;
+xDatZer = 0;
+/*                                                               
+datafa = data do afastamento
+datter = data do termino do afastamento
+sitafa = situação do afastamento
+
+
+
+*/
+Cur_R038AFA.SQL "SELECT R038AFA.DatAfa, R038AFA.DATTER, R038AFA.SITAFA \
+                FROM R038AFA \
+                WHERE R038AFA.NUMEMP=:XNUMEMP AND R038AFA.TIPCOL=:XTIPCOL \
+                AND R038AFA.NUMCAD=:XNUMCAD AND R038AFA.DATAFA<=:XDATFIM \ @ data do afastamento menor ou igual a datafim @
+                AND (R038AFA.DATTER >=:XDATAFAINI OR R038AFA.DATTER=:XDATZER) \ @ data termino maior que datini e igual a datzer(?) @
+                AND R038AFA.SITAFA IN (15,4,3,107)"   @ <- abrangencia de situações do select @         
+
+Cur_R038AFA.AbrirCursor();
+Enquanto(Cur_R038AFA.Achou){
+    FDirVal = 0;
+    Se(Cur_R038AFA.DatAfa < (xDatAfaIni - 90))
+    FDirVal = 0;
+}
+senao {
+    FDirVal = 1;
+}
+
+Se(Cur_R38AFA.SitAfa = 3){
+    ((Cur_R038AFA.DATAFA <=(xDatAfaIni + 10)) e (Cur_R038AFA.DatAfa > xDatAfaIni)){
+        FDirVal = 1;
+        Senao{
+        FDirVal = 0;
+        }   
+    }
+
+Cur_RR038AFa.Proximo();
+}
+Cur_R038AFA.FecharCursor();
+
+Cur_R046VER.SQL "SELECT R046VER.CODEVE \
+                FROM R046VER
+                WHERE R046VER.NUMEMP=:XNUMEMP AND R046VER.TIPCOL=:XTIPCOL \
+                AND R046VER.NUMCAD=:XNUMCAD AND R046VER.CODCAL=:XCODCAL \
+                AND R046VER.CODEVE=22"
+Cur_R046VER.AbrirCursor();
+Se(Cur_R046VER.Achou){
+    FDirVal=0;
+}
+Cur_R046VER.FecharCursor();
+
+Se(R034FUN.CodCar = "073"){
+    FDirVal = 0;
+}
+
+Se(R034FUN.DatAdm>IniCmp){
+    FDirVal = 0;
+}
+
+RetVinEmp(R034FUN.NUMEMP,R034FUN.TIPCOL,R034FUN.NUMCAD,FIMCMP)
+
+/*
+Esta função retorna o código do vínculo de um colaborador em uma determinada data na variável de sistema CodVinEmp. 
+Nas regras de apuração pode ser utilizada a variável CodVinEmp que retorna o código do vínculo segundo a data do 
+processamento (DatPro).
+*/
+Se ((CodVinEmp = 90) ou ((CodVinEmp=55)e(xNumCad <> 14511) e (xNumCad <> 14527) e (xNumCad <> 14529))) @ CodVinEmp = Codigo Vinculo Empregador nessa competencia @
+{
+    FDirVal = 0;
+}
+
+Se(FDirVal = 0)
+    Cancel(1); @ Cancel(1) é o que não imprime o resultado @
+
+@ -- Conta dias trabalhados demitidos -- @
+
+Definir Cursor Cur_R042RCM;
+
+RetSitEmp(R034FUN.NUMEMP,R034FUN.TIPCOL,R034FUN.NUMCAD,INICMP);
+xSitIni = SitEmp;
+Se(xSitIni=7)
+{
+    Cancel(1);
+}
+RetSitEmp(R034FUN.NUMEMP,R034FUN.TIPCOL,R034FUN.NUMCAD,INICMP);
+xSitIni = SitEmp;
+Se(xSitIni=68)
+{
+    Cancel(1);
+}
+RetSitEmp(R034FUN.NUMEMP,R034FUN.TIPCOL,R034FUN.NUMCAD,INICMP);
+xSitIni = SitEmp;
+Se(xSitIni=7)
+{
+    Cancel(1);
+}

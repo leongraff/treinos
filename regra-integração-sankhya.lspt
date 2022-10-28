@@ -1,0 +1,1058 @@
+
+--------------------------------------------------------------------------------
+Código: 1 - Descrição: Interface
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 2 - Descrição: Tabela R047PEN
+--------------------------------------------------------------------------------
+
+@ Regra da tabela R047PEN @
+Se(CodOpe = "DepoisSelecionar")
+{
+  Definir Alfa CUR_R047PEN;
+  Definir Alfa sTipCal;
+  Definir Alfa sDesLis;
+  Definir Alfa sTipAgr;
+  
+  nTotVlr = 0;
+  nVlrMax = 0;
+  sTipCal = "";
+  sDesLis = "";
+  sTipAgr = "";
+  
+  nNumEmp = R047PEN_NumEmp;
+  nCodCif = R047PEN_CodCif;
+  nCodCal = R047PEN_CodCal;
+  nTipCol = R047PEN_TipCol;
+  nNumCad = R047PEN_NumCad;
+  nTipCal = R047PEN_TipCal;
+  sTipAgr = R047PEN_TipAgr;
+    
+  sTipCal = Formatar(nTipCal,"%0.0f");
+  
+  DescItemLista("LTipCal", sTipCal, sDesLis);
+  
+  sDesLis = sTipCal + " - " + sDesLis;
+  
+  R047PEN_sDesLis = sDesLis;
+  
+  SQL_Criar(CUR_R047PEN);
+  SQL_UsarSQLSenior2(CUR_R047PEN, 0);  @- 0 - Não usa senior SQL 2, Qualquer valor diferente de 0 utiliza -@
+  SQL_UsarAbrangencia(CUR_R047PEN, 0); @- 0 - Não utiliza abrangência de usuário, 1- Utiliza -@
+  SQL_DefinirComando(CUR_R047PEN,"SELECT SUM(ValTit) TotVlr,        \
+                                         COUNT(NumEmp) VlrMax       \
+                                  FROM R047PEN                      \
+                                  WHERE NumEmp = :nNumEmp           \
+                                    AND CodCif = :nCodCif           \
+                                    AND VncTit >= :dVncIni          \
+                                    AND VncTit <= :dVncFin");   
+  SQL_DefinirInteiro(CUR_R047PEN,"nNumEmp",nNumEmp);
+  SQL_DefinirInteiro(CUR_R047PEN,"nCodCif",nCodCif);
+  SQL_DefinirData(CUR_R047PEN,"dVncIni",dVncIni);
+  SQL_DefinirData(CUR_R047PEN,"dVncFin",dVncFin);
+  SQL_AbrirCursor(CUR_R047PEN);
+  Se(SQL_EOF(CUR_R047PEN) = 0)
+  {
+    SQL_RetornarFlutuante(CUR_R047PEN,"VlrMax",nVlrMax); @- Usado na contagem da barra de progresso -@
+    SQL_RetornarFlutuante(CUR_R047PEN,"TotVlr",nTotVlr);
+    
+    R047PEN_nTotVlr = nTotVlr;
+  }
+  SQL_FecharCursor(CUR_R047PEN);
+  SQL_Destruir(CUR_R047PEN);
+}
+--------------------------------------------------------------------------------
+Código: 3 - Descrição: Ação R047PEN.IntegrarSankhya
+--------------------------------------------------------------------------------
+
+Definir Alfa CUR_R047PEN;
+Definir Alfa CUR_R047PER;
+Definir Cursor CUR_R030FIL;       
+            
+Definir Funcao AutenticarLogin();
+Definir Funcao VerificarStatus();
+Definir Funcao IntegrarTitulo();
+Definir Funcao IntegrarRateio();
+Definir Funcao ExcluirTitulo();
+Definir Funcao Logout();
+
+Definir Alfa sTipAgr;
+Definir Alfa sStaAut;
+Definir Alfa sMsgRet;
+Definir Alfa sNumEmp;
+Definir Alfa sCodFor;
+Definir Alfa sDatEmi;
+Definir Alfa sDatEnt;
+Definir Alfa sValTit;
+Definir Alfa sVncTit;
+Definir Alfa sCodBan;
+Definir Alfa sCtaFin;
+Definir Alfa sCodCcu;
+Definir Alfa aConBan;
+Definir Alfa sAgeBan;
+Definir Alfa sCodCon;
+Definir Alfa sTipTis;
+Definir Alfa sCodTrs;
+Definir Alfa VaURL;
+Definir Alfa VaHTTP;
+Definir Alfa VaHTML;
+Definir Alfa vPostData;
+Definir Alfa sToken;
+Definir Alfa sCookie;
+Definir Alfa sMsgErr;
+Definir Alfa sTipTit;
+Definir Alfa sNroUni;
+Definir Alfa sNroNot;
+Definir Alfa sPerRat;
+Definir Alfa sCodPrj;
+Definir Alfa sCodRed;
+Definir Alfa sMsgExc;
+Definir Alfa sMes;
+Definir Alfa sAno;
+
+Definir Data dDatEmi;
+Definir Data dDatEnt;
+Definir Data dVncTit;
+
+nTemErr = 0;@- Indica se houve erro em algum título -@
+nTemReg = 0;@- Indica se o cursor não encontrou títulos para integrar -@ 
+
+vPostData = "";
+sStaAut = "";
+sMsgRet = "";
+sToken = "";
+VaHTTP = "";
+VaHTML = "";
+VaURL = "";
+
+@- Realizar login no Sankhya via HttpPost -@
+AutenticarLogin();
+
+@- Verificar o status da requisição -@
+sStaAut = VaHTML; 
+VerificarStatus();
+
+Se(sStaAut = "1")@- Autenticação realizada com sucesso -@
+{
+  nPosIni = 0;
+  nPosFim = 0;
+  
+  sToken = VaHTML;
+  
+  PosicaoAlfa("<jsessionid>", sToken, nPosIni);
+  PosicaoAlfa("</jsessionid>", sToken, nPosFim);
+  CopiarAlfa(sToken, nPosIni+12, nPosFim-12-nPosIni);
+  
+  IniciaBarraProgresso(nVlrMax);
+   
+  Se(sTipAgr = "I")@- CIF com o tipo de agrupamento INDIVIDUAL -@
+  {
+    nCont = 0;
+    
+    VaURL = "";
+    VaHTTP = "";
+    VaHTML = "";
+    vPostData = "";
+    
+    SQL_Criar(CUR_R047PEN);
+    SQL_UsarSQLSenior2(CUR_R047PEN, 0);  @- 0 - Não usa senior SQL 2, Qualquer valor diferente de 0 utiliza -@
+    SQL_UsarAbrangencia(CUR_R047PEN, 0); @- 0 - Não utiliza abrangência de usuário, 1- Utiliza -@
+    SQL_DefinirComando(CUR_R047PEN,"SELECT *                                             \
+                                      FROM R047PEN                                       \
+                                     WHERE NumEmp = :nNumEmp                             \
+                                       AND CodCif = :nCodCif                             \
+                                       AND VncTit >= :dVncIni                            \
+                                       AND VncTit <= :dVncFin                            \ 
+                                       AND ((USU_IntTit <> 'OK') OR (USU_IntTit IS NULL))");
+    SQL_DefinirInteiro(CUR_R047PEN,"nNumEmp",nNumEmp);
+    SQL_DefinirInteiro(CUR_R047PEN,"nCodCif",nCodCif);
+    SQL_DefinirData(CUR_R047PEN,"dVncIni",dVncIni);
+    SQL_DefinirData(CUR_R047PEN,"dVncFin",dVncFin);  
+    SQL_AbrirCursor(CUR_R047PEN);
+    Enquanto(SQL_EOF(CUR_R047PEN) = 0)
+    {
+      nDia = 0;
+      nMes = 0;
+      nAno = 0;
+      nNumEmp = 0;
+      xNumEmp= 0;
+      nCodFil = 0;
+      nCodFor = 0;
+      nValTit = 0;
+      nCodBan = 0;
+      nCtaFin = 0;
+      dDatEmi = 0;
+      dDatEnt = 0;
+      dVncTit = 0;
+      nCodCal = 0;
+      nTipCol = 0;
+      nNumCad = 0;
+      nCodBan = 0;
+      nAgeBan = 0;
+      nCodCon = 0;
+      nTemReg = 1;
+      sMes = "";
+      sAno = "";
+      sNroNot = "";
+      aConBan = "";
+      sNumEmp = "";
+      sCodFor = "";
+      sDatEmi = "";
+      sAgeBan = "";
+      sCodCon = "";
+      sDatEnt = "";
+      sValTit = "";
+      sVncTit = "";
+      sCodBan = "";
+      sCtaFin = "";
+      sCodTrs = "";
+      STipTis = "";
+      sCodCcu = "";
+      sMsgRet = "";
+      sCookie = "";
+      sStaAut = "";
+      sMsgErr = "";
+      sTipTit = "";
+      sNroUni = "";
+      sPerRat = "";
+      sCodPrj = "";
+      sCodRed = "";
+      sMsgExc = "";
+      
+      VaURL = "";
+      VaHTTP = "";
+      VaHTML = "";
+      vPostData = "";
+      
+      SQL_RetornarInteiro(CUR_R047PEN,"NumEmp",nNumEmp);
+      SQL_RetornarInteiro(CUR_R047PEN,"CodFil",nCodFil);
+      SQL_RetornarInteiro(CUR_R047PEN,"CodCal",nCodCal);
+      SQL_RetornarInteiro(CUR_R047PEN,"TipCol",nTipCol);
+      SQL_RetornarInteiro(CUR_R047PEN,"NumCad",nNumCad);
+      SQL_RetornarInteiro(CUR_R047PEN,"CodFor",nCodFor);
+      SQL_RetornarInteiro(CUR_R047PEN,"CodBan",nCodBan);
+      SQL_RetornarInteiro(CUR_R047PEN,"CtaFin",nCtaFin);
+      SQL_RetornarData(CUR_R047PEN,"VncTit",dVncTit);
+      SQL_RetornarData(CUR_R047PEN,"DatEmi",dDatEmi);
+      SQL_RetornarFlutuante(CUR_R047PEN,"ValTit",nValTit);
+      SQL_RetornarAlfa(CUR_R047PEN,"CodCcu",sCodCcu);
+      SQL_RetornarAlfa(CUR_R047PEN,"TipTis",sTipTis);
+      SQL_RetornarAlfa(CUR_R047PEN,"CodTrs",sCodTrs);
+      SQL_RetornarAlfa(CUR_R047PEN,"TipTit",sTipTit);
+      
+
+      IntParaAlfa(nCodFor,sCodFor);
+      /*IntParaAlfa(nCodBan,sCodBan);*/
+      IntParaAlfa(nCtaFin,sCtaFin);
+      
+      /*Se ((sTipTit = "C11") ou (sTipTit = "C01"))
+        {
+          Se (nNumEmp <> 12) 
+            {
+              MontaData(04,06,2021,dVncTit);
+            }
+          Senao
+            {
+              dVncTit = dVncTit;
+            }
+        }*/
+        
+      nCodBan = 0;
+      nAgeban = 0;
+      aConBan = "";
+      ncodCon = 0;
+      nFilEmp = nCodFil;
+      CUR_R030FIL.Sql "Select * from R030FIL where NumEmp = :nNumEmp and CodFil = :nCodFil";
+      CUR_R030FIL.AbrirCursor();
+      Se (CUR_R030FIL.Achou)
+        {
+          nCodBan = CUR_R030FIL.USU_BcoSan;
+          nAgeBan = CUR_R030FIL.USU_AgeSan;
+          aConBan = CUR_R030FIL.USU_ConSan;
+          nCodCon = CUR_R030FIL.USU_CodCon;
+        }
+      CUR_R030FIL.FecharCursor();
+      
+      /* De-Para de Empresas com o Sankhya */
+         Se (nNumEmp = 1)
+           {
+             Se ((nFilEmp = 1) ou (nFilEmp = 12) ou (nFilEmp = 13))
+               {
+                 xNumEmp = 1;
+               }
+             Senao
+             Se (nFilEmp = 2)
+               {
+                 xNumEmp = 10;
+               }
+             Senao
+             Se (nFilEmp = 3)
+               {
+                 xNumEmp = 11;
+               }
+             Senao
+             Se (nFilEmp = 4)
+               {
+                 xNumEmp = 12;
+               }
+             Senao
+             Se (nFilEmp = 5)
+               {
+                 xNumEmp = 13;
+               }
+             Senao
+             Se (nFilEmp = 6)
+               {
+                 xNumEmp = 15;
+               }
+             Senao
+             Se (nFilEmp = 8)
+               {
+                 xNumEmp = 17;
+               }
+             Senao
+             Se (nFilEmp = 10)
+               {
+                 xNumEmp = 33;
+               }
+             Senao
+             Se (nFilEmp = 11)
+               {
+                 xNumEmp = 35;
+               }
+           }
+         Senao
+         Se (nNumEmp = 2)
+           {
+             xNumemp = 7;
+           }
+         Senao
+         Se (nNumemp = 12)
+           {
+             xNumEmp = 31;
+           }
+         Senao
+         Se (nNumEmp = 14)
+           {
+             xNumEmp = 34;
+           }
+
+      IntParaAlfa(xNumEmp,sNumEmp); 
+      IntParaAlfa(nCodBan,sCodBan);
+      IntParaAlfa(nAgeBan,sAgeBan);
+      IntParaAlfa(nCodcon,sCodCon);
+      
+      
+      DesmontaData(dDatEmi,nDia,nMes,nAno);
+      ConverteMascara(2,nMes,sMes,"99");
+      ConverteMascara(2,nAno,sAno,"9999"); 
+      sNroNot = sMes + sAno;   
+      
+      dDatEmi = DatSis;
+      dDatEnt = DatSis;
+      ConverteMascara(3,dDatEmi,sDatEmi,"DD/MM/YYYY");
+      ConverteMascara(3,dDatEnt,sDatEnt,"DD/MM/YYYY");
+      ConverteMascara(3,dVncTit,sVncTit,"DD/MM/YYYY");
+      
+      ConverteMascara(2,nValTit,sValTit,"ZZZZZZZZZZZ9,99");
+      TiraEspacos(sValTit,sValTit);
+      TrocaString(sValTit,",",".",sValTit);
+     
+      @- Enviar os dados para o Sankhya -@
+      IntegrarTitulo();
+      
+      @- Verificar o status da requisição -@
+      sStaAut = VaHTML; 
+      VerificarStatus();
+      
+      Se(sStaAut = "1")
+      {
+        nPosIni = 0;
+        nPosFim = 0;
+  
+        PosicaoAlfa("<NUFIN>", VaHTML, nPosIni);
+        PosicaoAlfa("</NUFIN>", VaHTML, nPosFim);
+        CopiarAlfa(VaHTML, nPosIni+7, nPosFim-7-nPosIni);
+        
+        sNroUni = VaHTML;
+        
+        ExecSqlEx("UPDATE R047PEN SET USU_IntTit = 'OK',                    \
+                                      USU_ObsInt = 'Integrado com Sucesso', \
+                                      USU_NroUni = :sNroUni                 \
+                                WHERE NumEmp = :nNumEmp                     \
+                                  AND CodFil = :nCodFil                     \
+                                  AND TipTit = :sTipTit                     \
+                                  AND CodFor = :nCodFor                     \
+                                  AND TipCol = :nTipCol                     \
+                                  AND NumCad = :nNumCad                     \
+                                  AND CodCal = :nCodCal                     \
+                                  AND ValTit = :nValTit",nErro,sMsgErr);
+        @- Rateio -@
+        /*SQL_Criar(CUR_R047PER);
+        SQL_UsarSQLSenior2(CUR_R047PER, 0);  @- 0 - Não usa senior SQL 2, Qualquer valor diferente de 0 utiliza -@
+        SQL_UsarAbrangencia(CUR_R047PER, 0); @- 0 - Não utiliza abrangência de usuário, 1- Utiliza -@
+        SQL_DefinirComando(CUR_R047PER,"SELECT *                                             \
+                                          FROM R047PER                                       \
+                                         WHERE NumEmp = :nNumEmp                             \
+                                           AND CodFil = :nCodFil                             \
+                                           AND CodFor = :nCodFor                             \
+                                           AND CodCif = :nCodCif                             \
+                                           AND CodCal = :nCodCal                             \
+                                           AND TipCol = :nTipCol                             \
+                                           AND NumCad = :nNumCad");
+        SQL_DefinirInteiro(CUR_R047PER,"nNumEmp",nNumEmp);
+        SQL_DefinirInteiro(CUR_R047PER,"nCodFil",nCodFil);
+        SQL_DefinirInteiro(CUR_R047PER,"nCodFor",nCodFor);
+        SQL_DefinirInteiro(CUR_R047PER,"nCodCif",nCodCif);
+        SQL_DefinirInteiro(CUR_R047PER,"nCodCal",nCodCal); 
+        SQL_DefinirInteiro(CUR_R047PER,"nTipCol",nTipCol); 
+        SQL_DefinirInteiro(CUR_R047PER,"nNumCad",nNumCad);   
+        SQL_AbrirCursor(CUR_R047PER);
+        Se(SQL_EOF(CUR_R047PER) = 0)
+        {
+          SQL_RetornarInteiro(CUR_R047PER,"CodPrj",nCodPrj);
+          SQL_RetornarInteiro(CUR_R047PEN,"CodRed",nCodRed);
+          
+          IntParaAlfa(nCodPrj,sCodPrj);
+          IntParaAlfa(nCodRed,sCodRed);
+          
+          sPerRat = "100";
+          
+          IntegrarRateio();
+          
+          @- Verificar o status da requisição -@
+          sStaAut = VaHTML; 
+          VerificarStatus();
+          
+          Se(sStaAut = "0")
+          {
+            nPosIni = 0;
+            nPosFim = 0;
+            nTemErr = 1; @- Indica se houve erro em algum título -@
+                    
+            PosicaoAlfa("<![CDATA[", VaHTML, nPosIni);
+            PosicaoAlfa("]]>", VaHTML, nPosFim);
+            CopiarAlfa(VaHTML, nPosIni+9, nPosFim-10-nPosIni);
+               
+            Base64Decode(VaHTML, sMsgRet);
+             
+            sMsgRet = "Não foi possivel integrar o título, erro ao gerar o rateio. Erro: " + sMsgRet + ".";
+             
+            ExecSqlEx("UPDATE R047PEN SET USU_IntTit = 'ERRO',            \
+                                          USU_ObsInt = :sMsgRet,          \
+                                          USU_NroUni = ' '                \
+                                    WHERE NumEmp = :nNumEmp               \
+                                      AND CodFil = :nCodFil               \
+                                      AND TipTit = :sTipTit               \
+                                      AND CodFor = :nCodFor               \
+                                      AND TipCol = :nTipCol               \
+                                      AND NumCad = :nNumCad               \
+                                      AND CodCal = :nCodCal",nErro,sMsgErr);
+            ExcluirTitulo();
+            
+            @- Verificar o status da requisição -@
+            sStaAut = VaHTML; 
+            VerificarStatus();
+            
+            Se(sStaAut = "0")
+            {
+              nPosIni = 0;
+              nPosFim = 0;
+              nTemErr = 1; @- Indica se houve erro em algum título -@
+                      
+              PosicaoAlfa("<![CDATA[", VaHTML, nPosIni);
+              PosicaoAlfa("]]>", VaHTML, nPosFim);
+              CopiarAlfa(VaHTML, nPosIni+9, nPosFim-10-nPosIni);
+                 
+              Base64Decode(VaHTML, sMsgExc);
+               
+              sMsgExc = sMsgRet + "Erro ao excluir a movimentação financeira Nro. Único: " + sNroUni + " no Sankhya. Erro: " + sMsgExc + ".";
+              sMsgExc = sMsgExc + "Será necessário excluir manualmente antes de integrar esse título novamente.";
+               
+              ExecSqlEx("UPDATE R047PEN SET USU_ObsInt = :sMsgExc           \
+                                      WHERE NumEmp = :nNumEmp               \
+                                        AND CodFil = :nCodFil               \
+                                        AND TipTit = :sTipTit               \
+                                        AND CodFor = :nCodFor               \
+                                        AND TipCol = :nTipCol               \
+                                        AND NumCad = :nNumCad               \
+                                        AND CodCal = :nCodCal",nErro,sMsgErr);  
+            }                            
+          }  
+        }
+        SQL_FecharCursor(CUR_R047PER);
+        SQL_Destruir(CUR_R047PER);*/
+        
+      }Senao
+       {
+         nPosIni = 0;
+         nPosFim = 0;
+         nTemErr = 1; @- Indica se houve erro em algum título -@
+                
+         PosicaoAlfa("<![CDATA[", VaHTML, nPosIni);
+         PosicaoAlfa("]]>", VaHTML, nPosFim);
+         CopiarAlfa(VaHTML, nPosIni+9, nPosFim-10-nPosIni);
+           
+         Base64Decode(VaHTML, sMsgRet);
+         
+         sMsgRet = "Não foi possivel integrar o título. Erro: " + sMsgRet;
+         
+         ExecSqlEx("UPDATE R047PEN SET USU_IntTit = 'ERRO',            \
+                                       USU_ObsInt = :sMsgRet           \
+                                 WHERE NumEmp = :nNumEmp               \
+                                   AND CodFil = :nCodFil               \
+                                   AND TipTit = :sTipTit               \
+                                   AND CodFor = :nCodFor               \
+                                   AND TipCol = :nTipCol               \
+                                   AND NumCad = :nNumCad               \
+                                   AND CodCal = :nCodCal",nErro,sMsgErr); 
+       } 
+      
+      @- Atualizar barra de progresso -@
+      Se(nCont <= nVlrMax)
+      {
+        AtualizaBarraProgresso("Executando integração com o Sankhya.", "Aguarde.", "SIM", 3);
+        
+        nCont = nCont + 1;
+      }
+      
+      SQL_Proximo(CUR_R047PEN);
+    }
+    
+    Se(nTemReg <> 1)@- Cursor não encontrou títulos para integrar no Sankhya -@
+    {
+      nTemErr = 3;
+      Mensagem(Retorna,"Não foram encontrados títulos para integrar com o Sankhya. Verifique se os títulos já foram integrados anteriormente.");
+    }
+    
+    SQL_FecharCursor(CUR_R047PEN);
+    SQL_Destruir(CUR_R047PEN);
+  }Senao
+     Se(sTipAgr = "T") @- CIF com o tipo de agrupamento TOTALIZA AGRUPANDO -@
+     {
+       nCont = 0;
+      
+       VaURL = "";
+       VaHTTP = "";
+       VaHTML = "";
+       vPostData = "";
+      
+       SQL_Criar(CUR_R047PEN);
+       SQL_UsarSQLSenior2(CUR_R047PEN, 0);  @- 0 - Não usa senior SQL 2, Qualquer valor diferente de 0 utiliza -@
+       SQL_UsarAbrangencia(CUR_R047PEN, 0); @- 0 - Não utiliza abrangência de usuário, 1- Utiliza -@
+       SQL_DefinirComando(CUR_R047PEN,"SELECT NumEmp, CodFil, CodTrs, CodFor, DatEmi,                \
+                                          	  VncTit, CodBan, TipTis, CtaFin,                \
+                                          	  CodCif, CodCal, TipTit, CodCcu,               \
+                                              SUM(ValTit) ValTit                             \
+                                         FROM R047PEN                                        \
+                                        WHERE NumEmp = :nNumEmp                              \
+                                          AND CodCif = :nCodCif                              \
+                                          AND VncTit >= :dVncIni                             \
+                                          AND VncTit <= :dVncFin                             \ 
+                                          AND ((USU_IntTit <> 'OK') OR (USU_IntTit IS NULL)) \
+                                     GROUP BY NumEmp, CodFil, CodTrs, CodFor, DatEmi,        \
+                                              VncTit, CodBan, TipTis, CtaFin,                \
+                                              CodCif, CodCal, TipTit                         \                                           
+                                     ORDER BY NumEmp, CodFil, CodCif, CodCal");
+
+/*       SQL_DefinirComando(CUR_R047PEN,"SELECT NumEmp, CodFil, CodTrs, CodFor, DatEmi,                \
+                                          	  VncTit, CodBan, TipTis, CtaFin,                \
+                                          	  CodCcu, CodCif, CodCal, TipTit,                \
+                                              SUM(ValTit) ValTit                             \
+                                         FROM R047PEN                                        \
+                                        WHERE NumEmp = :nNumEmp                              \
+                                          AND CodCif = :nCodCif                              \
+                                          AND VncTit >= :dVncIni                             \
+                                          AND VncTit <= :dVncFin                             \ 
+                                          AND ((USU_IntTit <> 'OK') OR (USU_IntTit IS NULL)) \
+                                     GROUP BY NumEmp, CodFil, CodTrs, CodFor, DatEmi,                \
+                                              VncTit, CodBan, TipTis, CtaFin,                \
+                                              CodCcu, CodCif, CodCal, TipTit                 \                                           
+                                     ORDER BY NumEmp, CodFil, CodCif, CodCal"); */
+
+       /*SQL_DefinirComando(CUR_R047PEN,"SELECT NumEmp, CodTrs, CodFor, DatEmi, \
+                                              VncTit, CodBan, TipTis, CtaFin, \
+                                              CodCcu, CodCif, CodCal, TipTit, \
+                                              SUM(ValTit) ValTit                             \
+                                         FROM R047PEN                                        \
+                                        WHERE NumEmp = :nNumEmp                              \
+                                          AND CodCif = :nCodCif                              \
+                                          AND VncTit >= :dVncIni                             \
+                                          AND VncTit <= :dVncFin                             \ 
+                                          AND ((USU_IntTit <> 'OK') OR (USU_IntTit IS NULL)) \
+                                     GROUP BY NumEmp                                          \
+                                     ORDER BY NumEmp");*/
+      
+      
+       SQL_DefinirInteiro(CUR_R047PEN,"nNumEmp",nNumEmp);
+       SQL_DefinirInteiro(CUR_R047PEN,"nCodCif",nCodCif);
+       SQL_DefinirData(CUR_R047PEN,"dVncIni",dVncIni);
+       SQL_DefinirData(CUR_R047PEN,"dVncFin",dVncFin);  
+       SQL_AbrirCursor(CUR_R047PEN);
+       Enquanto(SQL_EOF(CUR_R047PEN) = 0)
+       {
+         nDia = 0;
+         nMes = 0;
+         nAno = 0;
+         nNumEmp = 0;
+         xNumEmp = 0;
+         nCodFil = 0;
+         nCodFor = 0;
+         nValTit = 0;
+         nCodBan = 0;
+         nCtaFin = 0;
+         dDatEmi = 0;
+         dDatEnt = 0;
+         dVncTit = 0;
+         nCodCal = 0;
+         nTemReg = 1;
+         sMes = "";
+         sAno = "";
+         sNroNot = "";
+         sNumEmp = "";
+         sCodFor = "";
+         sDatEmi = "";
+         sDatEnt = "";
+         sValTit = "";
+         sVncTit = "";
+         sCodBan = "";
+         sCtaFin = "";
+         sCodTrs = "";
+         STipTis = "";
+         sCodCcu = "";
+         sMsgRet = "";
+         sCookie = "";
+         sStaAut = "";
+         sMsgErr = "";
+         sTipTit = "";
+         sNroUni = "";
+        
+         VaURL = "";
+         VaHTTP = "";
+         VaHTML = "";
+         vPostData = "";
+        
+         SQL_RetornarInteiro(CUR_R047PEN,"NumEmp",nNumEmp);
+         SQL_RetornarInteiro(CUR_R047PEN,"CodFil",nCodFil);
+         SQL_RetornarInteiro(CUR_R047PEN,"CodFor",nCodFor);
+         SQL_RetornarInteiro(CUR_R047PEN,"CodBan",nCodBan);
+         SQL_RetornarInteiro(CUR_R047PEN,"CtaFin",nCtaFin);
+         SQL_RetornarInteiro(CUR_R047PEN,"CodCal",nCodCal);
+         SQL_RetornarFlutuante(CUR_R047PEN,"ValTit",nValTit);
+         SQL_RetornarData(CUR_R047PEN,"DatEmi",dDatEmi);
+         SQL_RetornarData(CUR_R047PEN,"VncTit",dVncTit);
+         SQL_RetornarAlfa(CUR_R047PEN,"CodTrs",sCodTrs);
+         SQL_RetornarAlfa(CUR_R047PEN,"TipTis",sTipTis);
+         SQL_RetornarAlfa(CUR_R047PEN,"CodCcu",sCodCcu);
+         SQL_RetornarAlfa(CUR_R047PEN,"TipTit",sTipTit);
+         
+         nFilEmp = nCodFil;
+         
+      /* De-Para de Empresas com o Sankhya */
+         Se (nNumEmp = 1)
+           {
+             Se ((nFilEmp = 1) ou (nFilEmp = 12) ou (nFilEmp = 13))
+               {
+                 xNumEmp = 1;
+               }
+             Senao
+             Se (nFilEmp = 2)
+               {
+                 xNumEmp = 10;
+               }
+             Senao
+             Se (nFilEmp = 3)
+               {
+                 xNumEmp = 11;
+               }
+             Senao
+             Se (nFilEmp = 4)
+               {
+                 xNumEmp = 12;
+               }
+             Senao
+             Se (nFilEmp = 5)
+               {
+                 xNumEmp = 13;
+               }
+             Senao
+             Se (nFilEmp = 6)
+               {
+                 xNumEmp = 15;
+               }
+             Senao
+             Se (nFilEmp = 8)
+               {
+                 xNumEmp = 17;
+               }
+             Senao
+             Se (nFilEmp = 10)
+               {
+                 xNumEmp = 33;
+               }
+             Senao
+             Se (nFilEmp = 11)
+               {
+                 xNumEmp = 35;
+               }
+           }
+         Senao
+         Se (nNumEmp = 2)
+           {
+             xNumemp = 7;
+           }
+         Senao
+         Se (nNumemp = 12)
+           {
+             xNumEmp = 31;
+           }
+         Senao
+         Se (nNumEmp = 14)
+           {
+             xNumEmp = 34;
+           }
+         
+         IntParaAlfa(xNumEmp,sNumEmp);
+         IntParaAlfa(nCodFor,sCodFor);
+         IntParaAlfa(nCodBan,sCodBan);
+         IntParaAlfa(nCtaFin,sCtaFin);
+        
+         DesmontaData(dDatEmi,nDia,nMes,nAno);
+         ConverteMascara(1,nMes,sMes,"99");
+         ConverteMascara(1,nAno,sAno,"9999"); 
+         sNroNot = sMes + sAno;   
+        
+         dDatEmi = DatSis;
+         dDatEnt = DatSis;
+         ConverteMascara(3,dDatEmi,sDatEmi,"DD/MM/YYYY");
+         ConverteMascara(3,dDatEnt,sDatEnt,"DD/MM/YYYY");
+         ConverteMascara(3,dVncTit,sVncTit,"DD/MM/YYYY");
+        
+         ConverteMascara(2,nValTit,sValTit,"ZZZZZZZZZZZ9,99");
+         TiraEspacos(sValTit,sValTit);
+         TrocaString(sValTit,",",".",sValTit);
+       
+         @- Enviar os dados para o Sankhya -@
+         IntegrarTitulo();
+         
+         SQL_RetornarData(CUR_R047PEN,"DatEmi",dDatEmi); @- Será usado o DATEMI da tabela R047PEN para fazer o UPDATE de retorno -@
+        
+         @- Verificar o status da requisição -@
+         sStaAut = VaHTML; 
+         VerificarStatus();
+        
+         Se(sStaAut = "1")
+         { 
+           nPosIni = 0;
+           nPosFim = 0;
+    
+           PosicaoAlfa("<NUFIN>", VaHTML, nPosIni);
+           PosicaoAlfa("</NUFIN>", VaHTML, nPosFim);
+           CopiarAlfa(VaHTML, nPosIni+7, nPosFim-7-nPosIni);
+          
+           sNroUni = VaHTML;
+          
+           ExecSqlEx("UPDATE R047PEN SET USU_IntTit = 'OK',                    \
+                                         USU_ObsInt = 'Integrado com Sucesso', \
+                                         USU_NroUni = :sNroUni                 \
+                                   WHERE NumEmp = :nNumEmp                     \
+                                     AND CodFil = :nCodFil \
+                                     AND CodTrs = :sCodTrs                     \
+                                     AND CodFor = :nCodFor                     \
+                                     AND DatEmi = :dDatEmi                     \
+                                     AND VncTit = :dVncTit                     \
+                                     AND CodBan = :nCodBan                     \
+                                     AND TipTis = :sTipTis                     \
+                                     AND CtaFin = :nCtaFin                     \
+                                     AND CodCcu = :sCodCcu                     \
+                                     AND CodCif = :nCodCif                     \
+                                     AND CodCal = :nCodCal                     \
+                                     AND TipTit = :sTipTit",nErro,sMsgErr);
+         }Senao
+          {
+            nPosIni = 0;
+            nPosFim = 0;
+            nTemErr = 1; @- Indica se houve erro em algum título -@
+                  
+            PosicaoAlfa("<![CDATA[", VaHTML, nPosIni);
+            PosicaoAlfa("]]>", VaHTML, nPosFim);
+            CopiarAlfa(VaHTML, nPosIni+9, nPosFim-10-nPosIni);
+             
+            Base64Decode(VaHTML, sMsgRet);
+           
+            sMsgRet = "Não foi possivel integrar as informações. Erro: " + sMsgRet;
+           
+            ExecSqlEx("UPDATE R047PEN SET USU_IntTit = 'ERRO',                 \
+                                          USU_ObsInt = :sMsgRet                \
+                                    WHERE NumEmp = :nNumEmp                    \
+                                      and CodFil = :nCodFil \
+                                      AND CodTrs = :sCodTrs                    \
+                                      AND CodFor = :nCodFor                    \
+                                      AND DatEmi = :dDatEmi                    \
+                                      AND VncTit = :dVncTit                    \
+                                      AND CodBan = :nCodBan                    \
+                                      AND TipTis = :sTipTis                    \
+                                      AND CtaFin = :nCtaFin                    \
+                                      AND CodCcu = :sCodCcu                    \
+                                      AND CodCif = :nCodCif                    \
+                                      AND CodCal = :nCodCal                    \
+                                      AND TipTit = :sTipTit",nErro,sMsgErr); 
+          } 
+        
+         @- Atualizar barra de progresso -@
+         Se(nCont <= nVlrMax)
+         {
+           AtualizaBarraProgresso("Executando integração com o Sankhya.", "Aguarde.", "SIM", 3);
+          
+           nCont = nCont + 1;
+         }
+        
+         SQL_Proximo(CUR_R047PEN);
+       }
+      
+       Se(nTemReg <> 1)@- Cursor não encontrou títulos para integrar no Sankhya -@
+       {
+         nTemErr = 3;
+         Mensagem(Retorna,"Não foram encontrados títulos para integrar com o Sankhya. Verifique se os títulos já foram integrados anteriormente.");
+       }
+      
+       SQL_FecharCursor(CUR_R047PEN);
+       SQL_Destruir(CUR_R047PEN);
+     }
+   
+   @- Fazer Logout ao final do processo -@
+   Logout();
+   
+   FinalizaBarraProgresso();
+   
+   Se(nTemErr = 0)
+   {
+     Mensagem(Retorna,"Integração realizada com sucesso.");
+   }Senao
+     Se(nTemErr = 1)
+     {
+       Mensagem(Retorna,"Integração finalizada com alguns erros. Verifique o relatório de logs de erros para mais informações.");
+     }Senao
+      {
+        Mensagem(Retorna,"Integração com o Sankhya foi cancelado.");
+      }
+      
+   AtualizarTabela("USU_V047PEN");   
+}Senao
+ {
+   nPosIni = 0;
+   nPosFim = 0;
+        
+   PosicaoAlfa("<![CDATA[", VaHTML, nPosIni);
+   PosicaoAlfa("]]>", VaHTML, nPosFim);
+   CopiarAlfa(VaHTML, nPosIni+9, nPosFim-10-nPosIni);
+   
+   Base64Decode(VaHTML, sMsgRet);
+   
+   sMsgRet = "Não foi possivel realizar autenticação com o sistema Sankhya. Erro: " + sMsgRet; 
+   
+   Mensagem(Erro,sMsgRet); 
+ }   
+
+
+@------------------------------------------------------------------------------@
+@- Funções                                                                    -@
+@------------------------------------------------------------------------------@
+Funcao AutenticarLogin();
+{
+  @- Serviço de Autenticação -@
+  /*VaURL = "http://186.250.186.149:8180/mge/service.sbr?serviceName=MobileLoginSP.login";*/ @ Base de Testes @
+  VaURL = "http://186.250.186.149:8080/mge/service.sbr?serviceName=MobileLoginSP.login"; @ Base de Produção @
+  
+  @- Dados -@  
+  /*vPostData = "<serviceRequest serviceName=\"MobileLoginSP.login\">";
+  vPostData = vPostData + "<requestBody>";
+  vPostData = vPostData + "<NOMUSU>SUP</NOMUSU>";
+  vPostData = vPostData + "<INTERNO>UN1@VAN</INTERNO>";
+  vPostData = vPostData + "</requestBody>";
+  vPostData = vPostData + "</serviceRequest>";*/
+
+  vPostData = "<serviceRequest serviceName=\"MobileLoginSP.login\">";
+  vPostData = vPostData + "<requestBody>";
+  vPostData = vPostData + "<NOMUSU>senior</NOMUSU>";
+  vPostData = vPostData + "<INTERNO>#S3n10r-2021@</INTERNO>";
+  vPostData = vPostData + "</requestBody>";
+  vPostData = vPostData + "</serviceRequest>";
+
+    
+  @- Executar a chamada -@
+  HttpObjeto(VaHTTP);
+  HttpAlteraCabecalhoRequisicao(VaHTTP, "Content-Type", "text/xml;charset=ISO-8859-1");
+  HttpPost(VaHTTP, VaURL, vPostData, VaHTML);  
+}
+
+Funcao VerificarStatus();
+{
+  nPosIni = 0;
+  
+  PosicaoAlfa("status", sStaAut, nPosIni);
+  CopiarAlfa(sStaAut, nPosIni+8, 1);  
+}  
+
+Funcao IntegrarTitulo();
+{
+  @- Serviço de Inclusão de dados -@
+  /*VaURL = "http://186.250.186.149:8180/mge/service.sbr?serviceName=CRUDServiceProvider.saveRecord";*/ @ Base de Testes @
+  VaURL = "http://186.250.186.149:8080/mge/service.sbr?serviceName=CRUDServiceProvider.saveRecord"; @ Base de Produção @
+  
+  @- Dados -@  
+  vPostData = "<serviceRequest serviceName=\"CRUDServiceProvider.saveRecord\">";
+    vPostData = vPostData + "<requestBody>";
+      vPostData = vPostData + "<dataSet rootEntity=\"Financeiro\">";
+        vPostData = vPostData + "<entity>";
+          vPostData = vPostData + "<fieldset/>";
+          vPostData = vPostData + "<field/>";
+        vPostData = vPostData + "</entity>";
+        vPostData = vPostData + "<dataRow>";
+          vPostData = vPostData + "<localFields>";
+             vPostData = vPostData + "<ORIGEM><![CDATA[P]]></ORIGEM>"; @ Receita/Despesa @
+             vPostData = vPostData + "<CODEMP><![CDATA[" + sNumEmp + "]]></CODEMP>"; @ Empresa @
+             vPostData = vPostData + "<RECDESP><![CDATA[-1]]></RECDESP>"; @ Receita/Despesa @
+             vPostData = vPostData + "<CODTIPOPER><![CDATA[" + sCodTrs + "]]></CODTIPOPER>"; @ Tipo Operação @
+             vPostData = vPostData + "<CODPARC><![CDATA[" + sCodFor + "]]></CODPARC>"; @ Parceiro @
+             vPostData = vPostData + "<NUMNOTA><![CDATA[" + sNroNot + "]]></NUMNOTA>"; @ Nro. Nota @
+             vPostData = vPostData + "<DTNEG><![CDATA[" + sDatEmi + "]]></DTNEG>"; @ Dt. Negociação(Emissão) @
+             vPostData = vPostData + "<DTENTSAI><![CDATA["+ sDatEnt +"]]></DTENTSAI>"; @ Dt. Entrada e Saída @
+             vPostData = vPostData + "<VLRDESDOB><![CDATA["+ sValTit +"]]></VLRDESDOB>"; @ Vlr do Desdobramento @
+             vPostData = vPostData + "<DTVENC><![CDATA["+ sVncTit +"]]></DTVENC>"; @ Dt. Vencimento @
+             vPostData = vPostData + "<CODBCO><![CDATA["+ sCodBan +"]]></CODBCO>"; @ Banco @
+             vPostData = vPostData + "<CODCTABCOINT><![CDATA["+ sCodCon +"]]></CODCTABCOINT>"; @ Código da Conta no Sankhya @
+             vPostData = vPostData + "<CODTIPTIT><![CDATA["+ sTipTis +"]]></CODTIPTIT>"; @ Tipo de Título @
+             vPostData = vPostData + "<CODNAT><![CDATA["+ sCtaFin +"]]></CODNAT>"; @ Natureza @
+             vPostData = vPostData + "<CODCENCUS><![CDATA["+ sCodCcu +"]]></CODCENCUS>"; @ Centro Resultado @
+          vPostData = vPostData + "</localFields>";
+        vPostData = vPostData + "</dataRow>";
+      vPostData = vPostData + "</dataSet>";
+    vPostData = vPostData + "</requestBody>";
+  vPostData = vPostData + "</serviceRequest>";
+    
+  @- Executar a chamada -@
+  sCookie = "JSESSIONID="+ sToken;
+  
+  HttpObjeto(VaHTTP);
+  HttpAlteraCabecalhoRequisicao(VaHTTP, "Content-Type", "text/xml;charset=ISO-8859-1");
+  HttpAlteraCabecalhoRequisicao(VaHTTP, "Cookie", sCookie);
+  HttpPost(VaHTTP, VaURL, vPostData, VaHTML);
+}
+
+Funcao IntegrarRateio();
+{
+  @- Serviço de Inclusão de dados -@
+  /*VaURL = "http://186.250.186.149:8180/mge/service.sbr?serviceName=CRUDServiceProvider.saveRecord";*/ @ Base de Testes @
+  VaURL = "http://186.250.186.149:8080/mge/service.sbr?serviceName=CRUDServiceProvider.saveRecord"; @ Base de Produção @
+  
+  @- Dados -@  
+  vPostData = "<serviceRequest serviceName=\"CRUDServiceProvider.saveRecord\">";
+    vPostData = vPostData + "<requestBody>";
+      vPostData = vPostData + "<dataSet rootEntity=\"RateioRecDesp\">";
+        vPostData = vPostData + "<entity>";
+          vPostData = vPostData + "<fieldset/>";
+          vPostData = vPostData + "<field/>";
+        vPostData = vPostData + "</entity>";
+        vPostData = vPostData + "<dataRow>";
+          vPostData = vPostData + "<localFields>";
+             vPostData = vPostData + "<PERCRATEIO><![CDATA[" + sPerRat + "]]></PERCRATEIO>"; @ % Rateio @
+             vPostData = vPostData + "<CODCENCUS><![CDATA[" + sCodCcu + "]]></CODCENCUS>"; @ Centro Resultado @
+             vPostData = vPostData + "<CODNAT><![CDATA[" + sCtaFin + "]]></CODNAT>"; @ Cód. Natureza @
+             vPostData = vPostData + "<CODPROJ><![CDATA[" + sCodPrj + "]]></CODPROJ>"; @ Projeto @
+             vPostData = vPostData + "<CODCTACTB><![CDATA[" + sCodRed + "]]></CODCTACTB>"; @ Conta Contábil @
+             vPostData = vPostData + "<CODPARC><![CDATA[" + sCodFor + "]]></CODPARC>"; @ Cód. Parceiro @
+          vPostData = vPostData + "</localFields>";
+        vPostData = vPostData + "</dataRow>";
+      vPostData = vPostData + "</dataSet>";
+    vPostData = vPostData + "</requestBody>";
+  vPostData = vPostData + "</serviceRequest>";
+    
+  @- Executar a chamada -@
+  sCookie = "JSESSIONID="+ sToken;
+  
+  HttpObjeto(VaHTTP);
+  HttpAlteraCabecalhoRequisicao(VaHTTP, "Content-Type", "text/xml;charset=ISO-8859-1");
+  HttpAlteraCabecalhoRequisicao(VaHTTP, "Cookie", sCookie);
+  HttpPost(VaHTTP, VaURL, vPostData, VaHTML);
+}
+
+Funcao ExcluirTitulo();
+{
+  @- Serviço de Inclusão de dados -@
+  /*VaURL = "http://186.250.186.149:8180/mge/service.sbr?serviceName=CRUDServiceProvider.removeRecord";*/ @ Base de Testes @
+  VaURL = "http://186.250.186.149:8080/mge/service.sbr?serviceName=CRUDServiceProvider.removeRecord";     @ Base de Produção @
+  
+  @- Dados -@  
+  vPostData = "<serviceRequest serviceName=\"CRUDServiceProvider.removeRecord\">";
+    vPostData = vPostData + "<requestBody>";
+      vPostData = vPostData + "<entity rootEntity=\"Financeiro\">";
+        vPostData = vPostData + "<id>";
+          vPostData = vPostData + "<NUFIN>" + sNroUni + "</NUFIN>";  
+        vPostData = vPostData + "</id>";  
+      vPostData = vPostData + "</entity>";
+    vPostData = vPostData + "</requestBody>";
+  vPostData = vPostData + "</serviceRequest>";
+    
+  @- Executar a chamada -@
+  sCookie = "JSESSIONID="+ sToken;
+  
+  HttpObjeto(VaHTTP);
+  HttpAlteraCabecalhoRequisicao(VaHTTP, "Content-Type", "text/xml;charset=ISO-8859-1");
+  HttpAlteraCabecalhoRequisicao(VaHTTP, "Cookie", sCookie);
+  HttpPost(VaHTTP, VaURL, vPostData, VaHTML);
+}
+
+Funcao Logout();
+{
+  @- Serviço de Autenticação -@
+  /*VaURL = "http://186.250.186.149:8180/mge/service.sbr?serviceName=MobileLoginSP.logout";*/ @ Base de Testes @
+  VaURL = "http://186.250.186.149:8080/mge/service.sbr?serviceName=MobileLoginSP.logout"; @ Base de Produção @
+  
+  @- Dados -@  
+  vPostData = "<serviceRequest serviceName=\"MobileLoginSP.logout\">";
+  vPostData = vPostData + "<requestBody>";
+  vPostData = vPostData + "</requestBody>";
+  vPostData = vPostData + "</serviceRequest>";
+    
+  @- Executar a chamada -@
+  HttpObjeto(VaHTTP);
+  HttpAlteraCabecalhoRequisicao(VaHTTP, "Content-Type", "text/xml;charset=ISO-8859-1");
+  HttpPost(VaHTTP, VaURL, vPostData, VaHTML);  
+}
+--------------------------------------------------------------------------------
+Código: 4 - Descrição: Ação R047PEN.ValidarVncIni
+--------------------------------------------------------------------------------
+
+@ Validar campo de entrada @
+Se(dVncIni = 0) 
+{
+  Mensagem(Erro,"Necessário informar uma data válida.");
+}         
+--------------------------------------------------------------------------------
+Código: 5 - Descrição: Ação R047PEN.ValidarVncFin
+--------------------------------------------------------------------------------
+
+@ Validar campo de entrada @
+Se(dVncFin = 0)
+{
+ Mensagem(Erro,"Necessário informar uma data válida.");
+}Senao 
+  Se(dVncIni > dVncFin)
+  {
+    Mensagem(Erro,"Data final informada é menor que a data inicial.");
+  } 
+--------------------------------------------------------------------------------
+Código: 6 - Descrição: Ação R047PEN.RelatorioLog
+--------------------------------------------------------------------------------
+
+SetaNumeroTelaEntrada("EAbrEmp", R047PEN_NumEmp);
+SetaNumeroTelaEntrada("EAbrCif", R047PEN_CodCif);
+SetaDataTelaEntrada("EVncIni", dVncIni);
+SetaDataTelaEntrada("EVncFin", dVncFin);
+ExecutaRelatorio("FPGR102.INT", "N");
+--------------------------------------------------------------------------------
+Código: 7 - Descrição: Tabela USU_V047PEN
+--------------------------------------------------------------------------------

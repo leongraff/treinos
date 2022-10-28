@@ -1,0 +1,694 @@
+@==============================================================================@
+@=== Regra de apuração converte as situações de H.E conforme tabela abaixo: ===@
+@=== Até 25 H.E 55% (500 diurna e 501 Noturna)                              ===@
+@=== de 25:01 a 45 60% (502 diurna e 503 Noturna)                           ===@
+@=== de 45:01 acima 100% (603 diurna e 604 Noturna)                         ===@
+@==============================================================================@
+@=== Duas condições para a regra funcionar adequadamente:                   ===@
+@=== 1- A situação de H.E em dia "normal" (exceções de DSRs e Feriados) deve ===@
+@===    ser a situação 500 e 501 H.E 55%                                    ===@
+@=== 2- Caso seja feito qualquer ajuste do ponto, que influencie as H.E,    ===@
+@===    todos os dias posteriores devem ser reapurados                      ===@
+@==============================================================================@
+
+Definir Funcao BancoCovid(numero fNumEmp, numero fTipCol, numero fNumCad, numero end fResult);
+Definir Funcao BancoMarcenaria(numero fNumEmpMar, numero fTipColMar, numero fNumCadMar, numero end fResultMar);
+Definir Funcao TrataHomeOffice();
+
+Definir Numero xNumEmp;
+Definir Numero xTipCol;
+Definir Numero xNumCad;
+Definir Numero xQtdHor;
+
+Definir Data xDatAnt;
+Definir Data xIniApu;
+
+Definir Cursor Cur_R066SIT;
+Definir Cursor Cur_R034FUN;
+
+Definir Alfa   vBanHor;
+
+Definir Data xTrocaLimites2022;
+MontaData (21, 04, 2022, xTrocaLimites2022);
+Se (IniApu < xTrocaLimites2022)
+  x25Horas = 1500;
+Senao
+Se (IniApu >= xTrocaLimites2022)
+  x25Horas = 1800;
+
+x45Horas = 2700;
+
+
+xNumEmp = R034FUN.NumEmp;
+xTipCol = R034FUN.TipCol;
+xNumCad = R034FUN.NumCad;
+vBanHor="";
+Cur_R034FUN.SQL "SELECT R034FUN.USU_BANHOR \
+                   FROM R034FUN \
+                  WHERE R034FUN.NUMEMP = :XNUMEMP AND \
+                        R034FUN.TIPCOL = :XTIPCOL AND \
+                        R034FUN.NUMCAD = :XNUMCAD";
+Cur_R034FUN.AbrirCursor();
+Se (Cur_R034FUN.Achou)
+  Inicio
+    vBanHor=Cur_R034FUN.USU_BanHor;
+  Fim
+Cur_R034FUN.FecharCursor();
+
+             
+@ ---------------------------------------------------------------------------- @
+@ -- Banco de horas COVID-19 -- @
+@ -- Verifica na USU_TBanCov se o colaborador já compensou -- @
+@ -- as horas negativas e teve integração -- @
+Definir Alfa aCur_USU_TBanCov;
+Definir Alfa aCur_R064CMP;
+Definir Alfa aComCov;
+Definir Data dDatZer;
+
+MontaData(31, 12, 1900, dDatZer);
+xTemCompesacao = 0;
+
+Sql_Criar(aCur_R064CMP);
+
+Sql_DefinirComando(aCur_R064CMP, " SELECT * FROM R064CMP \
+                                    WHERE NUMEMP = :XNUMEMP \
+                                      AND TIPCOL = :XTIPCOL \
+                                      AND NUMCAD = :XNUMCAD \
+                                      AND DATINI <= :DDATPRO \
+                                      AND ((DATFIM >= :DDATPRO) OR (DATFIM = :DDATZER)) \
+                                      AND CODSIT in (917,918) ");
+                              
+Sql_DefinirInteiro(aCur_R064CMP, "xNumEmp", xNumEmp);
+Sql_DefinirInteiro(aCur_R064CMP, "xTipCol", xTipCol);
+Sql_DefinirInteiro(aCur_R064CMP, "xNumCad", xNumCad);
+Sql_DefinirData(aCur_R064CMP, "dDatPro", DatPro);
+Sql_DefinirData(aCur_R064CMP, "dDatZer", dDatZer);
+                              
+Sql_AbrirCursor(aCur_R064CMP);
+Se(Sql_EOF(aCur_R064CMP) = 0)
+Inicio
+  xTemCompesacao = 1;  
+Fim;
+Sql_FecharCursor(aCur_R064CMP);
+Sql_Destruir(aCur_R064CMP);
+
+aComCov = "";
+
+
+@====================  BH COVID  ============================@
+BancoCovid(xNumEmp, xTipCol, xNumCad, xBan100);
+
+BancoMarcenaria(xNumEmp, xTipCol, xNumCad, xBanMar);
+
+Se((xTemCompesacao = 0) e (xBan100 <> 1) e (xBanMar <> 1))
+Inicio
+    Sql_Criar(aCur_USU_TBanCov);
+    
+    Sql_DefinirComando(aCur_USU_TBanCov, " SELECT * FROM USU_TBANCOV \
+                                          WHERE USU_NUMEMP = :XNUMEMP \
+                                            AND USU_TIPCOL = :XTIPCOL \
+                                            AND USU_NUMCAD = :XNUMCAD \
+                                            AND USU_COMCOV = 'S' \
+                                            AND USU_DATCOM <= :INIAPU ");
+                                            
+    Sql_DefinirInteiro(aCur_USU_TBanCov, "xNumEmp", xNumEmp);
+    Sql_DefinirInteiro(aCur_USU_TBanCov, "xTipCol", xTipCol);
+    Sql_DefinirInteiro(aCur_USU_TBanCov, "xNumCad", xNumCad);
+    Sql_DefinirData(aCur_USU_TBanCov, "IniApu", IniApu);
+    
+    Sql_AbrirCursor(aCur_USU_TBanCov);
+    Se(Sql_EOF(aCur_USU_TBanCov) = 0)
+    Inicio
+      Sql_RetornarAlfa(aCur_USU_TBanCov, "USU_ComCov",aComCov);
+                 
+      @ -- Extras -- @
+      HorSit[704] = HorSit[704] + HorSit[917] + HorSit[907];              
+      HorSit[917] = 0;
+      HorSit[907] = 0;
+      
+      se(horsit[51] >0)
+      Inicio
+          HorSit[705] = HorSit[705] + HorSit[704];
+          HorSit[704] = 0;
+      fim;
+      
+      @ -- Faltas -- @
+      HorSit[150] = HorSit[150] + HorSit[918];
+      
+    Fim;
+    Sql_FecharCursor(aCur_USU_TBanCov);
+    Sql_Destruir(aCur_USU_TBanCov);    
+Fim;
+
+@ ---------------------------------------------------------------------------- @ 
+Definir Data dDatCort;
+MontaData(01, 05, 2020, dDatCort);
+Se((R034FUN.DatAdm > dDatCort) e (xTemCompesacao = 0) e (xBan100 <> 1) e (xBanMar <> 1))
+Inicio
+  @ -- Extras -- @
+  HorSit[704] = HorSit[704] + HorSit[917] + HorSit[907];
+  HorSit[917] = 0;
+  HorSit[907] = 0;
+  
+  se(horsit[51] >0)
+      Inicio
+          HorSit[705] = HorSit[705] + HorSit[704];
+          HorSit[704] = 0;
+      fim;
+  
+  @ -- Faltas -- @
+  HorSit[150] = HorSit[150] + HorSit[918];
+Fim;
+
+/*
+Autor: Gregório Blumer Bettoni
+Finalidade: Se for  o primeiro dia do calculo, zera todas as situações via exec sql no período de competência;
+*/
+Definir Data vDatPro;
+Definir Data vIniApu;
+Definir Data vFimApu;
+Definir Alfa vDiaSemana;
+Definir Data EDatUti;
+Definir Numero vIndFer;
+Definir Cursor Cur_R064PON;
+Definir Data   vDatPon;
+vDiaSemana="";
+vIndFer=0; 
+EDatUti=0;
+vDatPon=0;
+vIniApu=IniApu;
+vFimApu=FimApu;
+vDatPro=DatPro;
+RetornaDiaSemana(DatPro, vDiaSemana);
+ConverteParaMaiusculo(vDiaSemana,vDiaSemana);
+TiraAcentos(vDiaSemana,vDiaSemana);
+TiraEspacos(vDiaSemana,vDiaSemana);
+VerificaDiaUtil(DatPro,1,"P",EDatUti);
+vIndFer=VerDatFer(xNumEmp,xTipCol,xNumCad,DatPro);
+Se (vIndFer=1)
+  Inicio
+    Cur_R064PON.SQL "Select * From R064PON \
+                     Where R064PON.NumEmp=:xNumEmp and \
+                           R064PON.TipCol=:xTipCol and \
+                           R064PON.NumCad=:xNumCad and \
+                           R064PON.DiaHo1=:vDatPro"
+    Cur_R064PON.AbrirCursor();
+    Se (Cur_R064PON.Achou)
+      Inicio
+        vDatPon=Cur_R064PON.DiaHo2;
+        Se (vDatPon<>DatPro)
+          Inicio
+            vIndFer=0;
+          Fim
+      Fim
+    Cur_R064PON.FecharCursor();
+  Fim
+Se (vIndFer=0)
+  Inicio
+    Cur_R064PON.SQL "Select * From R064PON \
+                     Where R064PON.NumEmp=:xNumEmp and \
+                           R064PON.TipCol=:xTipCol and \
+                           R064PON.NumCad=:xNumCad and \
+                           R064PON.DiaHo2=:vDatPro";
+    Cur_R064PON.AbrirCursor();
+    Se (Cur_R064PON.Achou)
+      Inicio
+        vIndFer=1;
+      Fim
+    Cur_R064PON.FecharCursor();
+  Fim
+
+xDatAnt = DatPro - 1;
+xIniApu = IniApu;
+xQtdHor = 0;
+
+Se (vBanHor<>"D")
+  Inicio
+    @=== Busca soma das situações de H.E ===@
+    Cur_R066SIT.SQL "SELECT R066SIT.QtdHor                                         \
+                       FROM R066SIT                                                \
+                      WHERE 1 = 2                                                  \
+                      UNION                                                        \
+                     SELECT SUM(R066SIT.QtdHor)                                    \
+                       FROM R066SIT                                                \
+                      WHERE R066SIT.NumEmp = :xNumEmp                              \
+                        AND R066SIT.TipCol = :xTipCol                              \
+                        AND R066SIT.NumCad = :xNumCad                              \
+                        AND R066SIT.DatApu >= :xIniApu                             \
+                        AND R066SIT.DatApu <= :xDatAnt                             \
+                        AND R066SIT.CodSit IN (500,501,502,503,603,604,704,705,702,703)";
+                        
+    Cur_R066SIT.AbrirCursor();
+    Se(Cur_R066SIT.Achou){
+      xQtdHor = Cur_R066SIT.QtdHor;
+    }
+    Cur_R066SIT.FecharCursor();
+    
+    @=== Com a soma das situações de H.E compara com as extras do dia calcula ===@
+    Se(xQtdHor > x45Horas){ @=== Se for maior que 45 horas, considera 100% ===@
+      @=== H.E Diurna ===@
+      Se ((vDiaSemana="DOMINGO") ou (vIndFer=1))
+        Inicio
+          HorSit[603] = HorSit[603] + HorSit[500];          
+        Fim
+      Senao
+        Inicio
+          HorSit[603] = HorSit[502] + HorSit[603] + HorSit[500];
+          HorSit[502] = 0;
+        Fim
+      /*  
+      Se ((vDiaSemana="DOMINGO") ou (vIndFer=1))
+        Inicio
+          HorSit[603] = HorSit[603] ;
+          HorSit[604] = HorSit[604] + HorSit[501];
+        Fim
+      Senao
+        Inicio
+          HorSit[502] = HorSit[502] ;
+          HorSit[603] = HorSit[603] ;
+          HorSit[502] = HorSit[502] + HorSit[501];
+        Fim */
+      HorSit[500] = 0;
+      HorSit[501] = 0;
+
+    }
+    @=== Se for menor que 45 horas, e maior que 25 ===@
+    Senao Se((xQtdHor <= x45Horas) e (xQtdHor > x25Horas)) { 
+      @=== Trata a 55% diurna ===@
+      Se(HorSit[500] > 0){
+        @=== Verifica se a soma das horas mas a situação normal ultrapassa 45 ===@
+        Se((xQtdHor + HorSit[500]) > x45Horas){
+          @=== Se for maior ent?o considera a diferença como 60% e o resto 100% ===@
+          xDif60 = x45Horas - xQtdHor;
+          xDif100 = HorSIt[500] - xDif60;
+          
+          @=== Incrementa o total de horas ===@
+          xQtdHor = xQtdHor + HorSit[500];
+          
+          @=== Salva nas situações de H.E ===@
+          HorSit[502] = HorSit[502] + xDif60;
+          Se ((vDiaSemana="DOMINGO") ou (vIndFer=1))
+            Inicio
+              HorSit[603] = HorSit[603] + xDif100;          
+            Fim
+          Senao
+            Inicio
+              HorSit[603] = HorSit[502] + HorSit[603] + xDif100;
+              HorSit[502] = 0;
+            Fim
+          @=== Limpa a 55% Diurna ===@
+          HorSit[500] = 0;
+        } 
+        Senao {
+          @=== Se não ultrapassar 45 horas é 60% ===@
+          HorSit[502] = HorSit[502] + HorSit[500];
+          
+          @=== Incrementa o total de horas ===@
+          xQtdHor = xQtdHor + HorSit[500];
+          
+          @=== Limpa 50% Diurna ===@
+          HorSit[500] = 0;
+         }     
+      }  
+      
+      @=== Trata 55% Noturna ===@                                                     
+      Se(HorSit[501] > 0){
+        
+        @=== Verifica se já é maior que 45 ===@
+        Se(xQtdHor > x45Horas){
+          @=== Soma tudo em 100% Noturna ===@
+          HorSit[603] = HorSit[603] + HorSit[501];
+          HorSit[501] = 0;
+        }
+        @=== Verifica se a soma das horas com as horas noturnas é maior que 45 ===@
+        Senao Se((xQtdHor + HorSit[501]) > x45Horas){
+          @=== Se for maior a diferença em 60% noturna e o excedente em 100% noturna ===@
+          xDif60 = x45Horas - xQtdHor;
+          xDif100 = HorSit[501] - xDif60;
+          
+          @=== Soma o total de horas ===@
+          xQtdHor = HorSit[501];
+          
+          @=== Salva valores nas situações corretas ===@
+          HorSit[503] = HorSit[503] + xDif60;
+          HorSit[603] = HorSit[603] + xDif100;
+          
+          @=== Limpa a 55% noturna ===@
+          HorSit[501] = 0;
+        }
+        Senao {
+          @=== Se não for maior é 60% noturna ===@
+          HorSit[503] = HorSit[503] + HorSit[501];
+          
+          @=== Limpa 55% Noturna ===@
+          HorSit[501] = 0;
+        }
+      }
+    }
+    @=== Se a soma das situações com o saldo do per?do for maior que 25 h.e ===@
+    Senao Se((xQtdHor + HorSit[500] + HorSit[501]) > x25Horas ){
+      @=== Valida H.E 55 Diurna ===@
+      Se(HorSit[500] > 0){
+        @=== Se somado com diurna é maior que 25 horas ===@
+        Se((xQtdHor + HorSit[500]) > x25Horas ){
+          @=== Separa horas 55% e 60% ===@
+          xDif55 = x25Horas - xQtdHor;
+          xDif60 = HorSit[500] - xDif55;
+          
+          @=== Soma total de horas ===@
+          xQtdHor = xQtdHor + HorSit[500];
+          
+          @=== Salva H.E ===@
+          HorSit[500] = xDif55; @=== aqui não soma porque a 500 já é a padrão ===@
+          HorSit[502] = HorSit[502] + xDif60;
+        }
+        Senao {
+          @=== Se não for maior só soma na quantidade de horas ===@
+          xQtdHor = xQtdHor + HorSit[500];
+        }
+      }
+      
+      @=== Valida 55 Noturna ===@
+      Se(HorSit[501] > 0){
+        Se(xQtdHor > x25Horas){
+          @=== Se for maior é 60% noturna ===@
+          HorSit[503] = HorSit[503] + HorSit[501];
+          HorSit[501] = 0;
+        }
+        Senao Se((xQtdHor + HorSit[501]) > x25Horas){
+          @=== Separa horas 55% e 60% ===@
+          xDif55 = x25Horas - xQtdHor;
+          xDif60 = HorSit[501] - xDif55;
+          
+          @=== Soma total de horas ===@
+          xQtdHor = xQtdHor + HorSit[501];
+          
+          @=== Salva H.E ===@
+          HorSit[501] = xDif55; @=== aqui não soma porque a 501 já é a padrão ===@
+          HorSit[503] = HorSit[503] + xDif60;
+        }   @=== Não precisa de senão, se não for maior já era diurna ===@
+      }
+    }
+  Fim
+  
+Se (vBanHor="D")
+  Inicio
+  
+    /*
+    >>> Colaboradores que serão afetados pela regra <<<
+    958		Darlan Rodrigo de Bittencourt
+    1218	Felipe de Lima Ferreira
+    1056	Geane Vicente Sacramento
+    757		Joao Pedro Rocha
+    1482	Marcos Alexandre Goncalves
+    1064	Ram Yana Ache
+    1128	Sandra Mara da Luz
+    1343	Valerio Turaci
+    1577	Vitoria Lindsey Soares Martins
+    Solicitada alteração através do chamado 25847, para manter apenas os colaboradores 1128,1064,1482,1218*/
+    @Solicitada a inclusão da matrícula 1054 conforme chamado 37377@
+    @Solicitada a exclusão das matrículas 1631,1637,1641,1748,1828,1857,1870,1168 conforme chamado 37376@
+    @Solicitada a exclusao da matrícula 1630 conforme chamado 37414@
+    Definir Alfa aDiaSemana;
+    
+    Definir Data dDatIni;
+    Definir Data dDatFim;
+    
+    MontaData(31,07,2020,dDatIni);
+    MontaData(29,08,2020,dDatFim);
+    
+  @  RetornaDiaSemana(DatPro,aDiaSemana);              @
+  @  ConverteParaMaiusculo(aDiaSemana,aDiaSemana);     @
+    
+    xNumEmp = R034FUN.NumEmp;
+    xTipCol = R034FUN.TipCol;
+    xNumCad = R034FUN.NumCad;                                                                         
+    
+    RetSinEmp(xNumEmp, xTipCol, xNumCad, DatPro);
+    xSinEmp = CodSinEmp;
+    
+    se(vDiaSemana = "DOMINGO")
+        HorSit[603] = HorSit[704] + HorSit[907];
+        
+    @removido 1128 e 1482 - chamado 31387@
+    @Se((xNumCad = 1128) ou (xNumCad = 1064) ou (xNumCad = 1482) ou @
+       @(xNumCad = 1218))@
+    @Jardel Cunha 11/08/2022 -  Colaboradores com BH Indireto, não direto@
+    @Se((xNumCad = 1064) ou (xNumCad = 1218))                                   @
+    @Inicio                                                                     @
+     @ Se(((DatPro >= dDatIni) e (DatPro <= dDatFim)) e (aDiaSemana = "Sábado"))@
+     @ Inicio                                                                   @
+     @   HorSit[704] = HorSit[704] + HorSit[917];                               @
+     @   HorSit[705] = HorSit[705] + HorSit[918];                               @
+     @   HorSit[917] = 0;                                                       @
+     @   HorSit[918] = 0;                                                       @
+     @ Fim;                                                                     @
+     @ Senao                                                                    @
+     @ Inicio                                                                   @
+     @   VaPara Final;                                                          @
+     @ Fim;                                                                     @
+    @Fim;                                                                       @
+  
+    @=== Busca soma das situações de H.E ===@
+    Cur_R066SIT.SQL "SELECT R066SIT.QtdHor                                         \
+                       FROM R066SIT                                                \
+                      WHERE 1 = 2                                                  \
+                      UNION                                                        \
+                     SELECT SUM(R066SIT.QtdHor)                                    \
+                       FROM R066SIT                                                \
+                      WHERE R066SIT.NumEmp = :xNumEmp                              \
+                        AND R066SIT.TipCol = :xTipCol                              \
+                        AND R066SIT.NumCad = :xNumCad                              \
+                        AND R066SIT.DatApu >= :xIniApu                             \
+                        AND R066SIT.DatApu <= :xDatAnt                             \
+                        AND R066SIT.CodSit IN (500,501,502,503,603,604,702,703,704,705)";
+                        
+    Cur_R066SIT.AbrirCursor();
+    Se(Cur_R066SIT.Achou){
+      xQtdHor = Cur_R066SIT.QtdHor;
+    }
+    Cur_R066SIT.FecharCursor();
+    
+    @=== Com a soma das situações de H.E compara com as extras do dia calcula ===@
+    Se(xQtdHor > x45Horas){ @=== Se for maior que 45 horas, considera 100% ===@
+      @=== H.E Diurna ===@
+      HorSit[603] = HorSit[603] + HorSit[704];
+      @=== H.E Noturna ===@
+      HorSit[604] = HorSit[604] + HorSit[705];
+      @=== Limpa a situação de 55% ===@
+      HorSit[704] = 0;
+      HorSit[705] = 0;
+    }
+    @=== Se for menor que 45 horas, e maior que 25 ===@
+    Senao Se((xQtdHor <= x45Horas) e (xQtdHor > x25Horas)) { 
+      @=== Trata a 55% diurna ===@
+      Se(HorSit[704] > 0){
+        @=== Verifica se a soma das horas mas a situação normal ultrapassa 45 ===@
+        Se((xQtdHor + HorSit[704]) > x45Horas){
+          @=== Se for maior ent?o considera a diferença como 60% e o resto 100% ===@
+          xDif60 = x45Horas - xQtdHor;
+          xDif100 = HorSIt[704] - xDif60;
+          
+          @=== Incrementa o total de horas ===@
+          xQtdHor = xQtdHor + HorSit[704];
+          
+          @=== Salva nas situações de H.E ===@
+          HorSit[702] = HorSit[702] + xDif60;
+          HorSit[603] = HorSit[603] + xDif100;
+          
+          @=== Limpa a 55% Diurna ===@
+          HorSit[704] = 0;
+        } 
+        Senao {
+          @=== Se não ultrapassar 45 horas é 60% ===@
+          HorSit[702] = HorSit[702] + HorSit[704];
+          
+          @=== Incrementa o total de horas ===@
+          xQtdHor = xQtdHor + HorSit[704];
+          
+          @=== Limpa 50% Diurna ===@
+          HorSit[704] = 0;
+         }     
+      }  
+      
+      @=== Trata 55% Noturna ===@                                                     
+      Se(HorSit[705] > 0){
+        
+        @=== Verifica se já é maior que 45 ===@
+        Se(xQtdHor > x45Horas){
+          @=== Soma tudo em 100% Noturna ===@
+          HorSit[604] = HorSit[604] + HorSit[705];
+          HorSit[705] = 0;
+        }
+        @=== Verifica se a soma das horas com as horas noturnas é maior que 45 ===@
+        Senao Se((xQtdHor + HorSit[705]) > x45Horas){
+          @=== Se for maior a diferença em 60% noturna e o excedente em 100% noturna ===@
+          xDif60 = x45Horas - xQtdHor;
+          xDif100 = HorSit[705] - xDif60;
+          
+          @=== Soma o total de horas ===@
+          xQtdHor = HorSit[705];
+          
+          @=== Salva valores nas situações corretas ===@
+          HorSit[703] = HorSit[703] + xDif60;
+          HorSit[604] = HorSit[604] + xDif100;
+          
+          @=== Limpa a 55% noturna ===@
+          HorSit[705] = 0;
+        }
+        Senao {
+          @=== Se não for maior é 60% noturna ===@
+          HorSit[703] = HorSit[703] + HorSit[705];
+          
+          @=== Limpa 55% Noturna ===@
+          HorSit[705] = 0;
+        }
+      }
+    }
+    @=== Se a soma das situações com o saldo do per?do for maior que 25 h.e ===@
+    Senao Se((xQtdHor + HorSit[704] + HorSit[705]) > x25Horas){
+      @=== Valida H.E 55 Diurna ===@
+      Se(HorSit[704] > 0){
+        @=== Se somado com diurna é maior que 25 horas ===@
+        Se((xQtdHor + HorSit[704]) > x25Horas){
+          @=== Separa horas 55% e 60% ===@
+          xDif55 = x25Horas - xQtdHor;
+          xDif60 = HorSit[704] - xDif55;
+          
+          @=== Soma total de horas ===@
+          xQtdHor = xQtdHor + HorSit[704];
+          
+          @=== Salva H.E ===@
+          HorSit[704] = xDif55; @=== aqui não soma porque a 704 já é a padrão ===@
+          HorSit[702] = HorSit[702] + xDif60;
+        }
+        Senao {
+          @=== Se não for maior só soma na quantidade de horas ===@
+          xQtdHor = xQtdHor + HorSit[704];
+        }
+      }
+      
+      @=== Valida 55 Noturna ===@
+      Se(HorSit[705] > 0){
+        Se(xQtdHor > x25Horas){
+          @=== Se for maior é 60% noturna ===@
+          HorSit[703] = HorSit[703] + HorSit[705];
+          HorSit[705] = 0;
+        }
+        Senao Se((xQtdHor + HorSit[705]) > x25Horas){
+          @=== Separa horas 55% e 60% ===@
+          xDif55 = x25Horas - xQtdHor;
+          xDif60 = HorSit[705] - xDif55;
+          
+          @=== Soma total de horas ===@
+          xQtdHor = xQtdHor + HorSit[705];
+          
+          @=== Salva H.E ===@
+          HorSit[705] = xDif55; @=== aqui não soma porque a 705 já é a padrão ===@
+          HorSit[703] = HorSit[703] + xDif60;
+        }   @=== Não precisa de senão, se não for maior já era diurna ===@
+      }
+    } 
+
+  Fim
+
+Final:
+ 
+Definir Data xIniCov;
+Definir Data xIniFalCov;
+MontaData (23, 3, 2020, xIniCov);
+MontaData (1, 5, 2020, xIniFalCov);    
+
+
+Se (xSinEmp = 5)
+Inicio
+  Se ((Datpro < xIniCov) e (xBanMar <> 1) )@e ((aComCov = "N") ou (aComCov = ""))@
+  {
+    xcodsit = 704; 
+    se (aDiaSemana = "DOMINGO") 
+        xcodsit =  603;
+    HorSit[xcodsit] = HorSit[917];
+    HorSit[150] = HorSit[918];
+    HorSit[917] = 0;
+    HorSit[918] = 0;
+  }
+  
+Fim;
+
+se(xBanMar = 1)
+Inicio
+    HorSit[39] = HorSit[917];
+    HorSit[40] = HorSit[918];
+    HorSit[917] = 0;
+    HorSit[918] = 0;
+Fim;
+  
+
+
+TrataHomeOffice();
+
+Funcao TrataHomeOffice();{
+    @Incluído escalas 71 e 72 - Chamado - 30357@
+    @inscluido escalas até 80 - chamado - 31357@
+    Se (((EscEmp >= 62) e (EscEmp <= 80)) e (CodHor = 9000)) {
+        Se (HorSit[15] >= 480){
+            HorSit[910] = HorSit[15];
+            HorSit[15] = 0;
+        };
+    };
+};
+
+
+Funcao BancoCovid(numero fNumEmp, numero fTipCol, numero fNumCad, numero end fResult); {
+  Definir Cursor Cur_R038HSI;
+  Definir Data fDatApu;
+  vTem = 1;
+  vNaoTem = 0;
+  fResult = vNaoTem;
+  fDatApu = DatPro;
+  vBancoCovid = 100; 
+  Cur_R038HSI.SQL "SELECT * \
+                     FROM R038HSI \
+                    WHERE NUMEMP = :fNumEmp \
+                      AND TIPCOL = :fTipCol \
+                      AND NUMCAD = :fNumCad \
+                      AND DATALT <= :fDatApu \
+                 ORDER BY DATALT DESC"
+  Cur_R038HSI.abrirCursor();
+  se(Cur_R038HSI.achou) {      
+      se( (Cur_R038HSI.CODBHR = vBancoCovid ) 
+        e (Cur_R038HSI.POSSBH = 'S')
+        e (Cur_R038HSI.CODSIN = 5)
+        e (Cur_R038HSI.USABHR = 2)
+      ) 
+      fResult = vTem;
+  }
+  Cur_R038HSI.fecharCursor();
+}
+
+Funcao BancoMarcenaria(numero fNumEmpMar, numero fTipColMar, numero fNumCadMar, numero end fResultMar); {
+  Definir Cursor Cur_R038HSI;
+  Definir Data fDatApuMar;
+  vTemMar = 1;
+  vNaoTemMar = 0;
+  fResultMar = vNaoTem;
+  fDatApuMar = DatPro;
+  fBancoHora = 0; 
+  Cur_R038HSI.SQL "SELECT * \
+                     FROM R038HSI \
+                    WHERE NUMEMP = :fNumEmpMar \
+                      AND TIPCOL = :fTipColMar \
+                      AND NUMCAD = :fNumCadMar \
+                      AND DATALT <= :fDatApuMar \
+                 ORDER BY DATALT DESC"
+  Cur_R038HSI.abrirCursor();
+  se(Cur_R038HSI.achou) {      
+      se( (Cur_R038HSI.CODBHR = fBancoHora ) 
+        e (Cur_R038HSI.POSSBH = 'S')
+        e (Cur_R038HSI.CODSIN = 5)
+        e (Cur_R038HSI.USABHR = 1)
+      ) 
+      fResultMar = vTemMar;
+  }
+  Cur_R038HSI.fecharCursor();
+}

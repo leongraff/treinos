@@ -1,0 +1,39 @@
+
+Definir Cursor Cur_R026SMI;
+Definir Cursor Cur_R016HIE;
+Definir Numero xCodLoc;
+Definir Numero xNumCad;
+Definir Numero xNumEmp;
+Definir Numero xSalMin;
+
+xNumCad = R046VER.NumCad;
+xNumEmp = EmpAtu;
+
+Cur_R016HIE.SQL "select codloc from r016hie,r034fun where numcad=:xnumcad and numemp=:xnumemp and r034fun.numloc=r016hie.numloc \
+                and codloc between '01.03' and '01.03.04.04'";
+
+Cur_R026SMI.SQL "SELECT SALMIN FROM R026SMI";
+
+@============== Busca Salário Mínimo ==========@
+
+Cur_R026SMI.AbrirCursor()
+
+Se(Cur_R026SMI.Achou)
+    xSalMin = Cur_R026SMI.SALMIN;
+
+Cur_R026SMI.FecharCursor();
+
+@============ Busca Local e Adiciona Evento ============@
+
+Cur_R016HIE.AbrirCursor();
+Se(Cur_R016HIE.Achou){
+    ValEvt = xSalMin;
+}
+Cur_R016HIE.FecharCursor();
+
+
+
+
+
+
+
