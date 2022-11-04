@@ -1,0 +1,16 @@
+Definir Alfa xSenha;
+Definir Numero nSenha;
+Definir Numero nTipSai;
+Definir Alfa xTipSai;
+nTipSai=1;
+EntradaValor("Bloqueio","Insira a senha:",6,"A[20]","",0,xSenha,nSenha,nTipSai,xTipSai);
+
+Se(nTipSai = 0){
+  Mensagem(ERRO,"Você não clicou no OK!");
+}
+Se(xSenha = "CALCULO"){
+  Cancel(1);
+}
+Senao Se(xSenha <> "CALCULO"){
+  Mensagem(ERRO, "Senha Incorreta.");
+}

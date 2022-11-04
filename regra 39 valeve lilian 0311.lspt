@@ -1,0 +1,126 @@
+@ Por definição a media de variaveis do 13 Salario ocorre pelo periodo aquisitivo    @
+@ Porem por definição do cliente caso o colaborador receba gratificações no momento  @
+@ Será pago por este valor proporcional ao direito.                                  @
+
+se (Orimov <> "D")
+ {
+  definir data dinicmp;
+  definir data dfimcmp;
+  definir data dinifix;
+  definir data dfimfix;
+  definir data dultfol;
+  definir data ddatzer;
+  znumemp = R034FUN.NUMEMP;
+  ztipcol = R034FUN.TIPCOL;
+  znumcad = R034FUN.NUMCAD;
+  
+  zcodeve = CodEvt;
+  zrefeve = Refevt;
+  zvalevt = valEvt;
+  dinicmp = IniCmp;
+  retornaanodata(dinicmp,dano);
+  montadata(1,1,dano,dinicmp);
+  dfimcmp = FimCmp;
+  desmontadata(dfimcmp,x,y,z);
+  montadata(1,y,z,dfimcmp);
+  ddatzer = 0;
+  dultfol = 0;
+  dinifix = IniCmp;
+  dfimFix = FimCmp;
+  
+  se (zvalevt > 0)
+   {
+    zvalatu = 0;
+    zcont   = 0;
+    zcodant = 0;
+    zvalmed = 0;
+    
+    @ Verifica se tem direito atual @
+
+    definir cursor c_fix;
+    c_fix.sql "select r044fix.codeve,r044fix.valeve \
+                                    from  r044fix,r040tob \
+                                    where r044fix.numemp=:znumemp and \
+                                          r044fix.tipcol=:ztipcol and \
+                                          r044fix.numcad=:znumcad and \
+                                          r040tob.tabeve=r044fix.tabeve and \
+                                          r040tob.codtot=2 and \
+                                          r040tob.tipsom=1 and \
+                                          r040tob.tipsin='+' and \
+                                          r040tob.codeve<>1579 and \
+                                          r044fix.codeve=r040tob.codeve and \
+                                         (r044fix.datini<=:dfimfix or \
+                                          r044fix.datini=:ddatzer) and \
+                                         (r044fix.datfim>=:dinifix or \
+                                          r044fix.datfim=:ddatzer)";
+    c_fix.abrircursor();
+    enquanto (c_fix.achou)
+     {
+      zvalatu = zvalatu + c_fix.valeve;
+      c_fix.proximo();
+     };
+    c_fix.fecharcursor();
+    
+    @ Busca meses recebidos @
+    
+    definir cursor c_ver;
+    c_ver.sql "select R046VER.codeve,R046VER.valeve,R044CAL.codcal,r044cal.perref \
+                                    from  R046VER,r040tob,r044cal \
+                                    where R046VER.numemp=:znumemp and \
+                                          R046VER.tipcol=:ztipcol and \
+                                          R046VER.numcad=:znumcad and \
+                                          r040tob.tabeve=R046VER.tabeve and \
+                                          r040tob.codtot=2 and \
+                                          r040tob.tipsom=1 and \
+                                          r040tob.tipsin='+' and \
+                                          r040tob.codeve<>1579 and \
+                                          R046VER.codeve=r040tob.codeve and \
+                                          R046VER.numemp=R044CAL.numemp and \
+                                          R046VER.codcal=R044CAL.codcal and \
+                                          R044CAL.PERREF>=:dinicmp and \
+                                          R044CAL.PERREF<=:dfimcmp order by R044CAL.PERREF";
+    c_ver.abrircursor();
+    enquanto (c_ver.achou)
+     {
+      se (c_ver.codcal <> zcodant)
+       {
+        zcont++;
+        dultfol = c_ver.PerRef;
+       };  
+      zcodant = c_ver.codcal;
+      zvalmed = zvalmed + c_ver.valeve;
+      c_ver.proximo();
+     };
+    c_ver.fecharcursor();
+
+    @ Calculo do evento @
+    
+    se (zvalmed > 0) 
+     {
+      se (TipCal = 35)
+       zrefevt = 12;
+      senao  
+       zrefevt = RefEvt;
+      se (zvalatu > 0)
+       {
+        retornamesdata(dultfol,zmespag);
+        se (zmespag < zrefevt)
+         zcont = zcont + (zrefevt - zmespag);
+        ValEvt = (zvalatu / zrefevt) * zcont;
+        se (TipCal = 31) 
+         valevt = (valevt / 100) * Valcal;
+       }; 
+     };
+    senao 
+     {
+      Valevt = 0;
+      refevt = 0;
+     };  
+   };                                           
+ };
+senao
+ {
+  Valevt = ValMov;
+  Refevt = RefMov;
+ };
+          
