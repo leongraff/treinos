@@ -1,0 +1,49 @@
+InicializaPrxExamesLoc(EDatIni, EDatFim, EAbrExa, xAbrFic, xOriExa, EAbrLoc, EAbrCar, 
+    ETurTrb, EAbrTip, EAbrCol, EAbrFil, EAbrSit, xCodRqu, xDatExa, xDatRefExa);
+
+    Inicio
+        MontaAbrangencia("R110FIC.CODFIC", xAbrFic, xSqlAux);
+        xSqlAux = " AND " + xSqlAux;  
+        InsSQLWhereSimples("Detalhe_Ficha", xSqlAux);
+      Fim;
+      
+      ---------------------
+      
+      
+      gCodFic = R110FIC.CodFic;
+      xOrdExa = EOrdExa;
+      
+      RetornaPrxExamesLoc ("INICIO", gCodFic, gCodExa, xdatult, xdatpro, xmotexm, yoriexa, xOrdExa);
+      Se   (gCodExa = 0)
+           Cancel(1);
+      
+      --------------------
+      InicializaPrxExamesLoc(
+        EDatIni, EDatFim, EAbrExa, xAbrFic, xOriExa, EAbrLoc, 
+        EAbrCar, ETurTrb, EAbrTip, EAbrCol, 
+        EAbrFil, EAbrSit, xCodRqu, xDatExa, xDatRefExa);
+        FCodExa_Ord = gCodExa;
+      
+      
+      EDatIni, data inicio - tela de entrada
+      EDatFim, data fim - tela de entrada
+      EAbrExa, R108EXA.CodExa - exame  - tela de entrada (exame) - TABELA DE TIPO DE EXAMES
+      xAbrFic, R110FIC.CODFIC - ficha  - tela de entrada (ficha) - TABELA DE FICHAS
+      xOriExa, eexaadm (origem admissional)
+      EAbrLoc, local (tela de entrada)
+      EAbrCar, cargo - tela de entrada
+      ETurTrb, turno - tela de entrada
+      EAbrTcl, abrangencia errado - era p ser tipo do colaborador
+      EAbrCol, abrangencia colaborador - tela entrada	
+      EAbrFil, abrangencia filial - tela de entrada	
+      EAbrSit, abrangencia situação - tela de entrada
+      xCodRqu, codigo requisicao
+      xDatExa, recebe da data exame - tela de entrada
+      xDatRefExa - se EConExa = 'I'
+              xdatrefexa = EDatIni;
+          senao xdatrefexa = EDatFim;
+      
+      O QUE ESTÁ CONSIDERANDO NO RELATÓRIO PARA LEVAR INFORMAÇÕES PARA 
+      
+      
+      

@@ -1,0 +1,330 @@
+Definir Alfa sqlaux;
+Definir Alfa ynumemp;
+Definir Alfa EAbrFic;
+Definir Alfa EAbrExa;
+Definir Alfa EAbrLoc;
+Definir Alfa EAbrCar;
+Definir Alfa EAbrTip;
+Definir Alfa EAbrCol;
+Definir Alfa EAbrFil;
+Definir Alfa EAbrSit;
+Definir Alfa ECodRqu;
+Definir Alfa ETurTrb;
+Definir Alfa xOriExa;
+Definir Alfa xCodRqu;
+Definir Alfa EConPer;
+Definir Data xDatRefExa;
+Definir Data xDatExa;
+Definir Cursor Cur_R110DEF;
+
+xoriexa = " ";
+FDatIni = EDatIni;
+FDatFim = EDatFim;
+xDatExa = EDatExa;
+
+Se (ETipAgr = 'P')
+Inicio
+  Se (UsaPostoTrabalho = 0)
+  Inicio
+    Mensagem(Retorna, "Não é possível utilizar o agrupamento por Posto de Trabalho pois a rotina de posto de trabalho não está ativa.");
+    Cancel(1);
+  Fim;
+Fim;
+
+Se (((EExaPer = 'S') ou (EExaDem = 'S')) e (EExaAdm = 'S'))
+{
+  Mensagem(Retorna, "Não é possível listar os Exames Períodicos/Demissionais e os Admissionais ao mesmo tempo.[&Ok]");
+  Cancel(1);
+}
+
+Se ((EExaPer = 'S') ou (EExaDem = 'S'))
+{
+  Se ((EDatIni = 0) ou (EDatFim = 0))
+  {
+    Mensagem(Retorna, "É necessário informar uma data inicial e final.[&Ok]");
+    Cancel(1);
+  }
+}
+
+xCodRqu = "";
+Se (EExaAdm = 'S')
+{
+  Se (xDatExa = 0)
+  {
+    Mensagem(Retorna, "Para consultar os exames Admissionais é necessário informar a Data do Exame.[&Ok]");
+    Cancel(1);
+  }
+
+  xCodRqu = ECodRqu;
+}
+
+NumEmpSolExa = ENumEmp;
+
+@ 'NumEmpSolExa', esta variável evidencia de qual empresa que deverá buscar os exames usando determinadas rotinas @
+Se (NumEmpSolExa = 0)
+  ynumemp = formatar (EmpAtu,"%0.0f");
+Senao
+  ynumemp = formatar (NumEmpSolExa,"%0.0f");
+        
+sqlaux = "R110FIC.NUMEMP = " + ynumemp;
+
+/* INDICA SE DEVE FILTRAR AS SITUAÇÕES DA ABR. NA DATA ATUAL OU NA DATA GERADA */
+SitDataGerada = 'N';
+Se (EDatGer = 2)
+  SitDataGerada = 'S';
+
+/* SELECIONA SOMENTE ATENDIDOS QUE SEJAM COLABORADORES OU CANDIDATOS */
+sqlaux = sqlaux + " AND (R110FIC.TIPATN = 1 OR R110FIC.TIPATN = 4) ";
+
+/* Variável que define de qual empresa deverá Buscar os exames */ 
+Se (NumEmpSolExa = 0)
+  vNumEmp = EmpAtu;
+Senao  
+  vNumEmp = NumEmpSolExa;
+
+/* VERIFICA SE DEVE CONSIDERAR FICHAS MÉDICAS DE DEPENDENTES */  
+Cur_R110DEF.SQL "SELECT PCMHIS, EXADEP FROM R110DEF WHERE NUMEMP = :vNumEmp";
+Cur_R110DEF.AbrirCursor();
+Se (Cur_R110DEF.Achou)
+{
+  Se ((Cur_R110DEF.PCMHIS = "S") e (Cur_R110DEF.EXADEP = "S"))
+    sqlaux = sqlaux + " OR R110FIC.TIPATN = 2";   
+} 
+Cur_R110DEF.FecharCursor();
+InsClauSQLWhere ("Detalhe_Ficha", sqlaux);
+
+Se (EExaAdm = 'S')
+  xoriexa = "A";
+  
+Se (EExaPer = 'S')
+  xoriexa = xoriexa + "P";
+  
+Se (EExaDem = 'S')
+  xoriexa = xoriexa + "D";
+  
+Se (xoriexa = ' ')
+Inicio
+  Mensagem(Retorna,"Necessário Informar no Mínimo uma Origem.[&Ok]");
+  Cancel(1);
+Fim;
+     
+@ Abrangência de PPRA e GHE @
+Definir Alfa EAbrPRA;
+Definir Alfa EAbrGHE;
+Definir Alfa EAbrPos;
+Definir Alfa xStrDatZer;
+Definir Alfa xStrDatFim;
+Definir Alfa xCursor;
+Definir Alfa xSqlAbrEmp;
+Definir Alfa xSqlAbrFic;
+Definir Alfa xSqlAbrPra;
+Definir Alfa xSqlAbrGhe;
+Definir Alfa xSqlAbrPos;
+Definir Alfa xSqlAux;
+Definir Alfa xSqlAbr;
+Definir Alfa xCurFichas;
+Definir Alfa xSQL;
+Definir Alfa xAbrFic;
+Definir Alfa xStrNumEmp;
+Definir Alfa xStrCodFic;
+
+ConverteDataBanco(0, xStrDatZer);
+ConverteDataBanco(EDatFim, xStrDatFim);
+
+xAbrFic = EAbrFic;
+
+Se ((EAbrPra <> "") ou (EAbrGhe <> ""))
+Inicio
+  xSqlAux = "";
+  xSqlAbr = "";
+
+  @ Busca qual é o tipo de ligação do colaborador com GHE @
+  SQL_Criar(xCursor);
+  SQL_DefinirComando(xCursor, "SELECT COLGHE FROM R000SEG");
+  SQL_AbrirCursor(xCursor);
+  Se (SQL_EOF(xCursor) = 0)
+  Inicio
+    SQL_RetornarInteiro(xCursor, "COLGHE", xColGHE);
+  Fim;
+  SQL_FecharCursor(xCursor);
+  SQL_Destruir(xCursor);
+  
+  xDatZer = 0;
+  xDatFim = EDatFim;
+  
+  IntParaAlfa(ENumEmp, xStrNumEmp); 
+  xSqlAbrEmp = " AND R110FIC.NUMEMP = " + xStrNumEmp;
+  
+  Se (EAbrFic <> "")
+  Inicio
+    MontaAbrangencia("R110FIC.CODFIC", EAbrFic, xSqlAbr);
+    xSqlAbrFic = " AND " + xSqlAbr;
+  Fim;
+  
+  Se (xColGHE = 1) @ 1 = Ligação diretamente pelo colaborador @
+  Inicio
+    Se (EAbrPRA <> "")
+    Inicio
+      MontaAbrangencia("R038GHE.CODPRA", EAbrPRA, xSqlAbr);
+      xSqlAbrPra = " AND " + xSqlAbr;
+    Fim;
+    
+    Se (EAbrGHE <> "")
+    Inicio
+      MontaAbrangencia("R038GHE.CODGHE", EAbrGHE, xSqlAbr);
+      xSqlAbrGhe = " AND " + xSqlAbr;
+    Fim;
+    
+    @ Busca colaboradores que estejam ligados aos PPRA/GHE informados na tela de entrada na data final informada @
+    xSQL = "SELECT R110FIC.NUMEMP, R110FIC.CODFIC " +
+             "FROM R110FIC, R038GHE " +
+            "WHERE R110FIC.NUMEMP = R038GHE.NUMEMP " +
+              "AND R110FIC.TIPCOL = R038GHE.TIPCOL " +
+              "AND R110FIC.NUMCAD = R038GHE.NUMCAD " +
+              xSqlAbrEmp + xSqlAbrFic + xSqlAbrPra + xSqlAbrGhe +
+              "AND R038GHE.DATINI <= " + xStrDatFim +
+              "AND (R038GHE.DATTER >= " + xStrDatFim + " OR R038GHE.DATTER = " + xStrDatZer + ")" +
+         "ORDER BY R110FIC.NUMEMP, R110FIC.CODFIC";
+  Fim
+  Senao
+  Se (xColGHE = 2) @ 2 = Ligação pelo posto de trabalho do colaborador @
+  Inicio
+    Se (EAbrPra <> "")
+    Inicio
+      MontaAbrangencia("R017GHE.CODPRA", EAbrPRA, xSqlAbr);
+      xSqlAbrPra = " AND " + xSqlAbr;
+    Fim;
+    
+    Se (EAbrGhe <> "")
+    Inicio
+      MontaAbrangencia("R017GHE.CODGHE", EAbrGHE, xSqlAbr);
+      xSqlAbrGhe = " AND " + xSqlAbr;
+    Fim;
+    
+    @ Busca colaboradores que estejam em um posto de trabalho ligado aos PPRA/GHE informados na tela de entrada na data final informada @  
+    xSQL = "SELECT R110FIC.NUMEMP, R110FIC.CODFIC " +
+             "FROM R110FIC, R038HPO, R017TAP " +
+            "WHERE R110FIC.NUMEMP = R038HPO.NUMEMP " +
+              "AND R110FIC.TIPCOL = R038HPO.TIPCOL " +
+              "AND R110FIC.NUMCAD = R038HPO.NUMCAD " +
+              xSqlAbrEmp + xSqlAbrFic +
+              "AND R017TAP.HISPRI = 'S' " +
+              "AND R038HPO.CODTAP = R017TAP.CODTAP " +
+              "AND R038HPO.INIATU = (SELECT MAX(HPO.INIATU) FROM R038HPO HPO, R017TAP TAP " +
+                                     "WHERE HPO.NUMEMP = R038HPO.NUMEMP " +
+                                       "AND HPO.TIPCOL = R038HPO.TIPCOL " +
+                                       "AND HPO.NUMCAD = R038HPO.NUMCAD " +
+                                       "AND HPO.INIATU <= " + xStrDatFim + " " +
+                                       "AND HPO.CODTAP = TAP.CODTAP " +
+                                       "AND TAP.HISPRI = 'S') " +
+              "AND EXISTS (SELECT 1 FROM R017GHE " +
+                           "WHERE R017GHE.ESTPOS = R038HPO.ESTPOS " +
+                             "AND R017GHE.POSTRA = R038HPO.POSTRA " +
+                             "AND R017GHE.DATINI <= " + xStrDatFim + " " +
+                             "AND (R017GHE.DATFIM >= " + xStrDatFim + " OR R017GHE.DATFIM = " + xStrDatZer + ") " +
+                             xSqlAbrPra + xSqlAbrGhe + ") " +
+         "ORDER BY R110FIC.NUMEMP, R110FIC.CODFIC";
+  Fim;
+  
+  xAbrFic = "";
+  
+  SQL_Criar(xCurFichas);
+  SQL_DefinirComando(xCurFichas, xSQL);
+  SQL_AbrirCursor(xCurFichas);
+  
+  Se (SQL_EOF(xCurFichas) = 0)
+  Inicio
+    Enquanto (SQL_EOF(xCurFichas) = 0)
+    Inicio
+      SQL_RetornarInteiro(xCurFichas, "CODFIC", xCodFic);
+      IntParaAlfa(xCodFic, xStrCodFic);
+    
+      Se (xAbrFic = "")
+        xAbrFic = xStrCodFic;
+      Senao
+        xAbrFic = xAbrFic + "," + xStrCodFic;    
+    
+      SQL_Proximo(xCurFichas);
+    Fim;
+  Fim
+  Senao
+    xAbrFic = "0";
+    
+  SQL_FecharCursor(xCurFichas);
+  SQL_Destruir(xCurFichas);
+Fim;
+
+@ Abrangência de Posto de Trabalho @
+Definir Alfa EAbrPos;
+Definir Alfa xSqlAbrPos;
+
+Se ((EAbrPos <> "") e (xAbrFic <> "0"))
+Inicio
+  MontaAbrangencia("R038HPO.POSTRA", EAbrPos, xSqlAbr);
+  xSqlAbrPos = " AND " + xSqlAbr;
+  
+  Se (xAbrFic <> "")
+  Inicio
+    MontaAbrangencia("R110FIC.CODFIC", xAbrFic, xSqlAbr);
+    xSqlAbrFic = " AND " + xSqlAbr;
+  Fim;
+  
+  @ Busca os colaboradores que estejam nos postos informados na tela de entrada na data final informada @
+  xSQL = "SELECT R110FIC.NUMEMP, R110FIC.CODFIC " +
+           "FROM R110FIC " +
+          "WHERE (0 = 0) " + xSqlAbrEmp + xSqlAbrFic +
+            "AND EXISTS (SELECT 1 FROM R038HPO " +
+                         "WHERE R038HPO.NUMEMP = R110FIC.NUMEMP " +
+                           "AND R038HPO.TIPCOL = R110FIC.TIPCOL " +
+                           "AND R038HPO.NUMCAD = R110FIC.NUMCAD " +
+                           "AND R038HPO.INIATU <= " + xStrDatFim + " " +
+                           "AND (R038HPO.TERATU >= " + xStrDatFim + " OR R038HPO.TERATU = " + xStrDatZer + ")" +
+                           xSqlAbrPos + ")";
+  
+  xAbrFic = "";
+  
+  SQL_Criar(xCurFichas);
+  SQL_DefinirComando(xCurFichas, xSQL);
+  SQL_AbrirCursor(xCurFichas);
+  
+  Se (SQL_EOF(xCurFichas) = 0)
+  Inicio
+    Enquanto (SQL_EOF(xCurFichas) = 0)
+    Inicio
+      SQL_RetornarInteiro(xCurFichas, "CODFIC", xCodFic);
+      IntParaAlfa(xCodFic, xStrCodFic);
+    
+      Se (xAbrFic = "")
+        xAbrFic = xStrCodFic;
+      Senao
+        xAbrFic = xAbrFic + "," + xStrCodFic;    
+    
+      SQL_Proximo(xCurFichas);
+    Fim;
+  Fim
+  Senao
+    xAbrFic = "0";
+      
+  SQL_FecharCursor(xCurFichas);
+  SQL_Destruir(xCurFichas);                      
+Fim;
+
+Se (xAbrFic <> "")
+Inicio
+  MontaAbrangencia("R110FIC.CODFIC", xAbrFic, xSqlAux);
+  xSqlAux = " AND " + xSqlAux;  
+  InsSQLWhereSimples("Detalhe_Ficha", xSqlAux);
+Fim;
+
+/* Verifica qual data deve considerar para buscar os exames */
+Se (EConExa = 'I')
+  xDatRefExa = EDatIni;
+senao
+  xDatRefExa = EDatFim;
+
+/* Se estiver assinalado para listar os Admissionais, a data para buscar os exames deve ser a Data de geração */
+Se (EExaAdm = 'S')
+  xDatRefExa = xDatExa;
+
+VenExa = EVenExa; 
+InicializaPrxExamesLoc(EDatIni, EDatFim, EAbrExa, xAbrFic, xOriExa, EAbrLoc, EAbrCar, ETurTrb, EAbrTip, EAbrCol, EAbrFil, EAbrSit, xCodRqu, xDatExa, xDatRefExa);

@@ -1,0 +1,248 @@
+/* PROXIMOS EXAMES */
+Definir Alfa xmotexm;
+Definir Data xdatult;
+Definir Data xdatpro;
+
+Definir Alfa gPosTra;
+
+gCodFic = R110FIC.CodFic;
+xOrdExa = EOrdExa;
+
+RetornaPrxExamesLoc ("INICIO", gCodFic, gCodExa, xdatult, xdatpro, xmotexm, yoriexa, xOrdExa);
+Se   (gCodExa = 0)
+     Cancel(1);
+Senao
+Inicio
+     FCodExa = gCodExa;
+     FDatUlt = xdatult;
+     FDatPro = xdatpro;
+     AlteraControle("DDesMot","Descrição",xmotexm);
+
+     Definir Cursor CFun;
+     Definir Cursor CCar;
+     Definir Cursor COrn;
+     Definir Cursor CCex;
+     Definir Cursor CurR017POS;
+     Definir Alfa xcodcar;
+     Definir Alfa xtitred;
+     Definir Numero xnumloc;
+     Definir Alfa xnomloc;
+     Definir Alfa xlochie;
+     Definir Data xdatloc;
+     Definir Alfa xPosTra;
+     Definir Alfa xDesPos;
+
+     xdata = datsis;
+     xcodcar = "";
+     xtitred = "";
+     xnumloc = 0;
+     xnomloc = "";
+     FDatAdm = 0;
+
+     /* COLABORADOR */
+     Se   (R110FIC.TipAtn = 1)
+     Inicio
+
+          /* MONTA AS ABRANGENCIAS */
+          Definir Alfa EAbrPos;
+          Definir Alfa sql_abrpos;
+          Definir Alfa EAbrFil;
+          Definir Alfa sql_abrfil;
+          Definir Alfa EAbrLoc;
+          Definir Alfa sql_abrloc;
+          Definir Alfa EAbrCar;
+          Definir Alfa sql_abrcar;
+          Definir Alfa EAbrSit;
+          Definir Alfa sql_abrsit;
+
+          sql_abrpos = "";
+          sql_abrfil = "";
+          sql_abrloc = "";
+          sql_abrcar = "";
+          sql_abrsit = "";
+          
+          /* ABRANGENCIA DE POSTO */
+          Se   (EAbrPos <> "")
+          Inicio
+            MontaAbrangencia ("R034FUN.POSTRA", EAbrPos, sql_abrpos);
+            sql_abrpos = " AND " + sql_abrpos;
+          Fim;
+
+          /* ABRANGENCIA DE FILIAL */
+          Se   (EAbrFil <> "")
+          Inicio
+               MontaAbrangencia ("R034FUN.CODFIL", EAbrFil, sql_abrfil);
+               sql_abrfil = " AND " + sql_abrfil;
+          Fim;
+
+          /* ABRANGENCIA DE LOCAL */
+          Se   (EAbrLoc <> "")
+          Inicio
+               MontaAbrangencia ("R034FUN.NUMLOC", EAbrLoc, sql_abrloc);
+               sql_abrloc = " AND " + sql_abrloc;
+          Fim;
+
+          /* ABRANGENCIA DE CARGO */
+          Se   (EAbrCar <> "")
+          Inicio
+               MontaAbrangencia ("R034FUN.CODCAR", EAbrCar, sql_abrcar);
+               sql_abrcar = " AND " + sql_abrcar;
+          Fim;
+
+          /* ABRANGENCIA DE SITUCAO */
+          Se   (EAbrSit <> "")
+          Inicio
+               MontaAbrangencia ("R010SIT.TIPSIT", EAbrSit, sql_abrsit);
+               sql_abrsit = " AND " + sql_abrsit;
+          Fim;
+
+          xnumemp = R110FIC.NumEmp;
+          xtipcol = R110FIC.TipCol;
+          xnumcad = R110FIC.NumCad;
+
+          /* TURNO */
+          RetTurCol(xdata, xnumemp, xtipcol, xnumcad, xturno);
+          Se   ((EAbrTur <> 0) E (EAbrTur <> xturno))
+               Cancel(1);
+
+          /* DADOS R034FUN */
+          CFun.SQL "SELECT R034FUN.ESTCAR, R034FUN.CODCAR, R034FUN.TABORG, R034FUN.NUMLOC, R034FUN.DATADM, R034FUN.DATLOC, R034FUN.ESTPOS, R034FUN.POSTRA \ 
+                      FROM R034FUN, R010SIT \ 
+                     WHERE R034FUN.NUMEMP = :xnumemp AND \
+                           R034FUN.TIPCOL = :xtipcol AND \
+                           R034FUN.NumCad = :xnumcad AND \
+                           R034FUN.SITAFA = R010SIT.CODSIT \
+                           __inserir(:sql_abrpos) \
+                           __inserir(:sql_abrfil) \ 
+                           __inserir(:sql_abrloc) \ 
+                           __inserir(:sql_abrcar) \ 
+                           __inserir(:sql_abrsit)";
+          CFun.AbrirCursor();
+          Se   (CFun.Achou)
+               Inicio
+               xestcar = CFun.EstCar;
+               xcodcar = CFun.CodCar;
+               xtaborg = CFun.TabOrg;
+               xnumloc = CFun.NumLoc;
+               xdatloc = CFun.DatLoc;
+               xEstPos = CFun.EstPos;
+               xPosTra = CFun.PosTra;
+  
+               /* CARGO */
+               CCar.SQL "SELECT TitRed FROM R024CAR WHERE ESTCAR = :xestcar AND \
+                                                          CodCar = :xcodcar";
+               CCar.AbrirCursor();
+               Se   (CCar.Achou)
+                    xtitred = CCar.TitRed;
+               Senao
+                    xtitred = "";
+               CCar.FecharCursor();
+  
+               /* LOCAL */
+               COrn.SQL "SELECT NomLoc FROM R016ORN, R016HIE WHERE R016ORN.TABORG = :xtaborg AND R016ORN.NUMLOC = :xnumloc \
+                                                               AND R016HIE.TABORG = R016ORN.TABORG AND R016HIE.NUMLOC = R016ORN.NUMLOC \
+                                                               AND R016HIE.DATINI <= :xdatloc AND R016HIE.DATFIM >= :xdatloc";
+               COrn.AbrirCursor();
+               Se   (COrn.Achou)
+                    xnomloc = COrn.NomLoc;
+               Senao
+                    xnomloc = "";
+               COrn.FecharCursor();
+
+               /* LOCAL */
+               COrn.SQL "SELECT CODLOC FROM R016HIE WHERE R016HIE.TABORG = :xtaborg AND R016HIE.NUMLOC = :xnumloc \
+                                                      AND R016HIE.DATINI <= :xdatloc AND R016HIE.DATFIM >= :xdatloc";
+               COrn.AbrirCursor();
+               Se   (COrn.Achou)
+                    xlochie = COrn.CodLoc;
+               Senao
+                    xlochie = "";
+               COrn.FecharCursor();
+               
+               /* POSTO */
+               CurR017POS.SQL "SELECT DESRED FROM R017POS WHERE ESTPOS = :xEstPos AND POSTRA = :xPosTra";
+               CurR017POS.AbrirCursor();
+               Se (CurR017POS.Achou)
+                 xDesPos = CurR017POS.DesRed;
+               Senao
+                 xDesPos = "";
+               CurR017POS.FecharCursor();
+
+               /* DATA ADMISSAO */
+               FDatAdm = CFun.DatAdm;
+               Fim;
+          CFun.FecharCursor();
+     Fim;
+     Senao
+          /* CANDIDATO */
+          Se   (R110FIC.TipAtn = 4)
+          Inicio
+               xnumcan = R110FIC.NumCan;
+
+               /* DADOS R122CEX */
+               Definir Cursor CCar;
+               Definir Alfa xcodcar;
+
+               CCex.SQL "SELECT ESTCAR, CODCAR, TABORG, NUMLOC FROM R122CEX WHERE NUMCAN = :xnumcan";
+               CCex.AbrirCursor();
+               Se   (CCex.Achou)
+               Inicio
+                    xestcar = CCex.EstCar;
+                    xcodcar = CCex.CodCar;
+                    xtaborg = CCex.TabOrg;
+                    xnumloc = CCex.NUMLOC;
+
+                    /* CARGO */
+                    CCar.SQL "SELECT TitRed FROM R024CAR WHERE ESTCAR = :xestcar AND \
+                                                               CodCar = :xcodcar";
+                    CCar.AbrirCursor();
+                    Se   (CCar.Achou)
+                         xtitred = CCar.TitRed;
+                    Senao
+                         xtitred = "";
+                    CCar.FecharCursor();
+
+                    /* LOCAL */
+                    COrn.SQL "SELECT NomLoc FROM R016ORN WHERE TABORG = :xtaborg AND \
+                                                               NUMLOC = :xnumloc";
+                    COrn.AbrirCursor();
+                    Se   (COrn.Achou)
+                         xnomloc = COrn.NomLoc;
+                    Senao
+                         xnomloc = "";
+                    COrn.FecharCursor();
+
+                    /* LOCAL */
+                    COrn.SQL "SELECT CODLOC FROM R016HIE WHERE TABORG = :xtaborg AND \
+                                                               NUMLOC = :xnumloc";
+                    COrn.AbrirCursor();
+                    Se   (COrn.Achou)
+                         xlochie = COrn.CodLoc;
+                    Senao
+                         xlochie = "";
+                    COrn.FecharCursor();
+                    
+                    xPosTra = "";
+                    xDesPos = "";
+               Fim;
+               CCex.FecharCursor();
+          Fim;
+      
+     Definir Alfa xLocal;
+     Definir Alfa xPosto;
+     
+     gNumLoc = xNumLoc;
+     gPosTra = xPosTra;
+         
+     xLocal = xLocHie + " - " + xNomLoc;
+     
+     Se (xPosTra <> "")
+       xPosto = xPosTra + " - " + xDesPos;
+     Senao
+       xPosto = "";
+               
+     AlteraControle("DTitRed", "Descrição", xtitred);
+     Alteracontrole("DCodLoc", "Descrição", xlochie);
+     AlteraControle("DNomLoc", "Descrição", xLocal);
+     Alteracontrole("DDesPos", "Descrição", xPosto);
+Fim;

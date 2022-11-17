@@ -1,0 +1,63 @@
+Definir Numero XNumEmp;
+Definir Numero XTipCol;
+Definir Numero XNumCad;
+Definir Numero XCodCal;
+Definir Numero XValCop;
+
+Definir Data XDatRef;
+
+Definir Cursor Cur_R051SAC;
+
+XNumEmp = R034FUN.NumEmp;
+XTipCol = R034FUN.TipCol;
+XNumCad = R034FUN.NumCad;
+XCodCal = CodCal;
+XValCop = 0;
+
+MontaData(1,1,2016,XDatRef);
+
+Se(PerRef < XDatRef){
+  Cancel(1);
+}
+                                                                      
+Cur_R051SAC.SQL "SELECT R051SAC.NumCad, R051SAC.ValCop                         \
+                   FROM R051SAC                                                \
+                  WHERE 1 = 2                                                  \
+                  UNION                                                        \
+                 SELECT COUNT(R051SAC.NumCad), SUM(R051SAC.ValCop)             \
+                   FROM R051SAC                                                \
+                  WHERE R051SAC.NumEmp = :XNumEmp                              \
+                    AND R051SAC.TipCol = :XTipCol                              \
+                    AND R051SAC.NumCad = :XNumCad                              \
+                    AND R051SAC.CodCal = :XCodCal                              \
+                    AND R051SAC.CodOem in(5, 421)                              " 
+
+Cur_R051SAC.AbrirCursor();
+Enquanto(Cur_R051SAC.Achou){
+  XValCop = XvalCop + Cur_R051SAC.ValCop;
+  XQtdCol = XQtdCol + Cur_R051SAC.NumCad;
+  Cur_R051SAC.Proximo();
+}
+Cur_R051SAC.FecharCursor();
+
+Cur_R051SAC.SQL "SELECT R051SAD.NumCad, R051SAD.ValCop                        \
+                   FROM R051SAD                                                \
+                  WHERE 1 = 2                                                  \
+                  UNION                                                        \
+                 SELECT COUNT(R051SAD.NUMCAD),SUM(R051SAD.ValCop)              \
+                   FROM R051SAD                                                \      
+                  WHERE R051SAD.NumEmp = :XNumEmp                              \
+                    AND R051SAD.TipCol = :XTipCOl                              \
+                    AND R051SAD.NumCad = :XNumCad                              \
+                    AND R051SAD.CodCal = :XCodCal                              \
+                    AND R051SAD.CodOem in(5, 421)                              " 
+
+Cur_R051SAC.AbrirCursor();
+Enquanto(Cur_R051SAC.Achou){
+  XValCop = XvalCop + Cur_R051SAC.ValCop;
+  XQtdCol = XQtdCol + Cur_R051SAC.NumCad;
+  Cur_R051SAC.Proximo();
+}
+Cur_R051SAC.FecharCursor();
+
+ValEvt = XValCop;

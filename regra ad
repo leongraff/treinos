@@ -1,0 +1,873 @@
+Definir Cursor Cur_R034FUN;
+Definir Cursor Cur_R024CAR;
+Definir Cursor Cur_R018CCU;
+Definir Cursor Cur_R030FIL;
+Definir Cursor Cur_USUAD;
+Definir Alfa xNomFun;
+Definir Alfa xCodCar;
+Definir Alfa xTitCar;
+Definir Alfa xTitRed;
+Definir Alfa xCodCcu;
+Definir ALfa xNomCcu;
+Definir Alfa xNomFil;
+Definir Alfa xNumTel;
+Definir Alfa aDDDTel;
+Definir Alfa aNumCpf;
+Definir Alfa xNomCom;
+Definir Alfa aNomFun;
+Definir Alfa xNomEmp;
+Definir Alfa xUserAD;
+Definir Alfa xStg;
+Definir Alfa xValue;
+Definir Alfa xNomUsuSenior;
+Definir Data xDatAlt;
+Definir Alfa xPrimeiroNome;
+Definir ALfa xUltimoNome;
+
+Definir Alfa xLoginAD;
+Definir Alfa xEmaAD;
+
+Cur_R034FUN.SQL"SELECT R034FUN.NUMEMP, R034FUN.TIPCOL, R034FUN.NUMCAD, R034FUN.NOMFUN, R034FUN.NUMCPF, \
+                        R034FUN.DATADM, R034FUN.CODFIL, R034CPL.DDDTEL, R034CPL.NUMTEL, R034CPL.NOMCOM \
+                  FROM R034FUN, R034CPL                                                                \
+                  WHERE  NOT EXISTS (SELECT * FROM USU_TUSUAD                                          \
+                        WHERE R034FUN.NUMEMP = USU_TUSUAD.USU_NUMEMP AND                               \
+                              R034FUN.TIPCOL = USU_TUSUAD.USU_TIPCOL AND                               \
+                              R034FUN.NUMCAD = USU_TUSUAD.USU_NUMCAD) AND                              \
+                              R034FUN.NUMEMP = R034CPL.NUMEMP AND                                      \
+                              R034FUN.TIPCOL = R034CPL.TIPCOL AND                                      \
+                              R034FUN.NUMCAD = R034CPL.NUMCAD AND                                      \
+                              R034FUN.TIPCON <> 5 AND                                                  \
+                              R034FUN.NUMEMP IN (1) AND                                                \
+                              R034FUN.TIPCOL = 1 AND                                                   \
+                              R034FUN.SITAFA NOT IN (7,27)";
+
+/*Cur_R034FUN.SQL"SELECT R034FUN.NUMEMP, R034FUN.TIPCOL, R034FUN.NUMCAD, R034FUN.NOMFUN, R034FUN.NUMCPF, \
+                        R034FUN.DATADM, R034FUN.CODFIL, R034CPL.DDDTEL, R034CPL.NUMTEL, R034CPL.NOMCOM \
+                  FROM R034FUN, R034CPL                                                                \
+                  WHERE       R034FUN.NUMEMP = R034CPL.NUMEMP AND                                      \
+                              R034FUN.TIPCOL = R034CPL.TIPCOL AND                                      \
+                              R034FUN.NUMCAD = R034CPL.NUMCAD AND                                      \
+                              R034FUN.TIPCON <> 5 AND                                                  \
+                              R034FUN.NUMEMP IN (1,7) AND                                              \
+                              R034FUN.TIPCOL = 1 AND                                                   \
+                              R034FUN.NUMCAD = 6793 AND                                                \
+                              R034FUN.SITAFA NOT IN (7,27)";*/
+                              
+Cur_R034FUN.AbrirCursor();
+Enquanto (Cur_R034FUN.Achou)
+INICIO
+  xUserAD = "";
+  xStg = "";
+  xValue = "";
+  xNomUsuSenior = "";
+  
+  aNumCpf = "";
+  xTitCar = "";
+  xTitRed = "";
+  xNomCcu = "";
+  xNomFil = "";
+  xNumTel = "";
+  aDDDTel = "";
+  xNomCom = "";
+  aNomFun = "";
+  xNomEmp = "";
+  xPrimeiroNome = "";
+  xUltimoNome = "";
+  xExColab = 0;
+  xTemLoginExColab = 0;
+  
+  xLoginAD = "";
+  xEmaAD = "";
+  
+  xNumEmp = Cur_R034FUN.NUMEMP;
+  xTipCol = Cur_R034FUN.TIPCOL;
+  xNumCad = Cur_R034FUN.NUMCAD;
+  xNumCpf = Cur_R034FUN.NUMCPF;
+  xDatAdm = Cur_R034FUN.DATADM;
+  xCodFil = Cur_R034FUN.CODFIL;
+  xNumTel = Cur_R034FUN.NUMTEL;
+  xDDDTel = Cur_R034FUN.DDDTEL;
+  
+  xDatAlt = DatSis; 
+  
+  @=== Empresa =================@
+  Definir Cursor Cur_R030EMP;
+  Cur_R030EMP.SQL"SELECT APEEMP FROM R030EMP WHERE NUMEMP = :XNUMEMP";
+  Cur_R030EMP.AbrirCursor();
+  Se (Cur_R030EMP.AChou)
+  INICIO
+    xNomEmp = Cur_R030EMP.APEEMP;
+  FIM
+  Cur_R030EMP.FecharCursor();
+  
+  @=== Telefone ================@
+  IntParaAlfa(xDDDTel, aDDDTel);
+  xNumTel = aDDDTel + xNumTel;
+  TiraEspacos (xNumTel, xNumTel);
+  
+  @=== Display Name ===========@
+  xNomFun = Cur_R034FUN.NOMFUN;
+  xNomCom = Cur_R034FUN.NOMCOM;
+  aNomFun = xNomFun;
+  Se ((xNomCom <> "") e (xNomCom <> " "))
+    aNomFun = xNomCom;
+  
+  @=== Senha===================@
+  ConverteMascara (1, xNumCpf, aNumCpf, "99999999999");
+  CopiarAlfa (aNumCpf, 1, 4);
+  
+  @=== Title ==================@
+  RetCarEmp (xNumEmp, xTipCol, xNumCad, xDatAdm);
+  xCodCar = CarEmp;
+  xEstCar = EstCarEmp;
+  
+  Cur_R024CAR.SQL"SELECT TITRED, TITCAR FROM R024CAR WHERE ESTCAR = :XESTCAR AND CODCAR = :XCODCAR";
+  Cur_R024CAR.AbrirCursor();
+  Se (Cur_R024CAR.Achou)
+  INICIO
+    xTitCar = Cur_R024CAR.TITCAR;
+    xTitRed = Cur_R024CAR.TITRED;
+  FIM;
+  Cur_R024CAR.FecharCursor();
+  
+  @=== Department ==============@
+  RetCcuEmp (xNumEmp, xTipCol, xNumCad, xDatAdm);
+  xCodCcu = CcuEmp;
+  Cur_R018CCU.SQL"SELECT NOMCCU FROM R018CCU WHERE NUMEMP = :XNUMEMP AND CODCCU = :XCODCCU";
+  Cur_R018CCU.AbrirCursor();
+  Se (Cur_R018CCU.Achou)
+  INICIO
+    xNomCcu = Cur_R018CCU.NOMCCU;
+  FIM;
+  Cur_R018CCU.FecharCursor();
+  
+  @=== Company =================@
+  Cur_R030FIL.sql"SELECT NOMFIL FROM R030FIL WHERE NUMEMP = :XNUMEMP AND CODFIL = :XCODFIL";
+  Cur_R030FIL.AbrirCursor();
+  Se (Cur_R030FIL.Achou)
+  INICIO
+    xNomFil = Cur_R030FIL.NOMFIL;
+  FIM;
+  Cur_R030FIL.FecharCursor();
+  
+  @=== sAMAccountName =============@
+  @ Pega todos os Nomes @
+  Definir Alfa aPriNom;
+  Definir Alfa aUltNom;
+  Definir Alfa aCaracter;
+  Definir Alfa aNom1;
+  Definir Alfa aNom2;
+  Definir Alfa aNom3;
+  Definir Alfa aNom4;
+  Definir Alfa aNom5;
+  Definir Alfa aNom6;
+  Definir Alfa aNom7;
+  Definir Alfa aNom8;
+  Definir Alfa aNom9;
+  Definir Alfa aNom10;
+  
+  aNom1 = "";
+  aNom2 = "";
+  aNom3 = "";
+  aNom4 = "";
+  aNom5 = "";
+  aNom6 = "";
+  aNom7 = "";
+  aNom8 = "";
+  aNom9 = "";
+  aNom10 = "";
+  
+  aCaracter = aNomFun;
+  TamanhoAlfa(aCaracter,nTam);
+  nConta = 1;
+  i = 1;
+  Enquanto (nConta <= nTam)
+  INICIO
+    aCaracter = aNomFun;
+    CopiarAlfa (aCaracter, nConta, 1);
+    Se (aCaracter <> " ")
+    INICIO
+      Se (i=1)
+        aNom1 = aNom1 + aCaracter;
+      Se (i=2)
+        aNom2 = aNom2 + aCaracter;
+      Se (i=3)
+        aNom3 = aNom3 + aCaracter;
+      Se (i=4)
+        aNom4 = aNom4 + aCaracter;
+      Se (i=5)
+        aNom5 = aNom5 + aCaracter;
+      Se (i=6)
+        aNom6 = aNom6 + aCaracter;
+      Se (i=7)
+        aNom7 = aNom7 + aCaracter;
+      Se (i=8)
+        aNom8 = aNom8 + aCaracter;
+      Se (i=9)
+        aNom9 = aNom9 + aCaracter;
+      Se (i=10)
+        aNom10 = aNom10 + aCaracter;
+        
+      nConta++;
+    FIM;
+    Senao
+    INICIO
+      nConta++;
+      i++;
+    FIM;
+  FIM;
+  
+  @=== Monta Primeiro Nome e Ultimo Nome ===@
+  xPrimeiroNome = aNom1;
+  
+  Se (i = 2)
+    xUltimoNome = aNom2;
+  Se (i = 3)
+    xUltimoNome = aNom2 +" "+ aNom3;
+  Se (i = 4)
+    xUltimoNome = aNom2 +" "+ aNom3 +" "+ aNom4;
+  Se (i = 5)
+    xUltimoNome = aNom2 +" "+ aNom3 +" "+ aNom4 +" "+ aNom5;
+  Se (i = 6)
+    xUltimoNome = aNom2 +" "+ aNom3 +" "+ aNom4 +" "+ aNom5 +" "+ aNom6;
+  Se (i = 7)
+    xUltimoNome = aNom2 +" "+ aNom3 +" "+ aNom4 +" "+ aNom5 +" "+ aNom6 +" "+ aNom7;
+  Se (i = 8)
+    xUltimoNome = aNom2 +" "+ aNom3 +" "+ aNom4 +" "+ aNom5 +" "+ aNom6 +" "+ aNom7 +" "+ aNom8;
+  Se (i = 9)
+    xUltimoNome = aNom2 +" "+ aNom3 +" "+ aNom4 +" "+ aNom5 +" "+ aNom6 +" "+ aNom7 +" "+ aNom8+" "+ aNom9;
+  Se (i = 10)
+    xUltimoNome = aNom2 +" "+ aNom3 +" "+ aNom4 +" "+ aNom5 +" "+ aNom6 +" "+ aNom7 +" "+ aNom8+" "+ aNom9 +" "+ aNom10;
+      
+  @=== Monta todos os logins possíveis ========================================@
+  Definir Alfa aLogin1;
+  Definir Alfa aLogin2;
+  Definir Alfa aLogin3;
+  Definir Alfa aLogin4;
+  Definir Alfa aLogin5;
+  Definir Alfa aLogin6;
+  Definir Alfa aLogin7;
+  Definir Alfa aLogin8;
+  Definir Alfa aLogin9;
+  Definir Alfa aLogin10;
+  
+  aLogin1 = "";
+  aLogin2 = "";
+  aLogin3 = "";
+  aLogin4 = "";
+  aLogin5 = "";
+  aLogin6 = "";
+  aLogin7 = "";
+  aLogin8 = "";
+  aLogin9 = "";
+  aLogin10 = "";
+  
+  @=== POSSUI 10 NOMES =============================@
+  Se (i = 10)
+  INICIO
+    @ Primeiro Login @
+    aLogin1 = aNom1 +"."+ aNom10; 
+    
+    @ Segundo Login @
+    Se ((aNom9 = "de") ou (aNom9 = "da")  ou (aNom9 = "do") ou (aNom9 = "das") ou (aNom9 = "dos")  ou (aNom9 = "e"))
+      aLogin2 = aNom1 +"."+ aNom9+aNom10;
+    Senao
+      aLogin2 = aNom1 +"."+ aNom9;
+    
+    @ Terceiro Login @
+    Se ((aNom8 = "de") ou (aNom8 = "da")  ou (aNom8 = "do") ou (aNom8 = "das") ou (aNom8 = "dos")  ou (aNom8 = "e"))
+      aLogin3 = aNom1 +"."+ aNom8+aNom9;
+    Senao
+      aLogin3 = aNom1 +"."+ aNom8;
+      
+    @ Quarto Login @
+    Se ((aNom7 = "de") ou (aNom7 = "da")  ou (aNom7 = "do") ou (aNom7 = "das") ou (aNom7 = "dos")  ou (aNom7 = "e"))
+      aLogin4 = aNom1 +"."+ aNom7+aNom8;
+    Senao
+      aLogin4 = aNom1 +"."+ aNom7; 
+     
+    @ Quinto Login @
+    Se ((aNom6 = "de") ou (aNom6 = "da")  ou (aNom6 = "do") ou (aNom6 = "das") ou (aNom6 = "dos")  ou (aNom6 = "e"))
+      aLogin5 = aNom1 +"."+ aNom6+aNom7;
+    Senao
+      aLogin5 = aNom1 +"."+ aNom6; 
+      
+    @ Sexto Login @
+    Se ((aNom5 = "de") ou (aNom5 = "da")  ou (aNom5 = "do") ou (aNom5 = "das") ou (aNom5 = "dos")  ou (aNom5 = "e"))
+      aLogin6 = aNom1 +"."+ aNom5+aNom6;
+    Senao
+      aLogin6 = aNom1 +"."+ aNom5;
+    
+    @ Sétimo Login @
+    Se ((aNom4 = "de") ou (aNom4 = "da")  ou (aNom4 = "do") ou (aNom4 = "das") ou (aNom4 = "dos")  ou (aNom4 = "e"))
+      aLogin7 = aNom1 +"."+ aNom4+aNom5;
+    Senao
+      aLogin7 = aNom1 +"."+ aNom4;
+    
+    @ Oitavo Login @
+    Se ((aNom3 = "de") ou (aNom3 = "da")  ou (aNom3 = "do") ou (aNom3 = "das") ou (aNom3 = "dos")  ou (aNom3 = "e"))
+      aLogin8 = aNom1 +"."+ aNom3+aNom4;
+    Senao
+      aLogin8 = aNom1 +"."+ aNom3;
+    
+    @ Nono Login @
+    Se ((aNom2 = "de") ou (aNom2 = "da")  ou (aNom2 = "do") ou (aNom2 = "das") ou (aNom2 = "dos")  ou (aNom2 = "e"))
+      aLogin9 = aNom1 +"."+ aNom2+aNom3;
+    Senao
+      aLogin9 = aNom1 +"."+ aNom2;
+  FIM; 
+  
+  @=== POSSUI 9 NOMES =============================@
+  Se (i = 9)
+  INICIO
+    @ Primeiro Login @
+    aLogin1 = aNom1 +"."+ aNom9; 
+    
+    @ Segundo Login @
+    Se ((aNom8 = "de") ou (aNom8 = "da")  ou (aNom8 = "do") ou (aNom8 = "das") ou (aNom8 = "dos")  ou (aNom8 = "e"))
+      aLogin2 = aNom1 +"."+ aNom8+aNom9;
+    Senao
+      aLogin2 = aNom1 +"."+ aNom8;
+      
+    @  Teceiro Login @
+    Se ((aNom7 = "de") ou (aNom7 = "da")  ou (aNom7 = "do") ou (aNom7 = "das") ou (aNom7 = "dos")  ou (aNom7 = "e"))
+      aLogin3 = aNom1 +"."+ aNom7+aNom8;
+    Senao
+      aLogin3 = aNom1 +"."+ aNom7; 
+     
+    @ Quarto Login @
+    Se ((aNom6 = "de") ou (aNom6 = "da")  ou (aNom6 = "do") ou (aNom6 = "das") ou (aNom6 = "dos")  ou (aNom6 = "e"))
+      aLogin4 = aNom1 +"."+ aNom6+aNom7;
+    Senao
+      aLogin4 = aNom1 +"."+ aNom6; 
+      
+    @ Quinto Login @
+    Se ((aNom5 = "de") ou (aNom5 = "da")  ou (aNom5 = "do") ou (aNom5 = "das") ou (aNom5 = "dos")  ou (aNom5 = "e"))
+      aLogin5 = aNom1 +"."+ aNom5+aNom6;
+    Senao
+      aLogin5 = aNom1 +"."+ aNom5;
+    
+    @ Sexto Login @
+    Se ((aNom4 = "de") ou (aNom4 = "da")  ou (aNom4 = "do") ou (aNom4 = "das") ou (aNom4 = "dos")  ou (aNom4 = "e"))
+      aLogin6 = aNom1 +"."+ aNom4+aNom5;
+    Senao
+      aLogin6 = aNom1 +"."+ aNom4;
+    
+    @ Setimo Login @
+    Se ((aNom3 = "de") ou (aNom3 = "da")  ou (aNom3 = "do") ou (aNom3 = "das") ou (aNom3 = "dos")  ou (aNom3 = "e"))
+      aLogin7 = aNom1 +"."+ aNom3+aNom4;
+    Senao
+      aLogin7 = aNom1 +"."+ aNom3;
+    
+    @ Oitavo Login @
+    Se ((aNom2 = "de") ou (aNom2 = "da")  ou (aNom2 = "do") ou (aNom2 = "das") ou (aNom2 = "dos")  ou (aNom2 = "e"))
+      aLogin8 = aNom1 +"."+ aNom2+aNom3;
+    Senao
+      aLogin8 = aNom1 +"."+ aNom2;
+  FIM;
+  
+  @=== POSSUI 8 NOMES =============================@
+  Se (i = 8)
+  INICIO
+    @ Primeiro Login @
+    aLogin1 = aNom1 +"."+ aNom8; 
+      
+    @ Segundo Login @
+    Se ((aNom7 = "de") ou (aNom7 = "da")  ou (aNom7 = "do") ou (aNom7 = "das") ou (aNom7 = "dos")  ou (aNom7 = "e"))
+      aLogin2 = aNom1 +"."+ aNom7+aNom8;
+    Senao
+      aLogin2 = aNom1 +"."+ aNom7; 
+     
+    @ Terceiro Login @
+    Se ((aNom6 = "de") ou (aNom6 = "da")  ou (aNom6 = "do") ou (aNom6 = "das") ou (aNom6 = "dos")  ou (aNom6 = "e"))
+      aLogin3 = aNom1 +"."+ aNom6+aNom7;
+    Senao
+      aLogin3 = aNom1 +"."+ aNom6; 
+      
+    @ Quarto Login @
+    Se ((aNom5 = "de") ou (aNom5 = "da")  ou (aNom5 = "do") ou (aNom5 = "das") ou (aNom5 = "dos")  ou (aNom5 = "e"))
+      aLogin4 = aNom1 +"."+ aNom5+aNom6;
+    Senao
+      aLogin4 = aNom1 +"."+ aNom5;
+    
+    @ Quinto Login @
+    Se ((aNom4 = "de") ou (aNom4 = "da")  ou (aNom4 = "do") ou (aNom4 = "das") ou (aNom4 = "dos")  ou (aNom4 = "e"))
+      aLogin5 = aNom1 +"."+ aNom4+aNom5;
+    Senao
+      aLogin5 = aNom1 +"."+ aNom4;
+    
+    @ Sexto Login @
+    Se ((aNom3 = "de") ou (aNom3 = "da")  ou (aNom3 = "do") ou (aNom3 = "das") ou (aNom3 = "dos")  ou (aNom3 = "e"))
+      aLogin6 = aNom1 +"."+ aNom3+aNom4;
+    Senao
+      aLogin6 = aNom1 +"."+ aNom3;
+    
+    @ Setimo Login @
+    Se ((aNom2 = "de") ou (aNom2 = "da")  ou (aNom2 = "do") ou (aNom2 = "das") ou (aNom2 = "dos")  ou (aNom2 = "e"))
+      aLogin7 = aNom1 +"."+ aNom2+aNom3;
+    Senao
+      aLogin7 = aNom1 +"."+ aNom2;
+  FIM;
+  
+  @=== POSSUI 7 NOMES =============================@
+  Se (i = 7)
+  INICIO
+    @ Primeiro Login @
+    aLogin1 = aNom1 +"."+ aNom7; 
+     
+    @ Segundo Login @
+    Se ((aNom6 = "de") ou (aNom6 = "da")  ou (aNom6 = "do") ou (aNom6 = "das") ou (aNom6 = "dos")  ou (aNom6 = "e"))
+      aLogin2 = aNom1 +"."+ aNom6+aNom7;
+    Senao
+      aLogin2 = aNom1 +"."+ aNom6; 
+      
+    @ Terceiro Login @
+    Se ((aNom5 = "de") ou (aNom5 = "da")  ou (aNom5 = "do") ou (aNom5 = "das") ou (aNom5 = "dos")  ou (aNom5 = "e"))
+      aLogin3 = aNom1 +"."+ aNom5+aNom6;
+    Senao
+      aLogin3 = aNom1 +"."+ aNom5;
+    
+    @ Quarto Login @
+    Se ((aNom4 = "de") ou (aNom4 = "da")  ou (aNom4 = "do") ou (aNom4 = "das") ou (aNom4 = "dos")  ou (aNom4 = "e"))
+      aLogin4 = aNom1 +"."+ aNom4+aNom5;
+    Senao
+      aLogin4 = aNom1 +"."+ aNom4;
+    
+    @ Quinto Login @
+    Se ((aNom3 = "de") ou (aNom3 = "da")  ou (aNom3 = "do") ou (aNom3 = "das") ou (aNom3 = "dos")  ou (aNom3 = "e"))
+      aLogin5 = aNom1 +"."+ aNom3+aNom4;
+    Senao
+      aLogin5 = aNom1 +"."+ aNom3;
+    
+    @ Sexto Login @
+    Se ((aNom2 = "de") ou (aNom2 = "da")  ou (aNom2 = "do") ou (aNom2 = "das") ou (aNom2 = "dos")  ou (aNom2 = "e"))
+      aLogin6 = aNom1 +"."+ aNom2+aNom3;
+    Senao
+      aLogin6 = aNom1 +"."+ aNom2;
+  FIM;
+  
+  @=== POSSUI 6 NOMES =============================@
+  Se (i = 6)
+  INICIO
+    @ Primeiro Login @
+    aLogin1 = aNom1 +"."+ aNom6; 
+      
+    @ Segundo Login @
+    Se ((aNom5 = "de") ou (aNom5 = "da")  ou (aNom5 = "do") ou (aNom5 = "das") ou (aNom5 = "dos")  ou (aNom5 = "e"))
+      aLogin2 = aNom1 +"."+ aNom5+aNom6;
+    Senao
+      aLogin2 = aNom1 +"."+ aNom5;
+    
+    @ Terceiro Login @
+    Se ((aNom4 = "de") ou (aNom4 = "da")  ou (aNom4 = "do") ou (aNom4 = "das") ou (aNom4 = "dos")  ou (aNom4 = "e"))
+      aLogin3 = aNom1 +"."+ aNom4+aNom5;
+    Senao
+      aLogin3 = aNom1 +"."+ aNom4;
+    
+    @ Quarto Login @
+    Se ((aNom3 = "de") ou (aNom3 = "da")  ou (aNom3 = "do") ou (aNom3 = "das") ou (aNom3 = "dos")  ou (aNom3 = "e"))
+      aLogin4 = aNom1 +"."+ aNom3+aNom4;
+    Senao
+      aLogin4 = aNom1 +"."+ aNom3;
+    
+    @ Quinto Login @
+    Se ((aNom2 = "de") ou (aNom2 = "da")  ou (aNom2 = "do") ou (aNom2 = "das") ou (aNom2 = "dos")  ou (aNom2 = "e"))
+      aLogin5 = aNom1 +"."+ aNom2+aNom3;
+    Senao
+      aLogin5 = aNom1 +"."+ aNom2;
+  FIM;
+  
+  @=== POSSUI 5 NOMES =============================@
+  Se (i = 5)
+  INICIO
+    @ Primeiro Login @
+    aLogin1 = aNom1 +"."+ aNom5; 
+    
+    @ Segundo Login @
+    Se ((aNom4 = "de") ou (aNom4 = "da")  ou (aNom4 = "do") ou (aNom4 = "das") ou (aNom4 = "dos")  ou (aNom4 = "e"))
+      aLogin2 = aNom1 +"."+ aNom4+aNom5;
+    Senao
+      aLogin2 = aNom1 +"."+ aNom4;
+    
+    @ Terceiro Login @
+    Se ((aNom3 = "de") ou (aNom3 = "da")  ou (aNom3 = "do") ou (aNom3 = "das") ou (aNom3 = "dos")  ou (aNom3 = "e"))
+      aLogin3 = aNom1 +"."+ aNom3+aNom4;
+    Senao
+      aLogin3 = aNom1 +"."+ aNom3;
+    
+    @ Quarto Login @
+    Se ((aNom2 = "de") ou (aNom2 = "da")  ou (aNom2 = "do") ou (aNom2 = "das") ou (aNom2 = "dos")  ou (aNom2 = "e"))
+      aLogin4 = aNom1 +"."+ aNom2+aNom3;
+    Senao
+      aLogin4 = aNom1 +"."+ aNom2;
+  FIM;
+  
+  @=== POSSUI 4 NOMES =============================@
+  Se (i = 4)
+  INICIO
+    @ Primeiro Login @
+    aLogin1 = aNom1 +"."+ aNom4; 
+    
+    @ Segundo Login @
+    Se ((aNom3 = "de") ou (aNom3 = "da")  ou (aNom3 = "do") ou (aNom3 = "das") ou (aNom3 = "dos")  ou (aNom3 = "e"))
+      aLogin2 = aNom1 +"."+ aNom3+aNom4;
+    Senao
+      aLogin2 = aNom1 +"."+ aNom3;
+    
+    @ Terceiro Login @
+    Se ((aNom2 = "de") ou (aNom2 = "da")  ou (aNom2 = "do") ou (aNom2 = "das") ou (aNom2 = "dos")  ou (aNom2 = "e"))
+      aLogin3 = aNom1 +"."+ aNom2+aNom3;
+    Senao
+      aLogin3 = aNom1 +"."+ aNom2;
+  FIM;
+  
+  @=== POSSUI 3 NOMES =============================@
+  Se (i = 3)
+  INICIO
+    @ Primeiro Login @
+    aLogin1 = aNom1 +"."+ aNom3; 
+    
+    @ Segundo Login @
+    Se ((aNom2 = "de") ou (aNom2 = "da")  ou (aNom2 = "do") ou (aNom2 = "das") ou (aNom2 = "dos")  ou (aNom2 = "e"))
+      aLogin2 = aNom1 +"."+ aNom2+aNom3;
+    Senao
+      aLogin2 = aNom1 +"."+ aNom2;
+  FIM;
+  
+  @=== POSSUI 2 NOMES =============================@
+  Se (i = 2)
+  INICIO
+    @ Primeiro Login @
+    aLogin1 = aNom1 +"."+ aNom2; 
+  FIM;
+  
+  
+  @=== Verifica se Colaborador é Ex-Funcionário ===@
+  @================================================@
+  @================================================@
+  Definir Cursor Cur_ExColaborador;
+  Definir Alfa xEmaADAux;
+  xEmaADAux = "";
+  Cur_ExColaborador.SQL"SELECT R034CPL.EMACOM \ 
+                          FROM R034FUN, R034CPL \
+                            WHERE R034FUN.NUMEMP = R034CPL.NUMEMP AND \
+                                  R034FUN.TIPCOL = R034CPL.TIPCOL AND \
+                                  R034FUN.NUMCAD = R034CPL.NUMCAD AND \
+                                  R034FUN.NUMCPF = :XNUMCPF AND \
+                                  R034FUN.TIPCOL = 1 AND \
+                                  R034FUN.SITAFA = 7";
+  Cur_ExColaborador.AbrirCursor();
+  Se (Cur_ExColaborador.Achou)
+  INICIO
+    xExColab = 1;
+    xPosEmail = 0;
+    xEmaAD = Cur_ExColaborador.EmaCom;
+    PosicaoAlfa ("@",xEmaAD, xPosEmail);
+    xPosEmail = xPosEmail - 1;
+    
+    Se (xPosEmail <> 0)
+    INICIO
+      xEmaADAux = xEmaAD;
+      CopiarAlfa (xEmaADAux, 1, xPosEmail);
+    FIM;
+    
+    xLoginAD = xEmaADAux; 
+    TiraEspacos (xLoginAD, xLoginAD);
+    
+    xStg = "(&(objectclass=person)(sAMAccountName=" +xLoginAD+ "))";
+    ADBuscaEntidade(xStg, xUserAD);
+    TiraEspacos (xUserAD, xUserAD);
+    
+    Se (xUserAD <> ""){
+      xTemLoginExColab = 1;
+    }
+    Senao
+      xTemLoginExColab = 0;
+    
+    vapara exfuncionario;
+  FIM;
+  Cur_ExColaborador.FecharCursor(); 
+  
+  
+  @=== Faz as verificações dos logins no AD ===================================@
+  Minusculo(aLogin1, aLogin1, "N");
+  Minusculo(aLogin2, aLogin2, "N");
+  Minusculo(aLogin3, aLogin3, "N");
+  Minusculo(aLogin4, aLogin4, "N");
+  Minusculo(aLogin5, aLogin5, "N");
+  Minusculo(aLogin6, aLogin6, "N");
+  Minusculo(aLogin7, aLogin7, "N");
+  Minusculo(aLogin8, aLogin8, "N");
+  Minusculo(aLogin9, aLogin9, "N");
+  Minusculo(aLogin10, aLogin10, "N");
+  TiraEspacos (aLogin1, aLogin1);
+  TiraEspacos (aLogin2, aLogin2);
+  TiraEspacos (aLogin3, aLogin3);
+  TiraEspacos (aLogin4, aLogin4);
+  TiraEspacos (aLogin5, aLogin5);
+  TiraEspacos (aLogin6, aLogin6);
+  TiraEspacos (aLogin7, aLogin7);
+  TiraEspacos (aLogin8, aLogin8);
+  TiraEspacos (aLogin9, aLogin9);
+  TiraEspacos (aLogin10, aLogin10);
+  
+  xLogDisp = 0;
+    
+  @=== Verifica Disponibilidade do Login 1 ===@
+  Se (aLogin1 <> "")
+  INICIO 
+    xStg = "(&(objectclass=person)(sAMAccountName=" +aLogin1+ "))";
+    ADBuscaEntidade(xStg, xUserAD);
+    TiraEspacos (xUserAD, xUserAD);
+    
+    Se (xUserAD = ""){
+      xLogDisp = 1;
+      vapara final;
+    }
+  FIM;
+  
+  @=== Verifica Disponibilidade do Login 2 ===@
+  Se (aLogin2 <> "")
+  INICIO 
+    xStg = "(&(objectclass=person)(sAMAccountName=" +aLogin2+ "))";
+    ADBuscaEntidade(xStg, xUserAD);
+    TiraEspacos (xUserAD, xUserAD);
+    
+    Se (xUserAD = ""){
+      xLogDisp = 2;
+      vapara final;
+    }
+  FIM;
+  
+  @=== Verifica Disponibilidade do Login 3 ===@
+  Se (aLogin3 <> "")
+  INICIO 
+    xStg = "(&(objectclass=person)(sAMAccountName=" +aLogin3+ "))";
+    ADBuscaEntidade(xStg, xUserAD);
+    TiraEspacos (xUserAD, xUserAD);
+    
+    Se (xUserAD = ""){
+      xLogDisp = 3;
+      vapara final;
+    }
+  FIM;
+  
+  @=== Verifica Disponibilidade do Login 4 ===@
+  Se (aLogin4 <> "")
+  INICIO 
+    xStg = "(&(objectclass=person)(sAMAccountName=" +aLogin4+ "))";
+    ADBuscaEntidade(xStg, xUserAD);
+    TiraEspacos (xUserAD, xUserAD);
+    
+    Se (xUserAD = ""){
+      xLogDisp = 4;
+      vapara final;
+    }
+  FIM;
+  
+  @=== Verifica Disponibilidade do Login 5 ===@
+  Se (aLogin5 <> "")
+  INICIO 
+    xStg = "(&(objectclass=person)(sAMAccountName=" +aLogin5+ "))";
+    ADBuscaEntidade(xStg, xUserAD);
+    TiraEspacos (xUserAD, xUserAD);
+    
+    Se (xUserAD = ""){
+      xLogDisp = 5;
+      vapara final;
+    }
+  FIM;
+  
+  @=== Verifica Disponibilidade do Login 6 ===@
+  Se (aLogin6 <> "")
+  INICIO 
+    xStg = "(&(objectclass=person)(sAMAccountName=" +aLogin6+ "))";
+    ADBuscaEntidade(xStg, xUserAD);
+    TiraEspacos (xUserAD, xUserAD);
+    
+    Se (xUserAD = ""){
+      xLogDisp = 6;
+      vapara final;
+    }
+  FIM;
+  
+  @=== Verifica Disponibilidade do Login 7 ===@
+  Se (aLogin7 <> "")
+  INICIO 
+    xStg = "(&(objectclass=person)(sAMAccountName=" +aLogin7+ "))";
+    ADBuscaEntidade(xStg, xUserAD);
+    TiraEspacos (xUserAD, xUserAD);
+    
+    Se (xUserAD = ""){
+      xLogDisp = 7;
+      vapara final;
+    }
+  FIM;
+  
+  @=== Verifica Disponibilidade do Login 8 ===@
+  Se (aLogin8 <> "")
+  INICIO 
+    xStg = "(&(objectclass=person)(sAMAccountName=" +aLogin8+ "))";
+    ADBuscaEntidade(xStg, xUserAD);
+    TiraEspacos (xUserAD, xUserAD);
+    
+    Se (xUserAD = ""){
+      xLogDisp = 8;
+      vapara final;
+    }
+  FIM;
+  
+  @=== Verifica Disponibilidade do Login 9 ===@
+  Se (aLogin9 <> "")
+  INICIO 
+    xStg = "(&(objectclass=person)(sAMAccountName=" +aLogin9+ "))";
+    ADBuscaEntidade(xStg, xUserAD);
+    TiraEspacos (xUserAD, xUserAD);
+    
+    Se (xUserAD = ""){
+      xLogDisp = 9;
+      vapara final;
+    }
+  FIM;
+  
+  @=== Verifica Disponibilidade do Login 10 ===@
+  Se (aLogin10 <> "")
+  INICIO 
+    xStg = "(&(objectclass=person)(sAMAccountName=" +aLogin10+ "))";
+    ADBuscaEntidade(xStg, xUserAD);
+    TiraEspacos (xUserAD, xUserAD);
+    
+    Se (xUserAD = ""){
+      xLogDisp = 10;
+      vapara final;
+    }
+  FIM;
+
+  @=== FAZ OS TRATAMENTOS DE INSERT NA TABELA DE PENDENCIA DE INTEGRAÇÃO DO AD ===@
+  final:
+  Se (xLogDisp <> 0)
+  INICIO    
+    xLoginAD = "";
+    xEmaAD = "";
+      
+    Se (xLogDisp = 1)
+      xLoginAD = aLogin1;
+    Senao
+    Se (xLogDisp = 2)
+      xLoginAD = aLogin2;
+    Senao
+    Se (xLogDisp = 3)
+      xLoginAD = aLogin3;
+    Senao
+    Se (xLogDisp = 4)
+      xLoginAD = aLogin4;
+    Senao
+    Se (xLogDisp = 5)
+      xLoginAD = aLogin5;
+    Senao
+    Se (xLogDisp = 6)
+      xLoginAD = aLogin6;
+    Senao
+    Se (xLogDisp = 7)
+      xLoginAD = aLogin7;
+    Senao
+    Se (xLogDisp = 8)
+      xLoginAD = aLogin8;
+    Senao
+    Se (xLogDisp = 9)
+      xLoginAD = aLogin9;
+    Senao
+    Se (xLogDisp = 10)
+      xLoginAD = aLogin10;
+    
+    xEmaAD = xLoginAD+"@unimedlitoral.coop.br";
+    
+    @=== Usuário disponível para ser criado no AD =============================@
+    Definir Cursor Cur_PENDENCIAS;
+    Cur_PENDENCIAS.SQL"SELECT * FROM USU_TIntAD WHERE USU_NUMEMP = :XNUMEMP AND USU_TIPCOL = :XTIPCOL AND USU_NUMCAD = :XNUMCAD";
+    Cur_PENDENCIAS.AbrirCursor();
+    Se (Cur_PENDENCIAS.NaoAChou)
+    INICIO
+      ExecSQL"INSERT INTO USU_TIntAD (USU_NumEmp, USU_TipCol, USU_NumCad, \
+                                      USU_NumCpf, USU_NomFun, USU_EmaCom, USU_NomUsu, \
+                                      USU_SenUsu, USU_TitCar, USU_NomEmp, USU_NomCcu, \
+                                      USU_TIpAlt, USU_DatAlt, USU_StaPen, USU_SitAfa, \
+                                      USU_EmaCriUsu, USU_UsuExiAD, USU_NumTel, USU_ExFunc, \
+                                      USU_PriNom, USU_SegNom) \
+                              VALUES (:xNumEmp, :xTipCol, :xNumCad, \
+                                      :xNumCpf, :aNomFun, :xEmaAD, :xLoginAD, \
+                                      :aNumCpf, :xTitCar, :xNomEmp, :xNomCcu, \
+                                      01, :xDatAlt, 'N', 1, \
+                                      'N', 'N', :xNumTel, 'N', \
+                                      :xPrimeiroNome, :xUltimoNome)";
+    FIM;
+    Cur_PENDENCIAS.FecharCursor();
+
+  FIM;
+  @=== Usuário já existe no AD necessário ação da TI para a criação ===========@
+  Senao
+  Se (xLogDisp = 0)
+  INICIO
+    Definir Cursor Cur_PENDENCIAS;
+    Cur_PENDENCIAS.SQL"SELECT * FROM USU_TIntAD WHERE USU_NUMEMP = :XNUMEMP AND USU_TIPCOL = :XTIPCOL AND USU_NUMCAD = :XNUMCAD";
+    Cur_PENDENCIAS.AbrirCursor();
+    Se (Cur_PENDENCIAS.NaoAChou)
+    INICIO
+      ExecSQL"INSERT INTO USU_TIntAD (USU_NumEmp, USU_TipCol, USU_NumCad, \
+                                      USU_NumCpf, USU_NomFun, USU_EmaCom, USU_NomUsu, \
+                                      USU_SenUsu, USU_TitCar, USU_NomEmp, USU_NomCcu, \
+                                      USU_TIpAlt, USU_DatAlt, USU_StaPen, USU_SitAfa, \
+                                      USU_EmaCriUsu, USU_UsuExiAD, USU_NumTel, USU_ExFunc, \
+                                      USU_PriNom, USU_SegNom) \
+                              VALUES (:xNumEmp, :xTipCol, :xNumCad, \
+                                      :xNumCpf, :aNomFun, :xEmaAD, :xLoginAD, \
+                                      :aNumCpf, :xTitCar, :xNomEmp, :xNomCcu, \
+                                      01, :xDatAlt, 'N', 1, \
+                                      'N', 'S', :xNumTel, 'N', \
+                                      :xPrimeiroNome, :xUltimoNome)";
+    FIM;
+    Cur_PENDENCIAS.FecharCursor();
+  FIM;  
+  
+  
+  
+  @=== Se for Ex-funcionario faz de outra forma ===@
+  exfuncionario:
+  Definir Cursor Cur_PENDENCIAS;
+  Cur_PENDENCIAS.SQL"SELECT * FROM USU_TIntAD WHERE USU_NUMEMP = :XNUMEMP AND USU_TIPCOL = :XTIPCOL AND USU_NUMCAD = :XNUMCAD";
+  Cur_PENDENCIAS.AbrirCursor();
+  Se (Cur_PENDENCIAS.NaoAChou)
+  INICIO
+    Definir Alfa aTemLoginExColab;
+    
+    Se (xTemLoginExColab = 0)
+    {
+      aTemLoginExColab = "N";
+      xLoginAD = "";
+    }
+    Senao
+    Se (xTemLoginExColab = 1)
+      aTemLoginExColab = "S";
+        
+    ExecSQL"INSERT INTO USU_TIntAD (USU_NumEmp, USU_TipCol, USU_NumCad, \
+                                    USU_NumCpf, USU_NomFun, USU_EmaCom, USU_NomUsu, \
+                                    USU_SenUsu, USU_TitCar, USU_NomEmp, USU_NomCcu, \
+                                    USU_TIpAlt, USU_DatAlt, USU_StaPen, USU_SitAfa, \
+                                    USU_EmaCriUsu, USU_UsuExiAD, USU_NumTel, USU_ExFunc, \
+                                    USU_PriNom, USU_SegNom) \
+                            VALUES (:xNumEmp, :xTipCol, :xNumCad, \
+                                    :xNumCpf, :aNomFun, :xEmaAD, :xLoginAD, \
+                                    :aNumCpf, :xTitCar, :xNomEmp, :xNomCcu, \
+                                    01, :xDatAlt, 'N', 1, \
+                                    'N', :aTemLoginExColab, :xNumTel, 'S', \
+                                      :xPrimeiroNome, :xUltimoNome)";
+  FIM;
+  Cur_PENDENCIAS.FecharCursor();
+  
+  
+Cur_R034FUN.Proximo();
+FIM;
+Cur_R034FUN.FecharCursor();
+
+regra(403);
