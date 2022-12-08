@@ -1,0 +1,77 @@
+Definir Alfa xcodcar;
+xnumemp = r034fun.numemp;
+xtipcol = r034fun.tipcol;
+xnumcad = r034fun.numcad;
+xdatcar = fimcmp;
+RetCarEmp ( xNumEmp,  xTipCol,  xNumCad,  xDatCar);
+xcodcar = caremp;
+xvalant = 0;
+xmesant = -1;
+
+Definir Data xDataCorte;
+MontaData (31, 5, 2019, xDataCorte);
+
+@=== A PARTTIR DE 05/2019 VALOR ETAPA FOI INCORPORADO AO EVENTO DO VALE ALIMENTAÇÃO PARA OS CARGOS 001, 002, 004, 006 E 007 ===@
+Se (((CodEvt = 647)) e 
+    ((xcodcar = "001") ou (xcodcar = "002") ou (xcodcar = "004") ou (xcodcar = "006") ou (xcodcar = "007")) e 
+    (fimcmp >= xDataCorte))
+INICIO
+  ValEvt = 0;
+  RefEvt = 0;
+    cancel(1);
+FIM; 
+@=== FIM === A PARTTIR DE 05/2019 VALOR ETAPA FOI INCORPORADO AO EVENTO DO VALE ALIMENTAÇÃO PARA OS CARGOS 001, 002, 004, 006 E 007 ===@
+
+Se(xcodcar = "026")
+{
+  ValEvt = (AcuCal[9102] / 12) * BasRef/2;
+}
+
+Se((xcodcar = "003") ou(xcodcar = "008"))
+{
+    ValEvt = (AcuCal[9103] / 12) * BasRef/2;
+}
+
+Se((xcodcar = "1021") ou (xcodcar = "1022") ou (xcodcar = "1023") ou (xcodcar = "1025") ou (xcodcar = "427") ou (xcodcar = "426"))
+  {
+   ValEvt = 0;
+  }
+
+/*Se ((xCodCar = "301") ou (xCodCar = "302") ou (xCodCar = "303") ou (xCodCar = "304"))
+{
+  
+  Se (xCodCar = "302")
+    ValEvt = (AcuCal[9112] / 12) * BasRef / 2;
+  Se (xCodCar = "301")
+    ValEvt = (AcuCal[9113] / 12) * BasRef / 2;
+  Senao
+    ValEvt = (159.50 / 12) * BasRef / 2;
+}*/
+
+Se ((xCodCar = "301") ou (xCodCar = "302") ou (xCodCar = "303") ou (xCodCar = "304"))
+{
+  
+  Se (xCodCar = "302")
+    ValEvt = (AcuCal[9112] / 12) * BasRef / 2;
+  Se (xCodCar = "301")
+    Inicio
+      EveAnt[1] = 620; @ busca o 620 de 1 mes atras @
+      MesAnt = -1; @ mes anterior @
+      xvalant = ValAnt; @ valor do salario de meses anteriores @
+      Enquanto(xvalant = 0)
+        Inicio
+          EveAnt[1] = 620; @ valor do 620 do mes passad @
+          MesAnt = xmesant-1;  @ xmesant = ? @
+          xvalant = ValAnt; @ valor do evento calculado @
+        Fim 
+    ValEvt = xvalant * BasRef /2;
+    FIm
+  Senao
+    ValEvt = (159.50 / 12) * BasRef / 2;
+}  
+
+Se((EmpAtu = 3) e (TipCal = 12))
+{
+RefEvt = 0;
+ValEvt = 0;
+}

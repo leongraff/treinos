@@ -1,0 +1,20 @@
+Definir Cursor Cur_R006ESC;
+Definir Numero ENovEsc;
+Definir Numero vHorBar;
+Definir Numero vSeqMar;
+Definir Alfa   vHorBarAux;
+Definir Alfa   vAuxImp;
+Definir Alfa   vNomEsc;
+vNomEsc="";
+Cur_R006ESC.sql "Select * From R006ESC \
+                 Where R006ESC.CodEsc=:ENovEsc";
+Cur_R006ESC.AbrirCursor();
+Se (Cur_R006ESC.Achou)
+  Inicio
+    vNomEsc=Cur_R006ESC.USU_1; @ Usu_1 é a coluna da escala @
+    TiraEspacos(vNomEsc,vNomEsc);
+  Fim
+Cur_R006ESC.FecharCursor();
+vAuxImp="Nova Escala de Trabalho: "+vNomEsc+".";
+ValStr=vAuxImp;
+Cancel(2); 

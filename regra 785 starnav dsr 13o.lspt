@@ -1,0 +1,113 @@
+@=== Regra adicionada no dia 25/10 ===@
+@=== Implantação cargos 301,302,303 e 304 ===@
+@=== Visita presencial Thiago Henrique ===@
+Definir cursor Cur_TipGra;
+Definir Data xcmpcal;
+Definir Data xFimcal;
+Definir Alfa xcodcar;
+
+Definir Cursor c_r046ver;
+
+xValGra13Int = 0;
+xDsrHe50DecINt = 0;
+xDsrHE100DecInt = 0;
+xDsrHEFerDecInt = 0;
+xDsrAdc50DecInt = 0;
+xDsrAdc100DecInt = 0;
+xTotDsr13Int = 0;
+xDsr2DecInt = 0;
+xtipgra = 1;
+xnumemp = r034fun.numemp;
+xtipcol = r034fun.tipcol;
+xnumcad = r034fun.numcad;
+xdatcar = fimcmp;
+xcmpcal = perref;
+RetCarEmp ( xNumEmp,  xTipCol,  xNumCad,  xDatCar);
+xestcar = estcaremp;
+xcodcar = caremp;
+xvalev2 = 0;
+xbastotal = 0;
+xcodcal = codcal;
+
+Cur_TipGra.SQL "Select USU_ValGra From USU_TabGra where  1 = 2 union \
+                Select USU_ValGra From USU_TabGra where USU_TipGRa = :xtipgra \
+                                                    and USU_EstCar = :xestcar \
+                                                    and USU_CodCar = :xcodcar \
+                                                    and USU_cmpgra = (Select MAX(USU_CmpGra)    \
+                                                                      From USU_TabGra where USU_TipGRa = :xtipgra \
+                                                                      and USU_EstCar = :xestcar \
+                                                                      and USU_CodCar = :xcodcar \
+                                                                      and USU_cmpgra <= :xcmpcal)";
+                                                                      
+c_r046ver.sql "select valeve from r046ver where numemp = 3 and tipcol = 1 and numcad = :xnumcad and \
+                                                                  codcal = :xcodcal and codeve = 798"
+
+
+Se ((xcodcar = "301") ou (xcodcar = "302") ou (xcodcar = "303") ou (xcodcar = "304"))
+{
+        
+        Cur_TipGra.AbrirCursor();
+         Se (Cur_TipGra.Achou)
+          Inicio
+           xValGra13Int = Cur_TipGra.USU_ValGra;
+          Fim;
+        Cur_TipGra.FecharCursor();
+        
+  /*xValGra13Adt = xValGra13Adt / 220;
+  BasEvt = BasEvt + xValGra13Adt;*/
+  
+  /*xDsrAdc50DecInt = (((BasEvt * 104 * 1.5 * 0.2) / 12 * BasRef)) / 200 * 220;
+  xDsrAdc100DecInt = (((BasEvt * 16 * 2 * 0.2) / 12 * BasRef)) / 200 * 220;
+  xDsrHE50DecInt =  (((BasEvt * 174 * 1.5) / 12 * BasRef)) / 200 * 220;
+  xDsrHE100DecInt = (((BasEvt * 48 * 2) / 12 * BasRef)) / 200 * 220;
+  xDsrHEFerDecInt = (((BasEvt * 15 * 2) / 12 * BasRef)) / 200 * 220;
+  xDsr2DecInt = (BasEvt * 220);
+  
+  
+  xTotDsr13Int = (((xDsrAdc50DecInt + xDsrHE50DecInt) * 5 / 25) + 
+               ((xDsrAdc100DecInt + xDsrHE100DecInt) * 5 / 25) + 
+               (xDsrHEFerDecInt * 5 / 25) +
+               (xDsr2DecInt * 2 / 30));
+  ValEvt = xTotDsr13Int;*/
+  
+  xDsrHE50DecInt =  ((BasEvt * 174 * 1.5) / 200);
+  xDsrHE100DecInt = ((BasEvt * 48 * 2) / 200);
+  xDsrHEFerDecInt = ((BasEvt * 15 * 2) / 200);
+  xDsr2DecInt = BasEvt;
+  
+  Se((xcodcar = "302") ou (xcodcar = "303"))
+    Inicio
+      c_r046ver.abrircursor();
+      Se(c_r046ver.achou)
+        Inicio
+          xvalev2 = c_r046ver.valeve;
+          xbastotal = xvalev2 + Basevt;
+          xDsrHE50DecInt =  (((Basevt * 174 * 1.5) + (BasEvt * 104 * 1.5 * 0.2)) / 200);
+          xDsrHE100DecInt = (((Basevt * 48 * 2) + (BasEvt * 16 * 2 * 0.2)) / 200);
+          xDsrHEFerDecInt = ((Basevt * 15 * 2) / 200);
+          xDsr2DecInt = Basevt;
+        Fim
+      c_r046ver.fecharcursor();
+    Fim
+  
+  xTotDsr13Int = (((xDsrHE50DecInt) * 5 / 25) +
+                  ((xDsrHE100DecInt) * 5 / 25) +
+                  (xDsrHEFerDecInt * 5 / 25) +
+                  (xDsr2DecInt * 2 / 30)); 
+
+  
+  ValEvt = xTotDsr13Int;  
+}
+Senao
+{
+  Valevt = 0;
+}
+
+Definir Data xIniCmp;
+xIniCmp = IniCmp;
+DesMontaData (xIniCmp, xDia13, xMes13, xAno13);
+Se ((xMes13 = 12) e (TipCal = 33))
+INICIO
+    Valevt = 0;
+    refevt = 0;
+FIM;   
