@@ -1,0 +1,3476 @@
+
+--------------------------------------------------------------------------------
+Código: 1 - Descrição: ModeloGerador_Funções Globais
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 2 - Descrição: ModeloGerador_Inicialização
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 3 - Descrição: ModeloGerador_Pré-Seleção
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 4 - Descrição: ModeloGerador_Seleção
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 5 - Descrição: ModeloGerador_Finalização
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 6 - Descrição: ModeloGerador_Imprimir Página
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 7 - Descrição: Titulo_Depois Imprimir
+--------------------------------------------------------------------------------
+
+Definir cursor Ccursor; 
+Definir cursor cCursorx;
+Definir data ddatzro;
+Definir alfa ETipArq;
+Definir alfa aaux;
+Definir data DatPERFEF;
+definir data dinicmp;
+definir data dfimcmp;
+definir data edatref;
+edatref = DatSis;   @ Inserido para tratamento do PA @
+Desmontadata(edatref,x,y,z);
+montadata(1,y,z,edatref);
+dinicmp = edatref;
+dfimcmp = edatref;
+ultimodia(dfimcmp);
+ddatzro = 0;
+
+se(ETipArq = "C")
+{
+  @ Cargo@
+  Ccursor.sql"select CodCar,TitRed,TitCar,CodCb2,SisCar from R024CAR where Codcar like 'C%' and length(CodCar)<6";
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+    definir alfa aaux2;
+    aaux2 = Ccursor.CodCar;
+    aaux =  Ccursor.CodCar; 
+    copiaralfa(aaux,1,1);
+    copiaralfa(aaux2,2,5);
+    aaux = aaux+"."+aaux2;
+    AlteraControle ("cCodCar", "Descrição", aaux);
+    AlteraControle ("cTitCar", "Descrição", Ccursor.Titcar);
+    AlteraControle ("cTitRed", "Descrição", Ccursor.titRed);
+    AlteraControle ("cCodCBO", "Descrição", Ccursor.Codcb2);
+    aaux ="0";
+    se(Ccursor.siscar = 1)
+    aaux ="1";
+    se(Ccursor.siscar = 2)
+    aaux ="2"; 
+    se(Ccursor.siscar = 3)
+    aaux ="3";  
+    AlteraControle ("ctipCar", "Descrição", aaux);
+    @ D(direta); I(indireta); A(Administrativa); S(Serviços); O(Outros); PADRÃO  = A   @
+    aaux ="A"; 
+    AlteraControle ("cMaoObra", "Descrição", aaux);
+    Listasecao("Adicional_cargo");
+    Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+  
+  @ Função @
+  Ccursor.sql"select CodCar,TitRed,TitCar,CodCb2,SisCar from R024CAR where Codcar like 'C%' and length(CodCar)<6";
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio  
+    definir alfa aaux2;
+    aaux2 = Ccursor.CodCar;
+    aaux =  Ccursor.CodCar; 
+    copiaralfa(aaux,1,1);
+    copiaralfa(aaux2,2,5);
+    aaux = aaux+"."+aaux2;
+    AlteraControle ("fCodCar", "Descrição", aaux);
+    AlteraControle ("FCodFun", "Descrição", aaux);
+    AlteraControle ("fTitCar", "Descrição", Ccursor.Titcar);
+    AlteraControle ("fTitRed", "Descrição", Ccursor.titRed);
+    Listasecao("Adicional_funcao");
+    Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+  
+  @ HORARIO_TRABALHO  @
+  Ccursor.sql"select R004HOR.CodHor from R004HOR ";
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+    xCodHor = Ccursor.CodHor;
+    ConverteMascara (1, Ccursor.CodHor, aaux, "999999");
+    AlteraControle ("aCodHor", "Descrição", aaux);
+    ccursorx.sql "select CodHor,SeqMar,HorBat from R004MHR  where CodHor = :xCodHor";
+    ccursorx.abrircursor();
+    zcontmar = 1;
+    enquanto(ccursorx.achou)
+     { 
+      zcontmar++;
+      ccursorx.proximo();
+     };
+    ccursorx.fecharcursor();
+    ccursorx.abrircursor();
+    enquanto(ccursorx.achou)
+    {
+      se (zcontmar < 4)
+       {
+        se(ccursorx.SeqMar = 1)
+        {
+          ConverteMascara (4, ccursorx.HorBat, aaux, "HH:MM");
+          AlteraControle ("entrada", "Descrição", aaux);
+          zintauto = ccursorx.HorBat + 2;
+          ConverteMascara (4, zintauto, aaux, "HH:MM");
+          AlteraControle ("Saiinter", "Descrição", aaux);
+          zintauto = zintauto + 1;
+          ConverteMascara (4, zintauto, aaux, "HH:MM");
+          AlteraControle ("Voltainter", "Descrição", aaux);
+        }
+        se(ccursorx.SeqMar = 2)
+        {
+         ConverteMascara (4, ccursorx.HorBat, aaux, "HH:MM");
+         AlteraControle ("saida", "Descrição", aaux);
+        } 
+       };
+      senao 
+       { 
+        se(ccursorx.SeqMar = 1)
+        {
+          ConverteMascara (4, ccursorx.HorBat, aaux, "HH:MM");
+          AlteraControle ("entrada", "Descrição", aaux);
+        }
+        se(ccursorx.SeqMar = 2)
+        {
+         ConverteMascara (4, ccursorx.HorBat, aaux, "HH:MM");
+         AlteraControle ("Saiinter", "Descrição", aaux);
+        }
+        se(ccursorx.SeqMar = 3)
+        {     
+         ConverteMascara (4, ccursorx.HorBat, aaux, "HH:MM");
+         AlteraControle ("Voltainter", "Descrição", aaux);
+        }
+        se(ccursorx.SeqMar = 4)
+        {
+         ConverteMascara (4, ccursorx.HorBat, aaux, "HH:MM");
+         AlteraControle ("saida", "Descrição", aaux);
+         }
+       };  
+    ccursorx.proximo();
+    };
+    ccursorx.fecharcursor();
+    Listasecao("Adicional_HORARIO_TRABALHO");
+    Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+  
+  @  ESCALA_TRABALHO   @
+  Ccursor.sql"select R006ESC.CodEsc,R006ESC.nomesc, R006ESC.HorMes from R006ESC ";
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+     ncodesc = Ccursor.Codesc; 
+     
+     ConverteMascara (1, ccursor.Codesc, aaux, "999999");
+     AlteraControle ("cCodesc", "Descrição", aaux);
+     AlteraControle ("DESESC", "Descrição", Ccursor.nomesc);
+     Convertemascara(1,Ccursor.HorMes,aaux,"999,99"); 
+     AlteraControle ("HorMes", "Descrição", aaux);
+     nqtdhor =0; 
+     cCursorx.sql " select CodHor from R006HOR where 1 = 2 union \
+                    select count(CodHor) from R006HOR  where CodEsc = :ncodesc and CodHor <9996 "
+     cCursorx.abrircursor();
+     se(cCursorx.achou)
+       nqtdhor = cCursorx.codhor;
+     cCursorx.fecharcursor(); 
+    Convertemascara(1,nqtdhor,aaux,"999"); 
+     AlteraControle ("DiasSema", "Descrição", aaux);   
+    Listasecao("Adicional_ESCALA_TRABALHO");
+    
+    Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+  
+   @ TURMA_ESCALA_TRABALHO @
+  Ccursor.sql"select R006ESC.CodEsc,R006ESC.nomesc ,R006TMA.CodTma,R006TMA.DatBas from R006ESC,R006TMA \
+            where R006ESC. CodEsc = R006TMA.CodEsc";
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+    
+     ConverteMascara (1, Ccursor.Codesc, aaux, "999999");
+     AlteraControle ("Codesc_t", "Descrição", aaux);
+     ConverteMascara (1, Ccursor.CodTma, aaux, "999999");
+     AlteraControle ("Codturma", "Descrição", aaux);
+     AlteraControle ("NomTurma", "Descrição", Ccursor.nomesc);
+     Convertemascara(2,Ccursor.DatBas,aaux,"dd/mm/yyyy"); 
+     AlteraControle ("DatIniTur", "Descrição", aaux); 
+     
+    Listasecao("adicional_HORARIO_TURMA");
+    
+    Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+  
+  @ HORARIO_TURMA @
+  Ccursor.sql"select R006ESC.CodEsc,R006TMA.CodTma,R004HOR.CODHOR,r006hor.seqreg,R006TMA.DATBAS  \
+                 from R006ESC,R006TMA , R004HOR, r006hor                                          \
+                where R006ESC.CodEsc = R006TMA.CodEsc                                              \
+                  and R004HOR.CODHOR = r006hor.codhor                                               \
+                  and r006hor.CodEsc=R006ESC.CodEsc order by R006ESC.CodEsc,R006TMA.CodTma,R004HOR.CODHOR,r006hor.seqreg";
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+          
+     ConverteMascara (1, Ccursor.seqreg, aaux, "999");
+     AlteraControle ("HCodSeq", "Descrição", aaux);
+     ConverteMascara (1, Ccursor.Codesc, aaux, "999999");
+     AlteraControle ("HCodesc", "Descrição", aaux);
+     ConverteMascara (1, Ccursor.CodTma, aaux, "999999");
+     AlteraControle ("Hcodtur", "Descrição", aaux);
+     ConverteMascara (1, Ccursor.CODHOR, aaux, "999999");
+     AlteraControle ("hcodHor", "Descrição", aaux);
+     
+     @RetornaDiaSemana(Ccursor.DATBAS,aDiaSem);     @
+     Desmontadata(Ccursor.DATBAS,B1,B2,B3);
+     se ( B2<3){
+       b3=b3-1;
+       b2=b2+12;
+     }
+     total=B1+(2*B2);
+     parcial=(3*(B2+1))/5;
+     total=total+Truncar(parcial);
+     total=total+B3;
+     parcial=B3/4;
+     total=total+Truncar(parcial);
+     parcial=B3/100;
+     total=total-Truncar(parcial);
+     parcial=B3/400;
+     total=total+Truncar(parcial);
+     total=total+2;
+     RestoDivisao(total,7,nDiaSem);
+     RestoDivisao(Ccursor.seqreg, 7, nSeq);
+     ConverteMascara (1, nSeq-1+nDiaSem , aaux, "99"); 
+     AlteraControle ("hdia", "Descrição", aaux); 
+     
+    Listasecao("Adicional_Hor_turma");     
+    
+    Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+  
+  @Banco @
+  Ccursor.sql"select CodBan,NomBan,TabEst from R012BAN";
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+     ConverteMascara (1, Ccursor.CodBan, aaux, "999");
+     AlteraControle ("CodiBan", "Descrição", aaux);      
+     AlteraControle ("Descban", "Descrição", Ccursor.NomBan);
+  
+    Listasecao("Adicional_Banco");
+    
+    Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+  
+  @Agencia @
+  Ccursor.sql"Select CodBan,CodAge,NomAge,DigAge from R012AGE";
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+     ConverteMascara (1, Ccursor.CodBan, aaux, "999");
+     AlteraControle ("CodiBana", "Descrição", aaux);
+     ConverteMascara (1, Ccursor.CodAge, aaux, "9999");
+     AlteraControle ("codagea", "Descrição", aaux);
+     AlteraControle ("DescAGE", "Descrição", Ccursor.NomAge); 
+     AlteraControle ("DigAge", "Descrição", Ccursor.DigAge);  
+  
+    Listasecao("Adicional_agencia");
+    
+    Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+  
+  @ CATEGORIA_SINDICAL @
+  Ccursor.sql"Select * from R014SIN";
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+    
+      ConverteMascara (1, Ccursor.Codsin, aaux, "999");
+     AlteraControle ("aCodsin", "Descrição", aaux);
+     AlteraControle ("Descrsin", "Descrição", Ccursor.NOMSIN);     
+   
+    Listasecao("Adicional_CATEGORIA_SINDICAL");
+    
+    Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+  @SINDICATO (R014SIN)@
+  Ccursor.sql"Select * from R014SIN";
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+    
+      ConverteMascara (1, Ccursor.Codsin, aaux, "999");
+     AlteraControle ("aCodsin1", "Descrição", aaux);
+     AlteraControle ("Descrsin1", "Descrição", Ccursor.NOMSIN);     
+   
+    Listasecao("Adicional_SINDICAL");
+    
+    Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+  
+  @MOTIVO_AUMENTO_SAL (R076MOT)@
+  Ccursor.sql"Select CodMot,NomMot from R076MOT";
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+   ConverteMascara (1, Ccursor.CodMot, aaux, "999999");
+     AlteraControle ("aCodMot", "Descrição", aaux);
+    
+     AlteraControle ("descmod", "Descrição", Ccursor.NomMot); 
+  
+    Listasecao("Adicional_MOTIVO_AUMENTO_SAL");
+    
+    Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+  
+  @ MOTIVO_AFASTAMENTO (R010SIT)@
+  Ccursor.sql"Select Codsit,DesSit,DesAbr,USU_CODREP from R010SIT WHERE TIPSIT<>17 AND USU_CODREP<>' '  order by usu_codrep";
+  Ccursor.AbrirCursor();
+  definir alfa wcodant;
+  aaux = "";
+  Enquanto (Ccursor.Achou)
+  Inicio
+   se (aaux <> ccursor.usu_codrep)
+    { 
+     Aaux = ccursor.usu_codrep;
+     AlteraControle ("asigla", "Descrição", AAUX); 
+     AlteraControle ("descsigla", "Descrição", Ccursor.DesSit);
+     Listasecao("Adicional_MOTIVO_AFASTAMENTO");
+    };   
+    Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+  @MOTIVO_RESCISAO (R042CAU)@
+  
+   Ccursor.sql"Select CauDem,DesDem from R042CAU";
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+   
+   ConverteMascara (1, Ccursor.CauDem, aaux, "99");
+     AlteraControle ("aCauDem", "Descrição", aaux);
+     AlteraControle ("aDesDem", "Descrição", Ccursor.DesDem); 
+  
+    Listasecao("Adicional_MOTIVO_RESCISAO");
+      Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+};
+ 
+se(ETipArq = "M")
+{ 
+  @ EMPRESA (R030EMP)  @
+  
+   Ccursor.sql"Select NumEmp,NomEmp from R030EMP";
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+   
+   ConverteMascara (1, Ccursor.NumEmp, aaux, "999");
+     AlteraControle ("aNumEmp", "Descrição", aaux);
+     AlteraControle ("Descemp", "Descrição", Ccursor.NomEmp); 
+  
+    Listasecao("Adicional_EMPRESA");
+      Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+  @ ESTABELECIMENTO (R030FIL) @ 
+  ccursor.sql"Select NumEmp,CodFil,RazSoc,NumCgc from R030FIL";
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+
+     ConverteMascara (1, Ccursor.NumEmp, aaux, "999");
+     AlteraControle ("NumEmpf", "Descrição", aaux);
+     ConverteMascara (1, Ccursor.CodFil, aaux, "9999");
+     AlteraControle ("CodFilf", "Descrição", aaux);
+     ConverteMascara (1, Ccursor.NumCgc, aaux, "99999999999999");
+     AlteraControle ("aNumCgcf", "Descrição", aaux); 
+     AlteraControle ("descfil", "Descrição", Ccursor.RazSoc); 
+  
+    Listasecao("Adicional_ESTABELECIMENTO");
+      Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+  @ CENTRO_RESULTADO (R018CCU)  @
+  Ccursor.sql"Select NumEmp,FilCtb,CodCcu,NomCcu,CodRat from R018CCU WHERE  FilCtb>0 and \
+                     exists (select 1 from r038hcc where r038hcc.numemp=r018ccu.numemp and \
+                                                         r038hcc.codccu=r018ccu.codccu) ";
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+     
+     ConverteMascara (1, Ccursor.NumEmp, aaux, "999");
+     AlteraControle ("NumEmpc", "Descrição", aaux);
+     ConverteMascara (1, 1, aaux, "9999");
+     AlteraControle ("CodFilc", "Descrição", aaux);
+     aaux = Ccursor.CodCcu;
+     convertemascara(5,0,aaux,"999999999999999");
+     AlteraControle ("codccuc", "Descrição", aaux);
+     AlteraControle ("CodRatc", "Descrição", aaux);
+     aaux =  Ccursor.NomCcu;
+     copiaralfa(aaux,1,35);
+     AlteraControle ("NomCcuc", "Descrição", aaux);  
+     Listasecao("Adicional_CENTRO_RESULTADO");
+     
+     ConverteMascara (1, Ccursor.NumEmp, aaux, "999");
+     AlteraControle ("NumEmpc", "Descrição", aaux);
+     ConverteMascara (1, 2, aaux, "9999");
+     AlteraControle ("CodFilc", "Descrição", aaux);
+     aaux = Ccursor.CodCcu;
+     convertemascara(5,0,aaux,"999999999999999");
+     AlteraControle ("codccuc", "Descrição", aaux);
+     AlteraControle ("CodRatc", "Descrição", aaux);
+     aaux =  Ccursor.NomCcu;
+     copiaralfa(aaux,1,35);
+     AlteraControle ("NomCcuc", "Descrição", aaux);  
+     Listasecao("Adicional_CENTRO_RESULTADO");
+     Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor(); 
+  @EVENTO_FOLHA (R008EVC)   @  
+  Ccursor.sql"Select * from R008EVC WHERE CODTAB=941 AND CODEVE<6000";
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+     Intparaalfa(Ccursor.CodTab,aaux);
+     AlteraControle ("NumEmpe", "Descrição", "001");
+     ConverteMascara (1, Ccursor.CodEve, aaux, "9999");
+     AlteraControle ("CodEvee", "Descrição", aaux);
+     AlteraControle ("DescEve", "Descrição", Ccursor.DesEve);
+     se((Ccursor.TipEve =1)ou(Ccursor.TipEve =2))
+     {
+      AlteraControle ("aTipEVE", "Descrição", "1");
+      AlteraControle ("aTipNat", "Descrição", "P");
+     }
+     se((Ccursor.TipEve =3))
+     {
+      AlteraControle ("aTipEVE", "Descrição", "1");
+      AlteraControle ("aTipNat", "Descrição", "D");
+     }
+        se((Ccursor.TipEve =4))
+     {
+      AlteraControle ("aTipEVE", "Descrição", "1");
+      AlteraControle ("aTipNat", "Descrição", "O");
+     }
+     
+   
+     AlteraControle ("FatorM", "Descrição", "0,00");
+  
+  
+    Listasecao("Adicional_EVENTO_FOLHA");
+      Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+  @RELOGIO_PONTO (R058RLG) @
+  Ccursor.sql"Select CodPlt,CodRlg,DesRlg,NomApl,CodFil,Numemp,MODRLG from R058RLG";
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+    Intparaalfa(Ccursor.Numemp,aaux);
+     AlteraControle ("NumempR", "Descrição", "001");
+     Intparaalfa(Ccursor.CodFil,aaux);
+     ConverteMascara (1, Ccursor.CodFil, aaux, "9999");
+     AlteraControle ("CodFilR", "Descrição", aaux);      
+     ConverteMascara (1, Ccursor.CodRlg, aaux, "999999");
+     AlteraControle ("CodRlgr", "Descrição", aaux);
+     ConverteMascara (1, Ccursor.ModRlg, aaux, "999999999999999");
+     AlteraControle ("DescDispo", "Descrição",AAUX); 
+     AlteraControle ("DescRLG", "Descrição", Ccursor.DesRlg); 
+      
+     Listasecao("Adicional_RELOGIO_PONTO");
+      Ccursor.Proximo();
+  Fim;
+}; 
+
+se(ETipArq = "E")
+ {
+  @ COLABORADOR (R034FUN / R034CPL)@
+  
+  DatPERFEF = edatref;
+  
+  Ccursor.sql"Select R034FUN.NumEmp,R034FUN.NumCad,R034FUN.NomFun,R034FUN.SitAfa,R034FUN.GraIns,R034FUN.ESTPOS,R034FUN.POSTRA, \
+   R034fun.DatNas,R034FUN.NumCpf,R034FUN.DefFis,R034FUN.DatAdm,R034FUN.TipAdm,R034FUN.TipCon, R034FUN.TIPSEX,   \
+   R034FUN.NumCtp,R034FUN.SerCtp,R034FUN.EstCtp,R034FUN.DexCtp,R034FUN.NumPis,R034FUN.DcdPis, \
+   R034CPL.EMICID,R034CPL.CiDEMI,R034CPL.ESTCID,R034CPL.DEXCID,R034CPL.ZONELE,R034CPL.SECELE,R034CPL.NUMELE, \
+   R034CPL.NUMCNH,R034CPL.CATCNH,R034CPL.DATCNH,R034CPL.VENCNH,R034CPL.NUMRES,R034CPL.CATRES, \
+   r034fun.codpes,R074CID.NomCid, R034FUN.NumCpf,R034CPL.NumCid,R034CPL.EndRua, R034CPL.EndNum, \
+   R034CPL.EndCpl, R074BAI.NomBai, R034CPL.EndCep,R034CPL.NumTel,R034CPL.EmaPar,R034CPL.CodEst, \
+   R034fun.EstCiv,R034CPL.PaiNas,R034FUN.DatChe,R074PAI.NOMPAI,R034CPL.DDDTEL,r034cpl.numram,r034cpl.nmtel2,  \ 
+   R034CPL.EMACOM,R034FUN.DEFFIS, R034FUN.MODPAG,R034FUN.CODBAN,R034FUN.CODAGE,R034FUN.CONBAN, R034FUN.DIGBAN,\
+   R034FUN.CODFIL, R034FUN.CODCCU,R034FUN.CODCAR,R034FUN.VALSAL,R034FUN.CodEsc,R034FUN.CODTMA,R034FUN.CONRHO,R034FUN.NUMCRA, \ 
+   r034cpl.ficreg, r034fun.codvin, r034fun.tipsal,r034fun.raccor,r034fun.outcon,r034fun.outtet,r034fun.socsin,r034fun.pagsin, \
+   r034fun.perins, r034fun.perper,r034cpl.ccinas,R006ESC.HORMES \
+  from R034fun, r034CPL,R074CID,R074BAI,R074PAI,R006ESC \
+              where R074BAI.codcid = r034CPL.codcid \ 
+                and R074BAI.codBai = r034CPL.codBai \
+                and R074CID.codcid = r034CPL.codcid \ 
+                and R074PAI.CODPAI = r034cpl.codpai \
+                and R034fun.numemp = r034CPL.numemp \
+                and R034fun.tipcol = r034CPL.tipcol \
+                and R034fun.numcad = r034CPL.numcad \
+                AND R034FUN.CodEsc = R006ESC.CodEsc \
+                and R034fun.Tipcol = 1              \               
+                and ((R034FUN.SITAFA<>7 OR (R034FUN.SITAFA=7 AND R034FUN.DATAFA+60>=:DatPERFEF)) \
+                      OR (r034fun.sitafa=7 and exists (select 1 from r046ver xx,r044cal zz \
+                                                                           where  xx.numemp=r034fun.numemp and xx.tipcol=r034fun.tipcol and \
+                                                                                  xx.numcad=r034fun.numcad and zz.numemp=xx.numemp and \
+                                                                                  zz.codcal=xx.codcal and zz.perref=:DatPERFEF)))";
+
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+     z_numemp = ccursor.numemp;
+     z_numcad = ccursor.numcad;
+     definir cursor ccursorz;
+     Ccursorz.sql"Select NumEmp, NumCad, CodDep, NomDep, TipSex,GraPar \
+            from R036DEP \
+              where  numemp=:z_numemp and Tipcol = 1 and numcad=:z_numcad AND grapar=3";
+     ccursorz.abrircursor();
+     enquanto (ccursorz.achou)
+      {
+       se (ccursorz.tipsex = "F")
+        AlteraControle ("NomeMae", "Descrição",ccursorz.nomdep);
+       senao           
+        AlteraControle ("NomePai", "Descrição",ccursorz.nomdep);
+       ccursorz.proximo();
+      };
+     ccursorz.fecharcursor();
+        
+     Intparaalfa(Ccursor.NumEmp,aaux);
+      ConverteMascara (1, Ccursor.NumEmp, aaux, "999");
+     AlteraControle ("NumEmCO", "Descrição", aaux);
+     ConverteMascara (1, Ccursor.numcad, aaux, "99999999");
+     AlteraControle ("NumCadCo", "Descrição", aaux);
+     AlteraControle ("NomFunCO", "Descrição", Ccursor.NomFun); 
+     AlteraControle ("TipSexCo", "Descrição", Ccursor.TipSex);
+     Intparaalfa(Ccursor.codpes,aaux);
+     AlteraControle ("NumCraCO", "Descrição", aaux);
+     se (Ccursor.DatNas > 0)
+      Convertemascara(3,Ccursor.DatNas,aaux,"dd/mm/yyyy"); 
+     senao 
+      aaux = "          ";
+     AlteraControle ("DatNasCo", "Descrição", aaux);  
+     Convertemascara(1,Ccursor.NumCpf,aaux,"99999999999"); 
+     AlteraControle ("NumCpfCo", "Descrição", aaux);  
+     se (Ccursor.DcdPis > 0)
+      Convertemascara(3,Ccursor.DcdPis,aaux,"dd/mm/yyyy"); 
+     senao 
+      aaux = "          ";
+     AlteraControle ("DcdPisCo", "Descrição", aaux);  
+     Convertemascara(1,Ccursor.NumPis,aaux,"99999999999"); 
+     AlteraControle ("NumPisCo", "Descrição", aaux);  
+     AlteraControle ("NumCidCo", "Descrição", Ccursor.NumCid);
+     AlteraControle ("EmiCidCo", "Descrição", Ccursor.EmiCid);
+     AlteraControle ("EstCidCo", "Descrição", Ccursor.EstCid);
+     se (Ccursor.Dexcid > 0)
+       Convertemascara(3,Ccursor.Dexcid,aaux,"dd/mm/yyyy"); 
+     senao 
+      aaux = "          ";
+     AlteraControle ("DexCidCo", "Descrição", aaux);
+     Convertemascara(1,Ccursor.NumCtp,aaux,"999999999"); 
+     AlteraControle ("NumCtpCo", "Descrição", aaux);
+     AlteraControle ("SerCtpCo", "Descrição", Ccursor.SerCtp);
+     AlteraControle ("EstCtpCo", "Descrição", Ccursor.EstCtp);
+     se (Ccursor.Dexctp > 0)
+      Convertemascara(3,Ccursor.Dexctp,aaux,"dd/mm/yyyy"); 
+     senao 
+      aaux = "          ";
+     AlteraControle ("DexCtpCo", "Descrição", aaux);
+     AlteraControle ("CerRevCo", "Descrição", Ccursor.NumRes);
+     AlteraControle ("NumAbCo", "Descrição", Ccursor.NumCnh);
+     AlteraControle ("ABCat", "Descrição", Ccursor.CatCnh);
+     AlteraControle ("NUmEleCo", "Descrição", Ccursor.NumEle);
+     AlteraControle ("SecEleCo", "Descrição", Ccursor.SecEle);
+     AlteraControle ("ZonEleCo", "Descrição", Ccursor.ZonEle);
+     AlteraControle ("DesEndCo", "Descrição", Ccursor.EndRua);
+     AlteraControle ("NumEndCo", "Descrição", Ccursor.EndNum);
+     AlteraControle ("CmpEndCo", "Descrição", Ccursor.EndCpl);
+     AlteraControle ("nombaiCo", "Descrição", Ccursor.NomBai);
+     Convertemascara(1,Ccursor.EndCep,aaux,"99999999"); 
+     AlteraControle ("EndCepCo", "Descrição", aaux); 
+     AlteraControle ("CidEnd", "Descrição", Ccursor.NomCid);
+     AlteraControle ("DefFisCo", "Descrição", Ccursor.DefFis);
+     Convertemascara(1,Ccursor.CodBan,aaux,"999"); 
+     AlteraControle ("CodBanco", "Descrição", aaux); 
+     Convertemascara(1,Ccursor.CodAge,aaux,"9999"); 
+     AlteraControle ("CodAgeCo", "Descrição", aaux); 
+     AlteraControle ("DigAgeCo", "Descrição", "  "); 
+     Convertemascara(1,Ccursor.ConBan,aaux,"999999999999"); 
+     AlteraControle ("NumConCo", "Descrição", aaux); 
+     AlteraControle ("DigConCo", "Descrição", ccursor.digban); 
+     Convertemascara(1,Ccursor.CodFil,aaux,"9999"); 
+     AlteraControle ("CodFilCo", "Descrição", aaux);
+     definir alfa wcar;
+     definir alfa wcaraux;
+     wcar =  ccursor.CodCar;
+     wcaraux=wcar;
+     copiaralfa(wcaraux,1,1);
+     se(wcaraux <> "C")
+       wcar="C9999";
+     convertemascara(5,0,wcar,"U.UUUU");      
+     AlteraControle ("CodCarCo", "Descrição", wcar); 
+     AlteraControle ("CodFunCo", "Descrição", wcar); 
+     definir alfa wccu;
+     wccu = ccursor.codccu;
+     convertemascara (5,0,wccu,"999999999999999");
+     AlteraControle ("CodCcuCo", "Descrição", wccu);
+     se (ccursor.modpag = "R")
+      Alteracontrole ("ForPagCo", "Descrição", "B");
+     senao 
+      {
+       Alteracontrole ("ForPagCo", "Descrição", "T");
+       AlteraControle ("CodBanco", "Descrição", "   "); 
+       AlteraControle ("CodAgeCo", "Descrição", "    "); 
+       AlteraControle ("DigAgeCo", "Descrição", "  "); 
+       AlteraControle ("NumConCo", "Descrição", "            "); 
+       AlteraControle ("DigConCo", "Descrição","  "); 
+      };
+     se (ccursor.tipadm = 1)
+      {
+       Alteracontrole("PriempCo","Descrição","S");
+       Alteracontrole("emptrasCo","Descrição","N");
+      };
+     senao 
+      {
+       Alteracontrole("PriempCo","Descrição","N");
+       se (ccursor.tipadm = 2)
+         Alteracontrole("emptrasCo","Descrição","N");
+       senao 
+         Alteracontrole("emptrasCo","Descrição","S");
+      };
+     se ((ccursor.outcon <> "U") e (ccursor.outtet = "S"))    
+      Alteracontrole("DesInsCo","Descrição","N");
+     senao  
+      Alteracontrole("DesInsCo","Descrição","S");
+     Alteracontrole("AdqsalCo","Descrição","N");
+      
+     se (ccursor.conrho <> 4)
+      Alteracontrole("BatPonCo","Descrição","S");
+     senao 
+      Alteracontrole("BatPonCo","Descrição","N");
+     Alteracontrole("PonNetCo","Descrição","1");
+     Convertemascara(1,Ccursor.codesc,aaux,"999999"); 
+     AlteraControle ("CodEscCo", "Descrição", aaux); 
+     Convertemascara(1,Ccursor.codtma,aaux,"999999"); 
+     AlteraControle ("tmaescco", "Descrição", aaux); 
+     RetSinEmp(Z_NUMEMP,1,Z_NUMCAD,Datsis);
+     zcodsin = CodSinEmp;
+     se (zcodsin = 0)
+      zcodsin = 10;
+     Convertemascara(1,zcodsin,aaux,"999"); 
+     AlteraControle ("CodSinCo", "Descrição", aaux); 
+     Convertemascara(3,Ccursor.Datadm,aaux,"dd/mm/yyyy"); 
+     AlteraControle ("DatAdmCo", "Descrição", aaux);
+     Convertemascara(1,Ccursor.Ficreg,aaux,"99999999"); 
+     AlteraControle ("CodregCo", "Descrição", aaux);
+     naux = ccursor.raccor;
+     se (ccursor.raccor = 4)
+      naux = 7;
+     se (ccursor.raccor = 5)
+      naux = 8;
+     se (ccursor.raccor = 7)
+      naux = 4;
+     AlteraControle ("RasCorCo", "Descrição", aaux);
+     definir data ddatzer;
+     ddatzer = 0;
+     ddatanu = ccursor.datadm;
+     definir cursor canu;
+     canu.sql "select datanu from r034anu where numemp=:z_numemp and \
+                                                tipcol=1         and \
+                                                numcad=:z_numcad and \
+                                                datanu>:ddatzer";
+     canu.abrircursor();
+     se (canu.achou)
+      ddatanu = canu.datanu; 
+     canu.fecharcursor();
+     Convertemascara(3,ddatanu,aaux,"DD/MM/YYYY");
+     Alteracontrole("DatAtsCo","Descrição",aaux);
+     
+     se ((ccursor.tipcon = 1) ou (ccursor.tipcon = 7))
+      aaux = "1";
+     se (ccursor.tipcon = 5)
+      aaux = "2";
+     se (ccursor.tipcon = 6)
+      aaux = "5";                                            
+     se ((ccursor.tipcon = 10)  ou (ccursor.tipcon = 13))
+      aaux = "6";
+     se (ccursor.codvin = 11) 
+      aaaux = 7;      
+     AlteraControle ("CodvinCo", "Descrição", aaux);
+     se (ccursor.tipsal = 2)
+       Alteracontrole ("TipSal","Descrição","H");
+     senao 
+       Alteracontrole ("TipSal","Descrição","M");
+     zhormes = CCURSOR.HORMES / 60;
+     Convertemascara(1,zhormes,aaux,"999,99");
+     Alteracontrole("SalHorCo","Descrição",aaux);
+     Calsalemp(1,z_numemp,1,z_numcad,datsis);
+     Convertemascara(1,SalMesEmp,aaux,"9999999,99");
+     Alteracontrole("ValSalCo","Descrição",aaux);
+     Alteracontrole("SinSNCO","Descrição",ccursor.SocSin);        
+     se (ccursor.pagsin = "M")
+      {
+       Alteracontrole("DesSinSNCo","Descrição","N");
+       Alteracontrole("DesAnoSinCo","Descrição"," ");
+      };
+     senao 
+      {
+       Se (ccursor.pagSin = "S")
+         Alteracontrole("DesAnoSinCo","Descrição","S");
+       senao 
+         Alteracontrole("DesAnoSinCo","Descrição","N");
+      };
+      definir data ddatsis;
+      ddatsis = DatSis;
+@     se (ccursor.perper <> 0)          @
+@      Alteracontrole ("AdiPerCo","Descrição","S"); @
+@     senao           @
+@      Alteracontrole ("AdiPerCo","Descrição","N");@
+
+      definir cursor sqlbuscaper;
+      sqlbuscaper.sql "select r583lau.conper  \ 
+                from r034fun , \ 
+                     r017pos , \ 
+                     r017ghe , \ 
+                     r583ghe , \ 
+                     r583rev , \ 
+                     r583lau  \ 
+                 where r034fun.postra = r017pos.postra \ 
+                       and r034fun.estpos = r017pos.estpos \  
+                       and r017pos.estpos = r017ghe.estpos \ 
+                       and r017pos.postra = r017ghe.postra \  
+                       and r017ghe.codpra = r583ghe.codpra \ 
+                       and r017ghe.codghe = r583ghe.codghe \ 
+                       and r017ghe.datfim = :ddatzro \  
+                       and r017ghe.codpra = r583rev.codpra \ 
+                       and r017ghe.codghe = r583rev.codghe \ 
+                       and r583rev.datter >= :ddatsis \ 
+                       and r583rev.datini <= :ddatsis \ 
+                       and r583rev.codpra = r583lau.codpra \ 
+                       and r583rev.codghe = r583lau.codghe \ 
+                       and r583rev.revghe = r583lau.revghe \ 
+                       and r034fun.numemp = 1 \ 
+                       and r034fun.tipcol = 1 \ 
+                       and r034fun.sitafa <> 7 \ 
+                       and r034fun.numcad = :z_numcad order by  r583lau.conper asc";
+
+      sqlbuscaper.abrircursor();
+      Alteracontrole ("AdiPerCo","Descrição","N");
+      Enquanto (sqlbuscaper.achou)
+      Inicio
+      {
+        Alteracontrole ("AdiPerCo","Descrição",sqlbuscaper.conper); 
+        sqlbuscaper.proximo();
+      };
+      Fim 
+      sqlbuscaper.fecharcursor();
+@     se (ccursor.perIns <> 0)          @
+@      {                                 @
+@       convertemascara(1,ccursor.perins,aaux,"99");@
+@       Alteracontrole ("AdiInsCo","Descrição",aaux);@
+@      };@
+@     senao@           
+@      Alteracontrole ("AdiInsCo","Descrição","00");@
+
+      definir cursor sqlbuscains;
+      sqlbuscains.sql "select r583ghe.usu_perins  \ 
+                from r034fun , \ 
+                     r017pos , \ 
+                     r017ghe , \ 
+                     r583ghe , \ 
+                     r583rev , \ 
+                     r583lau  \ 
+                 where r034fun.postra = r017pos.postra \ 
+                       and r034fun.estpos = r017pos.estpos \  
+                       and r017pos.estpos = r017ghe.estpos \ 
+                       and r017pos.postra = r017ghe.postra \  
+                       and r017ghe.codpra = r583ghe.codpra \ 
+                       and r017ghe.codghe = r583ghe.codghe \ 
+                       and r017ghe.datfim = :ddatzro \  
+                       and r017ghe.codpra = r583rev.codpra \ 
+                       and r017ghe.codghe = r583rev.codghe \ 
+                       and r583rev.datter >= :ddatsis \ 
+                       and r583rev.datini <= :ddatsis \ 
+                       and r583rev.codpra = r583lau.codpra \ 
+                       and r583rev.codghe = r583lau.codghe \ 
+                       and r583rev.revghe = r583lau.revghe \ 
+                       and r034fun.numemp = 1 \ 
+                       and r034fun.tipcol = 1 \ 
+                       and r034fun.sitafa <> 7 \ 
+                       and r034fun.numcad = :z_numcad order by r583ghe.usu_perins desc ";
+
+      sqlbuscains.abrircursor();
+      Alteracontrole ("AdiInsCo","Descrição","00");
+      auxIndIns = 0;
+      Enquanto (sqlbuscains.achou)
+      Inicio
+      {
+        se (sqlbuscains.usu_perins>auxIndIns)
+        {
+          auxIndIns=sqlbuscains.usu_perins;     
+          convertemascara(1,auxIndIns,aaux,"99");   
+          Alteracontrole ("AdiInsCo","Descrição",aaux);
+        }
+        sqlbuscains.proximo();
+      };
+      Fim 
+      sqlbuscains.fecharcursor();
+
+     definir cursor cpli;
+     cpli.sql "select perliv from r034pli where numemp=:z_numemp and \
+                                                tipcol=1         and \
+                                                numcad=:z_numcad and \
+                                                codper=1";
+     cpli.abrircursor();
+     se (cpli.achou)
+      {
+       convertemascara(1,cpli.perliv,aaux,"99");
+       Alteracontrole ("AdiTit","Descrição",aaux); 
+      };
+     senao 
+      Alteracontrole ("AdiTit","Descrição","00"); 
+     cpli.fecharcursor();
+
+     
+     
+     definir cursor cprv;
+     cprv.sql "select * from usu_tprvprv where usu_numemp=:z_numemp and \
+                                               usu_tipcol=1         and \
+                                               usu_numcad=:z_numcad and \
+                                               usu_datade<=:ddatsis and \
+                                              (usu_datenc>=:ddatsis or usu_datenc=:ddatzer) and \
+                                               usu_tipprv<>'N' order by usu_datade desc";
+     cprv.abrircursor();
+     se (cprv.achou)
+       Alteracontrole ("UniPrev","Descrição","SIM"); 
+     senao 
+      Alteracontrole ("Uniprev","Descrição","NÃO"); 
+     cprv.fecharcursor();
+
+     definir cursor csel;
+     csel.sql "select codsel from r034sel where numemp=:z_numemp and \
+                                                tipcol=1         and \
+                                                numcad=:z_numcad and \
+                                                codsel in (7,8,9)";
+     csel.abrircursor();
+     zsumsel = 0;
+     enquanto (csel.achou)
+      {
+       zsumsel = zsumsel + csel.codsel;
+       csel.proximo(); 
+      };
+     csel.fecharcursor();
+     se (zsumsel = 0)
+      Alteracontrole("AssEmp","Descrição","000");
+     se (zsumsel = 7)
+      Alteracontrole("AssEmp","Descrição","001");
+     se (zsumsel = 8)
+      Alteracontrole("AssEmp","Descrição","002");
+     se (zsumsel = 9)
+      Alteracontrole("AssEmp","Descrição","003");
+     se (zsumsel = 15)
+      Alteracontrole("AssEmp","Descrição","012");
+     se (zsumsel = 16)
+      Alteracontrole("AssEmp","Descrição","013");
+     se (zsumsel = 17)
+      Alteracontrole("AssEmp","Descrição","023");
+     se (zsumsel = 24)
+      Alteracontrole("AssEmp","Descrição","123");
+@@
+     Convertemascara(1,Ccursor.DDDTel,aaux,"999"); 
+     AlteraControle ("DDDTelCo", "Descrição", aaux);                                           
+     AlteraControle ("NumTelCo", "Descrição", Ccursor.NumTel);
+     AlteraControle ("NumTe2Co", "Descrição", Ccursor.NmTel2);
+     AlteraControle ("RamTel", "Descrição", Ccursor.NumRam);
+     AlteraControle ("EmaComCo", "Descrição", Ccursor.EmaCom); 
+     
+     AlteraControle ("EmaParCo", "Descrição", Ccursor.EmaPar); 
+     AlteraControle ("CodEstCO", "Descrição", Ccursor.CodEst);
+     AlteraControle ("DeslSNCO", "Descrição", "N");
+     se(Ccursor.SitAfa = 7) 
+       AlteraControle ("DeslSNCO", "Descrição", "S"); 
+     aaux = " ";   
+     se(Ccursor.EstCiv = 2)
+        aaux = "CAS";      
+     se(Ccursor.EstCiv = 5)
+        aaux = "CON";
+     se(Ccursor.EstCiv = 4)
+        aaux = "VIU"; 
+     se(Ccursor.EstCiv = 3)
+        aaux = "DIV";  
+     se(Ccursor.EstCiv = 9)
+        aaux = "OUT";   
+     se(Ccursor.EstCiv = 1)
+        aaux = "SOL";
+     se(Ccursor.EstCiv = 7)
+        aaux = "MAR";        
+     AlteraControle ("EstCivCo", "Descrição", aaux);
+     intparaalfa(CCursor.GraIns,aaux); 
+     AlteraControle ("GraInsCo", "Descrição", aaux);
+     AlteraControle ("NAturalCo", "Descrição", "0"); 
+     se(CCursor.PaiNas = 1) 
+      AlteraControle ("NAturalCo", "Descrição", "1"); 
+     se (Ccursor.DatChe > 0) 
+      Convertemascara(3,Ccursor.DatChe,aaux,"dd/mm/yyyy"); 
+     senao 
+      aaux = "          ";
+     AlteraControle ("DatCheCO", "Descrição", aaux);
+     
+     definir cursor c_cid;
+     zcodcid = ccursor.ccinas;
+     c_cid.sql "select nomcid from r074cid where codcid=:zcodcid";
+     c_cid.abrircursor();
+     se (c_cid.achou)
+      AlteraControle ("NomePAisNasCO", "Descrição",c_cid.nomcid);
+     senao 
+      AlteraControle ("NomePAisNasCO", "Descrição",ccursor.nompai);
+@BusCadChefe (Ccursor.NumEmp, 1, Ccursor.NumCad, datsis, 0, "N", EmpChe, TipChe, CadChe, LocChe, LocCol, "N")     ;@
+     definir cursor cChefe;
+     definir data chedatsis;
+     Definir data chedatzero;
+     chedatzero=0;
+     chedatsis = DatSis;
+     chefunemp = Ccursor.NumEmp;
+     chefuncad = Ccursor.NumCad;
+     cChefe.sql "select r080exc.empche, r080exc.tipche, r080exc.cadche  \
+     from r080exc where r080exc.numemp=:chefunemp and r080exc.tipcol=1 and r080exc.numcad=:chefuncad   \
+     and datini<=:chedatsis  and (datfim>=:chedatsis  or datfim=:chedatzero )";
+     EmpChe=1;
+     CadChe=2284;
+     cChefe.abrircursor();
+     enquanto (cChefe.achou)
+     {
+       EmpChe = cChefe.empche;
+       CadChe = cChefe.cadche;       
+       cChefe.proximo(); 
+     };
+     cChefe.fecharcursor();
+     
+     se (EMPCHE > 0)
+      {
+       convertemascara(1,EmpChe,aaux,"9999"); 
+       AlteraControle ("EmpCheCo", "Descrição", aaux);
+       convertemascara(1,CadChe,aaux,"99999999"); 
+       AlteraControle ("CadCheCo", "Descrição", aaux);
+      };
+     senao 
+      {
+       definir alfa wpostra;
+       zestpos = ccursor.estpos;
+       wpostra = ccursor.postra;
+       RetornaChefePosto(1, zestpos,3,DatSis,wpostra, empche,tipche,cadche); 
+       convertemascara(1,EmpChe,aaux,"9999"); 
+       AlteraControle ("EmpCheCo", "Descrição", aaux);
+       convertemascara(1,CadChe,aaux,"99999999"); 
+       AlteraControle ("CadCheCo", "Descrição", aaux);
+      }; 
+       
+     AlteraControle ("NivSalSup", "Descrição", "");
+     AlteraControle ("NivSalfun", "Descrição",  "");
+     AlteraControle ("NivSalter", "Descrição",  "");
+     nnumemp = Ccursor.numemp;
+     nnumcad = Ccursor.numcad;
+     Ccursorx.sql "select USU_EstSup,USU_ClaSup,USU_NivSup,  \
+                          USU_EstMed ,USU_ClaMed,USU_NivMed,    \
+                          USU_EstTec,USU_ClaTec,USU_NivTec,  \
+                          USU_EstTer,USU_ClaTer,USU_NivTer, Datalt,seqalt from  R038HSA where  \ 
+                          numemp = :nnumemp and  Tipcol = 1 and   numcad = :nnumcad  \ 
+                          order By Datalt desc, seqalt desc ";
+      Ccursorx.abrircursor();
+      se(Ccursorx.achou)
+      Inicio
+       se (Ccursorx.USU_EstSup > 0)
+        {
+         convertemascara (1,ccursorx.USU_EstSup,aaux,"99");
+         aaux = aaux+"-"+Ccursorx.USU_ClaSup+"-"+Ccursorx.USU_NivSup;
+        };
+       senao 
+        aaux = "";  
+       AlteraControle ("NivSalSup", "Descrição", aaux);
+       AlteraControle ("enqSalSup", "Descrição", aaux);
+       se (Ccursorx.USU_EstMed > 0)
+        {
+         convertemascara (1,ccursorx.USU_EstMed,aaux,"99");
+         aaux = aaux+"-"+Ccursorx.USU_ClaMed+"-"+Ccursorx.USU_NivMed;
+        };
+       senao 
+        aaux = "";  
+       AlteraControle ("NivSalfun", "Descrição", aaux);
+       AlteraControle ("enqSalfun", "Descrição", aaux);
+       se (Ccursorx.USU_EstTer > 0)
+        {
+         convertemascara (1,ccursorx.USU_EstTer,aaux,"99");
+         aaux = aaux+"-"+Ccursorx.USU_ClaTer+"-"+Ccursorx.USU_NivTer;
+        };
+       senao 
+        aaux = "";  
+       AlteraControle ("NivSalter", "Descrição", aaux);
+       AlteraControle ("enqSalter", "Descrição", aaux);
+       se (Ccursorx.USU_EstTec > 0)
+        {
+         convertemascara (1,ccursorx.USU_EstTec,aaux,"99");
+         aaux = aaux +"-"+Ccursorx.USU_ClaTec+"-"+Ccursorx.USU_NivTec;
+        };
+       senao 
+        aaux = ""; 
+       AlteraControle ("NivSalTec", "Descrição", aaux);
+       AlteraControle ("enqSalTec", "Descrição", aaux);
+      Fim;
+      Ccursorx.fecharcursor(); 
+      Listasecao("Adicional_COLABORADOR");                    
+      Ccursor.Proximo();
+  Fim;
+  Ccursor.fecharcursor();
+   
+  @ DEPENDENTE @
+  
+  DatPERREF = edatref;
+  
+  Ccursor.sql"Select r036dep.NumEmp, r036dep.NumCad, r036dep.CodDep, r036dep.NomDep, r036dep.TipSex,r036dep.DatNas,r036dep.EstCiv,r036dep.datinv, \
+            r036dep.GraPar, r036dep.LimIrf, R036DEP.GraIns,R022GRA.DESGRA, r036dep.AuxCre, r036dep.usu_datexc,r036dep.usu_stadep,r036dep.locnas \
+            from R036DEP,R022GRA,r034fun   \
+              where  R036DEP.Tipcol = 1 AND \
+                     R036DEP.GRAINS=R022GRA.GRAINS AND \
+                     R036DEP.NUMEMP=R034FUN.NUMEMP AND \
+                     R036DEP.TIPCOL=R034FUN.TIPCOL AND \
+                     R036DEP.NUMCAD=R034FUN.NUMCAD AND \
+                     (R034FUN.SITAFA<>7 OR (R034FUN.SITAFA=7 AND R034FUN.DATAFA>=:DatPERFEF))";
+                     
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+    Intparaalfa(Ccursor.NumEmp,aaux);
+    ConverteMascara (1, Ccursor.NumEmp, aaux, "999");
+     AlteraControle ("NumEmpd", "Descrição", aaux);
+     Intparaalfa(Ccursor.NumCad,aaux);
+     ConverteMascara (1, Ccursor.NumCad, aaux, "99999999");
+     AlteraControle ("NumCadd", "Descrição", aaux);
+     Intparaalfa(Ccursor.CodDep,aaux);
+     ConverteMascara (1, Ccursor.CodDep, aaux, "99");
+     AlteraControle ("CodDepd", "Descrição", aaux);
+     AlteraControle ("NomDep", "Descrição", Ccursor.NomDep); 
+     AlteraControle ("TipSexd", "Descrição", Ccursor.TipSex); 
+     SE (Ccursor.DatNas > 0) 
+       Convertemascara(3,Ccursor.DatNas,aaux,"dd/mm/yyyy"); 
+     senao 
+      aaux = "          ";
+     AlteraControle ("DatNasd", "Descrição", aaux); 
+     
+     se (CCURSOR.datinv > 0)
+      AlteraControle ("StatusD2", "Descrição", "S"); 
+     senao
+      AlteraControle ("StatusD2", "Descrição", "N"); 
+      
+     se (CCURSOR.AuxCre > "S")
+      AlteraControle ("CrecheD", "Descrição", "S"); 
+     senao
+      AlteraControle ("CrecheD", "Descrição", "N"); 
+     
+     AlteraControle ("FretecD", "Descrição", "N"); 
+     AlteraControle ("EscolarD", "Descrição", "N"); 
+
+
+     definir cursor c_cid;
+     zcodcid = ccursor.locnas;
+     c_cid.sql "select nomcid from r074cid where codcid=:zcodcid";
+     c_cid.abrircursor();
+     se (c_cid.achou)
+      AlteraControle ("NaturalD", "Descrição",c_cid.nomcid);
+     senao 
+      AlteraControle ("NaturalD", "Descrição","     ");
+
+      
+     se (ccursor.usu_stadep = "N")
+      AlteraControle ("Statusd", "Descrição","I"); 
+     senao 
+      AlteraControle ("Statusd", "Descrição","A"); 
+     SE (Ccursor.usu_DatExc > 0) 
+       Convertemascara(3,Ccursor.usu_datexc,aaux,"dd/mm/yyyy"); 
+     senao 
+      aaux = "          ";
+     AlteraControle ("DatdesD", "Descrição",aaux);
+           
+     retdifdat(3,Ccursor.DatNas,datsis,qtddias);
+     AlteraControle ("DEPIRRd", "Descrição", "N");
+     AlteraControle ("Grainsd", "Descrição", Ccursor.DesGra); 
+    
+     se(qtddias <= Ccursor.LimIrf )
+      AlteraControle ("DEPIRRd", "Descrição", "S");
+     
+      se(Ccursor.EstCiv = 2)
+        aaux = "CAS";      
+      se(Ccursor.EstCiv = 5)
+        aaux = "CON";
+      se(Ccursor.EstCiv = 4)
+        aaux = "VIU"; 
+      se(Ccursor.EstCiv = 3)
+        aaux = "DIV";  
+      se(Ccursor.EstCiv = 9)
+        aaux = "OUT";   
+      se(Ccursor.EstCiv = 1)
+        aaux = "SOL";
+      se(Ccursor.EstCiv = 7)
+        aaux = "MAR";        
+      AlteraControle ("EstCivd", "Descrição", aaux);
+   
+      se(Ccursor.GraPar = 2)
+        aaux = "1";  
+      senao      
+      se(Ccursor.GraPar = 3)
+        aaux = "3";
+      senao
+      se(Ccursor.GraPar = 9)
+        aaux = "4"; 
+      senao
+      se(Ccursor.GraPar = 18)
+        aaux = "7"; 
+      senao 
+      se(Ccursor.GraPar = 14)
+        aaux = "6";
+      senao     
+      se(Ccursor.GraPar = 11)
+        aaux = "9";
+      senao  
+      se(Ccursor.GraPar = 16)
+        aaux = "10";
+      senao
+      se(Ccursor.GraPar = 17)
+        aaux = "8";
+      senao  
+        aaux = "5";
+         
+      AlteraControle ("GraPard", "Descrição", aaux);
+      
+     Listasecao("Adicional_DEPENDENTE");
+     Ccursor.Proximo();
+  Fim;
+  Ccursor.fecharcursor();
+  
+  @ AUTONOMO (R034FUN = TIPCOL = 2) @
+  
+  Ccursor.sql"Select R034FUN.NumEmp,R034FUN.NumCad,R034FUN.NomFun,R034FUN.SitAfa,R034FUN.GraIns, \
+  R034fun.DatNas,R034FUN.NumCpf,R034FUN.DefFis,R034FUN.DatAdm,R034FUN.TipAdm,R034FUN.TipCon,   \
+  R034FUN.NumCtp,R034FUN.SerCtp,R034FUN.EstCtp,R034FUN.DexCtp,R034FUN.NumPis,R034FUN.DcdPis, \
+   r034fun.numcra,R074CID.NomCid, R034FUN.NumCpf,R034CPL.NumCid,R034CPL.EndRua, R034CPL.EndNum, \
+   R034CPL.EndCpl, R074BAI.NomBai, R034CPL.EndCep,R034CPL.NumTel,R034CPL.EmaPar,R034CPL.CodEst  \
+  from R034fun, r034CPL,R074CID,R074BAI \
+              where R074BAI.codcid = r034CPL.codcid \ 
+                and R074BAI.codBai = r034CPL.codBai \
+                and R074CID.codcid = r034CPL.codcid \ 
+                and R034fun.numemp = r034CPL.numemp \
+                and R034fun.tipcol = r034CPL.tipcol \
+                and R034fun.numcad = r034CPL.numcad \
+                and R034fun.Tipcol = 2";
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+    Intparaalfa(Ccursor.NumEmp,aaux);
+    ConverteMascara (1, Ccursor.NumEmp, aaux, "999");
+     AlteraControle ("NumEmpTE", "Descrição", aaux);
+     Intparaalfa(Ccursor.NumCad,aaux);
+     ConverteMascara (1, Ccursor.NumCad, aaux, "99999999");
+     AlteraControle ("NumCadTE", "Descrição", aaux);
+     AlteraControle ("NomPEsTE", "Descrição", Ccursor.NomFun); 
+     Intparaalfa(Ccursor.numcra,aaux);
+     AlteraControle ("CodpesTE", "Descrição", aaux);
+     se (Ccursor.DatNas > 0)
+       Convertemascara(3,Ccursor.DatNas,aaux,"dd/mm/yyyy"); 
+     senao 
+       aaux = "          ";
+     AlteraControle ("DatNasTE", "Descrição", aaux);  
+     Convertemascara(1,Ccursor.NumCpf,aaux,"99999999999"); 
+     AlteraControle ("NumCpfTE", "Descrição", aaux);  
+     AlteraControle ("NumCpfTE", "Descrição", Ccursor.NumCid);
+     AlteraControle ("DesEndTE", "Descrição", Ccursor.EndRua);
+     AlteraControle ("NumRGTE",  "Descrição", Ccursor.NumCid);
+     AlteraControle ("NumEndTE", "Descrição", Ccursor.EndNum);
+     AlteraControle ("CmpEndTE", "Descrição", Ccursor.EndCpl);
+     AlteraControle ("nombaiTE", "Descrição", Ccursor.NomBai);
+     AlteraControle ("CidResTE", "Descrição", Ccursor.NomCid);
+     Convertemascara(1,Ccursor.EndCep,aaux,"9999999-999"); 
+     AlteraControle ("EndCepTE", "Descrição", aaux); 
+    
+     AlteraControle ("NumTelTE", "Descrição", Ccursor.NumTel);
+     AlteraControle ("EmaParTE", "Descrição", Ccursor.EmaPar); 
+     AlteraControle ("CodEstTE", "Descrição", Ccursor.CodEst);
+     Alteracontrole ("NomMaeTe", "Descrição", "   ");
+
+     z_numemp = ccursor.numemp;
+     z_numcad = ccursor.numcad;
+     definir cursor ccursorz;
+     Ccursorz.sql"Select NumEmp, NumCad, CodDep, NomDep, TipSex,GraPar \
+            from R036DEP \
+              where  numemp=:z_numemp and Tipcol = 1 and numcad=:z_numcad AND grapar=3";
+     ccursorz.abrircursor();
+     enquanto (ccursorz.achou)
+      {
+       se (ccursorz.tipsex = "F")
+        AlteraControle ("NomMaeTE", "Descrição",ccursorz.nomdep);
+       ccursorz.proximo();
+      };
+     ccursorz.fecharcursor();
+     AlteraControle ("SitAfaTE", "Descrição", "S");
+     se(Ccursor.SitAfa = 7) 
+     AlteraControle ("SitAfaTE", "Descrição", "N");    
+     Listasecao("Adicional_AUTONOMO");
+      Ccursor.Proximo();
+  Fim;
+  Ccursor.fecharcursor();
+
+}; 
+
+se(ETipArq = "H")
+{
+  DatPERFEF = edatref;
+  
+  @HIST_SALARIAL (R038HSA)@
+  Ccursor.sql"Select NumEmp, NumCad,DatAlt,CodMot,ValSal,TipSal, seqalt \
+            from R038HSA aa \
+              where aa.Tipcol = 1 \
+              and datalt=(select max(datalt) from r038hsa xx where xx.numemp=aa.numemp and \
+                                                                   xx.tipcol=aa.tipcol and \
+                                                                   xx.numcad=aa.numcad and \
+                                                                   xx.datalt<=:dfimcmp) \
+              and seqalt=(select max(seqalt) from r038hsa xx where xx.numemp=aa.numemp and \
+                                                                   xx.tipcol=aa.tipcol and \
+                                                                   xx.numcad=aa.numcad and \
+                                                                   xx.datalt=aa.datalt) \
+              and exists (select 1 from r034fun bb where aa.numemp=bb.numemp and \
+                                                         aa.tipcol=bb.tipcol and \
+                                                         aa.numcad=bb.numcad and \
+                                                        ((bb.sitafa<>7 or (bb.sitafa=7 and bb.datafa>=:DatPERFEF)) or \
+                                                         (bb.sitafa=7 and exists (select 1 from r046ver xx,r044cal zz \
+                                                                           where  xx.numemp=bb.numemp and xx.tipcol=bb.tipcol and \
+                                                                                  xx.numcad=bb.numcad and zz.numemp=xx.numemp and \
+                                                                                  zz.codcal=xx.codcal and zz.perref=:DatPERFEF))))";
+  Ccursor.AbrirCursor();
+  enquanto (Ccursor.Achou)
+  Inicio
+    Intparaalfa(Ccursor.NumEmp,aaux);  
+     ConverteMascara (1, Ccursor.NumEmp, aaux, "999");
+     AlteraControle ("NumEmpHS", "Descrição", aaux);
+     Intparaalfa(Ccursor.NumCad,aaux);
+      ConverteMascara (1, Ccursor.NumCad, aaux, "99999999");
+     AlteraControle ("NumCadHS", "Descrição", aaux);
+     Convertemascara(3,Ccursor.DatAlt,aaux,"dd/mm/yyyy"); 
+     AlteraControle ("DatAltHS", "Descrição", aaux); 
+     convertemascara(1,Ccursor.CodMot,aaux,"999999");
+     AlteraControle ("ModSalHS", "Descrição", aaux);
+     Convertemascara(1,Ccursor.ValSal,aaux,"9999999,99"); 
+     AlteraControle ("ValSalHS", "Descrição", aaux);
+     se(ccursor.TipSal = 1)
+       aaux = "M";
+     se(ccursor.TipSal = 2)
+       aaux = "H"; 
+     retescemp(Ccursor.NumEmp,1,Ccursor.NumCad,datsis);
+     zcodesc = EscEmp;
+     definir cursor c_esc;
+     c_esc.sql "select hormes from r006esc where CodEsc=:zcodesc";
+     c_esc.abrircursor();
+     se (c_esc.achou)
+      {
+       zhormes = c_esc.hormes / 60;
+       Convertemascara(1,zhormes,aaux,"999,99"); 
+       AlteraControle ("vSalHS", "Descrição", aaux);
+      };
+     c_esc.fecharcursor();
+       
+     AlteraControle ("TipsalHS", "Descrição", aaux);
+     Listasecao("Adicional_HIST_SALARIAL");
+     Ccursor.Proximo();   
+  Fim;
+  Ccursor.FecharCursor();
+  
+  @HIST_FUNCAO (R038HFU)@
+  
+  Ccursor.sql"Select NumEmp, NumCad,Datalt,CodCar \
+            from R038HCA aa \
+              where aa.Tipcol = 1 \
+              and datalt=(select max(datalt) from r038hca xx where xx.numemp=aa.numemp and \
+                                                          xx.tipcol=aa.tipcol and \
+                                                          xx.numcad=aa.numcad and \
+                                                          xx.datalt<=:dfimcmp) \
+              and exists (select 1 from r034fun bb where aa.numemp=bb.numemp and \
+                                                         aa.tipcol=bb.tipcol and \
+                                                         aa.numcad=bb.numcad and \
+                                                        (bb.sitafa<>7 or (bb.sitafa=7 and bb.datafa>=:DatPERFEF)))";
+  Ccursor.AbrirCursor();
+  enquanto (Ccursor.Achou)
+  Inicio
+    Intparaalfa(Ccursor.NumEmp,aaux);
+    ConverteMascara (1, Ccursor.NumEmp, aaux, "999");
+     AlteraControle ("NumEmpHF", "Descrição", aaux);
+     Intparaalfa(Ccursor.NumCad,aaux);
+     ConverteMascara (1, Ccursor.NumCad, aaux, "99999999");
+     AlteraControle ("NumCadHF", "Descrição", aaux);
+     Convertemascara(3,Ccursor.DatAlt,aaux,"dd/mm/yyyy"); 
+     AlteraControle ("DatAltHF", "Descrição", aaux); 
+     aaux = Ccursor.CodCar;
+     CONVERTEMASCARA(5,0,AAUX,"U.UUUU");
+     AlteraControle ("CodCarHF", "Descrição", aaux);
+     AlteraControle ("CodFunHF", "Descrição", aaux);
+     Listasecao("Adicional_HIST_FUNCAO");
+     Ccursor.Proximo();   
+  Fim;
+  Ccursor.FecharCursor();
+  
+  @HIST_LOTACAO (R038HFI, R038HCC)@
+  
+  Ccursor.sql"Select R038HCC.NumEmp, R038HCC.NumCad,R038HCC.DatAlt,R038HFI.CodFil, R038HCC.CodCcu\
+            from R038HFI , R038HCC, r018ccu \
+              where R038HFI.NumEmp = R038HCC.NumEmp \
+              and R038HFI.TipCol = 1              \
+              and R038HFI.TipCol = R038HCC.TipCol \ 
+              and R038HFI.NumCad = R038HCC.NumCad \
+              AND r038hcc.numemp=r018ccu.numemp \ 
+              and r038hcc.codccu=r018ccu.codccu \
+              and R018CCU.DATEXT=:ddatzro \ 
+              and R038HFI.datalt=(select max(datalt) from r038hfi xx where xx.numemp=R038HFI.numemp and \
+                                                                      xx.tipcol=R038HFI.tipcol and \
+                                                                      xx.numcad=R038HFI.numcad and \
+                                                                      xx.datalt<=:dfimcmp) \
+              and R038HCC.datalt=(select max(datalt) from r038hcc zz where zz.numemp=R038HCC.numemp and \
+                                                                      zz.tipcol=R038HCC.tipcol and \
+                                                                      zz.numcad=R038HCC.numcad and \
+                                                                      zz.datalt<=:dfimcmp) \
+              and exists (select 1 from r034fun bb where R038HFI.numemp=bb.numemp and \
+                                                         R038HFI.tipcol=bb.tipcol and \
+                                                         R038HFI.numcad=bb.numcad and \
+                                                        (bb.sitafa<>7 or (bb.sitafa=7 and bb.datafa>=:DatPERFEF)))";
+  Ccursor.AbrirCursor();
+  enquanto (Ccursor.Achou)
+  Inicio
+    Intparaalfa(Ccursor.NumEmp,aaux);
+    ConverteMascara (1, Ccursor.NumEmp, aaux, "999");
+     AlteraControle ("NumEmpHL", "Descrição", aaux);
+     Intparaalfa(Ccursor.NumCad,aaux);
+     ConverteMascara (1, Ccursor.NumCad, aaux, "99999999");
+     AlteraControle ("NumCadHL", "Descrição", aaux);
+     Convertemascara(3,Ccursor.DatAlt,aaux,"dd/mm/yyyy"); 
+     AlteraControle ("DatAltHL", "Descrição", aaux); 
+     Intparaalfa(Ccursor.CodFil,aaux);
+     ConverteMascara (1, Ccursor.CodFil, aaux, "9999");
+     AlteraControle ("CodFilHL", "Descrição", aaux);  
+     aaux = Ccursor.CodCcu;
+     convertemascara(5,0,aaux,"999999999999999");
+     AlteraControle ("CodCcuHL", "Descrição", aaux);    
+     Listasecao("Adicional_HIST_LOTACAO");
+     Ccursor.Proximo(); 
+  Fim;
+  Ccursor.FecharCursor();
+
+  @HIST_HORARIO (R038HES)@
+
+  Ccursor.sql"Select NumEmp,NumCad,DatAlt,CodEsc,CodTma \
+            from R038HES aa \
+              where tipcol = 1 \
+              and datalt=(select max(datalt) from r038hes xx where xx.numemp=aa.numemp and \
+                                                                   xx.tipcol=aa.tipcol and \
+                                                                   xx.numcad=aa.numcad and \
+                                                                   xx.datalt<=:dfimcmp) \
+              and exists (select 1 from r034fun bb where aa.numemp=bb.numemp and \
+                                                         aa.tipcol=bb.tipcol and \
+                                                         aa.numcad=bb.numcad and \
+                                                        (bb.sitafa<>7 or (bb.sitafa=7 and bb.datafa>=:DatPERFEF)))";
+
+  Ccursor.AbrirCursor();
+  enquanto (Ccursor.Achou)
+  Inicio
+    Intparaalfa(Ccursor.NumEmp,aaux);
+    ConverteMascara (1, Ccursor.NumEmp, aaux, "999");
+    AlteraControle ("NumEmpHH", "Descrição", aaux);
+    Intparaalfa(Ccursor.NumCad,aaux);
+    ConverteMascara (1, Ccursor.NumCad, aaux, "99999999");
+    AlteraControle ("NumCadHH", "Descrição", aaux);
+    Convertemascara(3,Ccursor.DatAlt,aaux,"dd/mm/yyyy"); 
+    AlteraControle ("DatAltHH", "Descrição", aaux); 
+    Intparaalfa(Ccursor.CodEsc,aaux);
+    ConverteMascara (1, Ccursor.CodEsc, aaux, "999999");
+    AlteraControle ("CodEscHH", "Descrição", aaux);
+    Intparaalfa(Ccursor.CodTma,aaux);
+    ConverteMascara (1, Ccursor.CodTma, aaux, "999999"); 
+    AlteraControle ("CodTmaHH", "Descrição", aaux);    
+    Listasecao("Adicional_HIST_HORARIO");
+    Ccursor.Proximo();  
+  Fim;
+  Ccursor.FecharCursor();
+  
+  @HIST_AFASTAMENTO (R038AFA)@
+  
+  Ccursor.sql"     \
+  Select NumEmp,NumCad,\
+                     DatAfa,DatTer,\
+                      SitAfa, R010SIT.USU_codrep from R038AFA aa, R010SIT   where 1=2 \
+   union all                                                                \
+  Select NumEmp,NumCad,\
+                     DatAfa,DatTer,\
+                      max(SitAfa), max(R010SIT.USU_codrep) from R038AFA aa,R010SIT \
+                                                       where aa.tipcol = 1 \
+                                                       and datafa=(select max(datafa) from r038afa xx where xx.numemp=aa.numemp and \
+                                                                                                            xx.tipcol=aa.tipcol and \
+                                                                                                            xx.numcad=aa.numcad and \
+                                                                                                            xx.datafa<=:dfimcmp) \
+                                                       and   R010SIT.CODSIT=aa.SITAFA \
+                                                       and   R010SIT.USU_CODREP<>' ' \
+                                                       and exists (select 1 from r034fun bb where aa.numemp=bb.numemp and \
+                                                                                                  aa.tipcol=bb.tipcol and \
+                                                                                                  aa.numcad=bb.numcad and \
+                                                                                                 (bb.sitafa<>7 or (bb.sitafa=7 and bb.datafa>=:DatPERFEF))) \
+                                                    group by aa.NumEmp, aa.NumCad, aa.DatAfa, aa.DatTer   ";
+  Ccursor.AbrirCursor();
+  enquanto (Ccursor.Achou)
+  Inicio
+    Intparaalfa(Ccursor.NumEmp,aaux);
+    ConverteMascara (1, Ccursor.NumEmp, aaux, "999"); 
+    AlteraControle ("NumEmpHA", "Descrição", aaux);
+    Intparaalfa(Ccursor.NumCad,aaux);
+    ConverteMascara (1, Ccursor.NumCad, aaux, "99999999"); 
+    AlteraControle ("NumCadHA", "Descrição", aaux);
+    Convertemascara(3,Ccursor.DatAfa,aaux,"dd/mm/yyyy"); 
+    AlteraControle ("DatAfaHA", "Descrição", aaux); 
+    Convertemascara(3,Ccursor.DatTer,aaux,"dd/mm/yyyy");
+    definir alfa aauxafa; 
+    tiraespacos(aaux,aaux);
+    se ((aaux <>"") e (aaux <> "00/00/0000"))
+     aauxafa = aaux;
+    senao 
+     aauxafa = "          "; 
+    AAUX = CCURSOR.USU_CODREP;
+    AlteraControle ("SitAfaHA", "Descrição", aaux);    
+    Listasecao("Adicional_HIST_AFASTAMENTO");
+    Ccursor.Proximo();   
+  Fim;
+  Ccursor.FecharCursor();
+  
+  @HIST_RESCISAO (R042RCM)@
+  
+  Ccursor.sql"Select NumEmp,NumCad, DatDem, CauDem,codrmd from R042RCM aa where tipcol = 1 \
+                                                    and datdem >=:dinicmp and datdem<=:dfimcmp ";
+ 
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+    Intparaalfa(Ccursor.NumEmp,aaux);
+    ConverteMascara (1, Ccursor.NumEmp, aaux, "999");
+     AlteraControle ("NumEmphR", "Descrição", aaux);
+     Intparaalfa(Ccursor.NumCad,aaux);
+     ConverteMascara (1, Ccursor.NumCad, aaux, "99999999");
+     AlteraControle ("NumCadHR", "Descrição", aaux);
+     Convertemascara(3,Ccursor.DatDem,aaux,"dd/mm/yyyy"); 
+     AlteraControle ("DatDemHR", "Descrição", aaux);   
+     Convertemascara(1,Ccursor.CauDem,aaux,"99");
+     AlteraControle ("CauDemHR", "Descrição", aaux);
+     se (Ccursor.codrmd = 12)
+       AlteraControle ("CauDe2HR", "Descrição", "04");    
+     senao   
+       AlteraControle ("CauDe2HR", "Descrição", "00");    
+  
+     Listasecao("Adicional_HIST_RESCISAO");
+     Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+  @PERIODO_FERIAS (R040PER)@
+  Ccursor.sql"Select NumEmp,NumCad, IniPer, FimPer from R040PER aa where tipcol = 1 \
+                and exists (select 1 from r034fun bb where aa.numemp=bb.numemp and \
+                                                           aa.tipcol=bb.tipcol and \
+                                                           aa.numcad=bb.numcad and \
+                                                          (bb.sitafa<>7 or (bb.sitafa=7 and bb.datafa>=:DatPERFEF)))";
+
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+    Intparaalfa(Ccursor.NumEmp,aaux);
+    ConverteMascara (1, Ccursor.NumEmp, aaux, "999");
+     AlteraControle ("NumEmpHP", "Descrição", aaux);
+     Intparaalfa(Ccursor.NumCad,aaux);
+     ConverteMascara (1, Ccursor.NumCad, aaux, "99999999");
+     AlteraControle ("NumCadHP", "Descrição", aaux);
+     Convertemascara(3,Ccursor.IniPer,aaux,"dd/mm/yyyy"); 
+     AlteraControle ("IniPerHP", "Descrição", aaux);   
+     Convertemascara(3,Ccursor.FimPer,aaux,"dd/mm/yyyy"); 
+     AlteraControle ("FimPerHP", "Descrição", aaux);    
+     Listasecao("Adicional_PERIODO_FERIAS");
+     Ccursor.Proximo();  
+  Fim;
+  Ccursor.FecharCursor();
+  
+  @HIST_FERIAS (R040FEM)@
+  
+  Ccursor.sql "Select R040FEM.NumEmp,R040FEM.NumCad,R040FEM.IniPer,R040FEM.IniFer, R040FEM.FimFer,R040PER.FimPer,  \
+                      R040FEM.DiaFer,R040FEM.DiaAbo,R040FEM.OPC13S,R040PER.QTDSLD \
+                      from R040FEM , R040PER where R040PER.tipcol = 1  \
+                                               and R040FEM.NumEmp =R040PER.NumEmp \
+                                               and R040FEM.TipCol =R040PER.TipCol \
+                                               and R040FEM.NumCad =R040PER.NumCad \
+                                               and R040FEM.IniPer =R040PER.IniPer \
+                                               and R040FEM.INIFER>=:dinicmp \
+                                               and R040FEM.INIFER<=:dfimcmp \
+                      and exists (select 1 from r034fun bb where R040FEM.numemp=bb.numemp and \
+                                                                 R040FEM.tipcol=bb.tipcol and \
+                                                                 R040FEM.numcad=bb.numcad and \
+                                                                (bb.sitafa<>7 or (bb.sitafa=7 and bb.datafa>=:DatPERFEF)))";
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+    Intparaalfa(Ccursor.NumEmp,aaux);
+    ConverteMascara (1, Ccursor.NumEmp, aaux, "999");
+    AlteraControle ("NumEmphfe", "Descrição", aaux);
+    Intparaalfa(Ccursor.NumCad,aaux);
+    ConverteMascara (1, Ccursor.NumCad, aaux, "99999999");     
+    AlteraControle ("NumCadhfe", "Descrição", aaux);
+    Convertemascara(3,Ccursor.IniPer,aaux,"dd/mm/yyyy"); 
+    AlteraControle ("IniPerhfe", "Descrição", aaux);   
+    Convertemascara(3,Ccursor.FimPer,aaux,"dd/mm/yyyy"); 
+    AlteraControle ("FimPerhfe", "Descrição", aaux);  
+    Convertemascara(3,Ccursor.IniFer,aaux,"dd/mm/yyyy"); 
+    AlteraControle ("IniFerhfe", "Descrição", aaux); 
+    dfimfer = Ccursor.IniFer + Ccursor.Diafer - 1;
+    Convertemascara(3,dfimfer,aaux,"dd/mm/yyyy"); 
+    AlteraControle ("FimFerhfe", "Descrição", aaux);  
+    Convertemascara(1,Ccursor.DiaFer,aaux,"99,99"); 
+    AlteraControle ("DiaFerhfe", "Descrição", aaux);
+    Convertemascara(1,Ccursor.DiaAbo,aaux,"99"); 
+    AlteraControle ("DiaAbohfe", "Descrição", aaux);
+    se (ccursor.opc13s = "S")
+      Alteracontrole ("Per13","Descrição","50,00");
+     senao 
+      Alteracontrole ("Per13","Descrição","00,00");
+    Listasecao("Adicional_HIST_FERIAS");
+    Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+}; 
+
+se(ETipArq = "F")
+ {
+  @ FOLHA_COLABORADOR@
+
+  definir data ddatcal;
+  definir data ddatsis;
+  desmontadata (edatref,x,y,z);
+  y--;
+  se (y = 0)
+   {
+    y = 12;
+    z--;
+   }; 
+  montadata(x,y,z,ddatcal);
+  ddatsis = Datsis;
+  Ccursor.sql"Select R046VER.NumEmp, R046VER.NumCad, R046VER.CodCal,  \
+                     R044CAL.PerRef, R044CAL.DatPag, R044CAL.TipCal,  \
+                     R044CAL.FimCmp                                   \ 
+                from R044CAL, R046VER \
+               where R044CAL.NumEmp = R046VER.NumEmp \
+                 and R044CAL.CodCal = R046VER.CodCal and 1=2 union \
+              Select distinct R046VER.NumEmp, R046VER.NumCad, R046VER.CodCal,  \
+                     R044CAL.PerRef, R044CAL.DatPag, R044CAL.TipCal, R044CAL.FimCmp  \
+                from R044CAL, R046VER  \
+               where R044CAL.NumEmp = R046VER.NumEmp \
+                 and R044CAL.CodCal = R046VER.CodCal \
+                 and R044CAL.PerRef = :dDatcal";
+
+                   @  and R044CAL.DATPAG = :ddatsis@
+
+
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+    Intparaalfa(Ccursor.NumEmp,aaux);
+    ConverteMascara (1, Ccursor.NumEmp, aaux, "999"); 
+    AlteraControle ("NumEmpFF", "Descrição", aaux);
+    Intparaalfa(Ccursor.NumCad,aaux);
+    ConverteMascara (1, Ccursor.NumCad, aaux, "99999999"); 
+    AlteraControle ("NumCadFF", "Descrição", aaux);
+    Intparaalfa(Ccursor.CodCal,aaux);
+    ConverteMascara (1, Ccursor.CodCal, aaux, "999999"); 
+    AlteraControle ("CodCalff", "Descrição", aaux);
+    Convertemascara(3,Ccursor.FimCmp,aaux,"dd/mm/yyyy"); 
+    se ( aaux = "00/00/0000")
+      Convertemascara(3,Ccursor.DatPag,aaux,"dd/mm/yyyy");
+    AlteraControle ("PerRefFF", "Descrição", aaux);   
+    Convertemascara(3,Ccursor.DatPag,aaux,"dd/mm/yyyy"); 
+    AlteraControle ("DatPagFF", "Descrição", aaux);
+    se(  Ccursor.TipCal = 11)
+      AlteraControle ("TipCalff", "Descrição", "03");
+    se(  Ccursor.TipCal = 12)
+      AlteraControle ("TipCalff", "Descrição", "09");
+    se(  Ccursor.TipCal = 91)
+      AlteraControle ("TipCalff", "Descrição", "01");
+    se(  Ccursor.TipCal = 41)
+      AlteraControle ("TipCalff", "Descrição", "02"); 
+    se(  Ccursor.TipCal = 31)
+      AlteraControle ("TipCalff", "Descrição", "05"); 
+    se(  Ccursor.TipCal = 32)
+      AlteraControle ("TipCalff", "Descrição", "07"); 
+    se(  Ccursor.TipCal = 15)
+       AlteraControle ("TipCalff", "Descrição", "10"); 
+    se(  Ccursor.TipCal = 92)
+       AlteraControle ("TipCalff", "Descrição", "11");   
+
+   nNumEmp = Ccursor.NumEmp; 
+   ntipcol = 1;
+   nNumcad = Ccursor.Numcad;
+   nCodcal = Ccursor.Codcal;
+   
+   @vantagens @ 
+   xvantagem = 0;
+   Ccursorx.sql "Select R046VER.NumEmp, R046VER.NumCad, R046VER.CodCal, r046ver.valeve  \
+              from R046VER,  R008EVC  \
+             where R008EVC.CodTab = R046VER.Tabeve  \
+               and R008EVC.CodEve = R046VER.CodEve and 1=2 union \
+               Select R046VER.NumEmp, R046VER.NumCad, R046VER.CodCal, sum(r046ver.valeve)  \
+              from R046VER,  R008EVC  \
+             where R008EVC.CodTab = R046VER.Tabeve  \
+               and R008EVC.CodEve = R046VER.CodEve \
+               and R046VER.NumEmp = :nNumEmp \
+               and R046VER.tipcol = :ntipcol \
+               and R046VER.Numcad = :nNumcad \
+               and R046VER.CodCal = :nCodcal \
+               and R008EVC.TipEve in(1,2) group by R046VER.NumEmp, R046VER.NumCad, R046VER.CodCal ";
+   Ccursorx.abrircursor();
+   se(Ccursorx.achou)
+   inicio 
+     xvantagem = Ccursorx.valeve;    
+   Fim;
+   Convertemascara(1,xvantagem,aaux,"999999999,99");             
+   AlteraControle ("Totvanff", "Descrição", aaux);
+   Ccursorx.Fecharcursor(); 
+   aaux =  "";
+   @Descontos@
+    Ccursorx.sql "Select R046VER.NumEmp, R046VER.NumCad, R046VER.CodCal, r046ver.valeve  \
+              from R046VER,  R008EVC  \
+             where R008EVC.CodTab = R046VER.Tabeve  \
+               and R008EVC.CodEve = R046VER.CodEve and 1=2 union \
+               Select R046VER.NumEmp, R046VER.NumCad, R046VER.CodCal, sum(r046ver.valeve)  \
+              from R046VER,  R008EVC  \
+             where R008EVC.CodTab = R046VER.Tabeve  \
+               and R008EVC.CodEve = R046VER.CodEve \
+               and R046VER.NumEmp = :nNumEmp \
+               and R046VER.tipcol = :ntipcol \
+               and R046VER.Numcad = :nNumcad \
+               and R046VER.CodCal = :nCodcal \
+               and R008EVC.TipEve in(3) group by R046VER.NumEmp, R046VER.NumCad, R046VER.CodCal ";
+   Ccursorx.abrircursor();
+   se(Ccursorx.achou)
+   inicio 
+    xdesconto = Ccursorx.valeve;     
+   Fim;
+   Convertemascara(1,xdesconto,aaux,"999999999,99");             
+   AlteraControle ("Totdesff", "Descrição", aaux);
+   Ccursorx.Fecharcursor(); 
+   aaux =  "";
+   xliquido = xvantagem - xdesconto;  
+   Convertemascara(1,xliquido,aaux,"999999999,99"); 
+   AlteraControle ("LiqFolff", "Descrição", aaux);
+   Listasecao("Adicional_FOLHA_COLABORADOR");
+   Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+
+  @LINHA_FOLHA_COLAB@
+
+  Ccursor.sql"Select R046VER.NumEmp, R046VER.NumCad, R046VER.CodEve, \
+                     R046VER.RefEve, R046VER.ValEve, R044CAL.CodCal  \
+                From R046VER,R044CAL  \
+                where  R046VER.NUMEMP=R044CAL.NUMEMP AND \
+                       R046VER.CODCAL=R044CAL.CODCAL AND \
+                       R044CAL.PERREF=:ddatcal";
+                       
+                         @  and R044CAL.DATPAG = :ddatsis@
+
+  Ccursor.AbrirCursor();
+  Enquanto (Ccursor.Achou)
+  Inicio
+    Intparaalfa(Ccursor.NumEmp,aaux);
+    ConverteMascara (1, Ccursor.NumEmp, aaux, "999");
+     AlteraControle ("NumEmpFl", "Descrição", aaux);
+     Intparaalfa(Ccursor.NumCad,aaux);
+     ConverteMascara (1, Ccursor.NumCad, aaux, "99999999");
+     AlteraControle ("NumCadFl", "Descrição", aaux);
+     Intparaalfa(Ccursor.CodCal,aaux);
+     ConverteMascara (1, Ccursor.CodCal, aaux, "999999");
+     AlteraControle ("CodCalFl", "Descrição", aaux);
+     ConverteMascara (1, Ccursor.CodEve, aaux, "9999");
+     AlteraControle ("CodEveFF1", "Descrição", aaux);
+     Convertemascara(1,Ccursor.RefEve,aaux,"9999999,99"); 
+     AlteraControle ("RefEveFl", "Descrição", aaux);
+     Convertemascara(1,Ccursor.ValEve,aaux,"999999999,99"); 
+     AlteraControle ("ValEveFl", "Descrição", aaux);
+     Listasecao("Adicional_LINHA_FOLHA_COLAB");
+     Ccursor.Proximo();
+  Fim;
+  Ccursor.FecharCursor();
+}; 
+
+--------------------------------------------------------------------------------
+Código: 8 - Descrição: Titulo_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 9 - Descrição: Adicional_Cargo_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 10 - Descrição: Adicional_Cargo_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 11 - Descrição: Descricao001_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 12 - Descrição: cCodCar_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 13 - Descrição: cTITCAR_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 14 - Descrição: cTITRED_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 15 - Descrição: cCODCBO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 16 - Descrição: cMaoObra_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 17 - Descrição: cTipCar_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 18 - Descrição: Adicional_Funcao_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 19 - Descrição: Adicional_Funcao_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 20 - Descrição: Descricao002_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 21 - Descrição: fcodcar_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 22 - Descrição: FCodFun_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 23 - Descrição: Ftitcar_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 24 - Descrição: ftitred_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 25 - Descrição: Adicional_HORARIO_TRABALHO_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 26 - Descrição: Adicional_HORARIO_TRABALHO_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 27 - Descrição: CHOR_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 28 - Descrição: aCodhor_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 29 - Descrição: entrada_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 30 - Descrição: saiInter_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 31 - Descrição: voltainter_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 32 - Descrição: Saida_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 33 - Descrição: adicional_ESCALA_TRABALHO_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 34 - Descrição: adicional_ESCALA_TRABALHO_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 35 - Descrição: Descricao003_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 36 - Descrição: CCodEsc_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 37 - Descrição: DESESC_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 38 - Descrição: HorMes_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 39 - Descrição: DiasSema_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 40 - Descrição: adicional_HORARIO_TURMA_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 41 - Descrição: adicional_HORARIO_TURMA_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 42 - Descrição: Descricao004_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 43 - Descrição: Codesc_t_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 44 - Descrição: Codturma_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 45 - Descrição: NomTurma_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 46 - Descrição: DatIniTur_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 47 - Descrição: Adicional_Hor_turma_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 48 - Descrição: Adicional_Hor_turma_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 49 - Descrição: Descricao005_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 50 - Descrição: HCodesc_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 51 - Descrição: Hcodtur_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 52 - Descrição: hcodHor_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 53 - Descrição: hdia_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 54 - Descrição: HCodSeq_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 55 - Descrição: Adicional_Banco_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 56 - Descrição: Adicional_Banco_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 57 - Descrição: Descricao006_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 58 - Descrição: Codiban_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 59 - Descrição: Descban_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 60 - Descrição: Adicional_agencia_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 61 - Descrição: Adicional_agencia_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 62 - Descrição: Descricao007_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 63 - Descrição: codibanA_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 64 - Descrição: codagea_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 65 - Descrição: Digage_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 66 - Descrição: DescAGE_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 67 - Descrição: Adicional_CATEGORIA_SINDICAL_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 68 - Descrição: Adicional_CATEGORIA_SINDICAL_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 69 - Descrição: Descricao008_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 70 - Descrição: Acodsin_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 71 - Descrição: Descricao010_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 72 - Descrição: Descrsin_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 73 - Descrição: Adicional_MOTIVO_AFASTAMENTO_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 74 - Descrição: Adicional_MOTIVO_AFASTAMENTO_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 75 - Descrição: TAFA_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 76 - Descrição: asigla_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 77 - Descrição: Descsigla_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 78 - Descrição: Adicional_SINDICAL_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 79 - Descrição: Adicional_SINDICAL_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 80 - Descrição: Descricao009_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 81 - Descrição: acodsin1_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 82 - Descrição: Descricao012_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 83 - Descrição: Descrsin1_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 84 - Descrição: Adicional_MOTIVO_AUMENTO_SAL_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 85 - Descrição: Adicional_MOTIVO_AUMENTO_SAL_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 86 - Descrição: Descricao011_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 87 - Descrição: aCodmot_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 88 - Descrição: Descmod_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 89 - Descrição: Adicional_MOTIVO_RESCISAO_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 90 - Descrição: Adicional_MOTIVO_RESCISAO_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 91 - Descrição: Descricao013_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 92 - Descrição: acaudem_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 93 - Descrição: adesdem_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 94 - Descrição: Adicional_EMPRESa_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 95 - Descrição: Adicional_EMPRESa_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 96 - Descrição: Descricao014_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 97 - Descrição: anumemp_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 98 - Descrição: Descemp_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 99 - Descrição: Adicional_estabelecimento_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 100 - Descrição: Adicional_estabelecimento_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 101 - Descrição: Descricao015_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 102 - Descrição: numempf_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 103 - Descrição: codfilf_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 104 - Descrição: Descfil_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 105 - Descrição: anumcgcf_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 106 - Descrição: Adicional_CENTRO_RESULTADO_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 107 - Descrição: Adicional_CENTRO_RESULTADO_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 108 - Descrição: Descricao016_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 109 - Descrição: numempc_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 110 - Descrição: codfilc_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 111 - Descrição: codccuc_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 112 - Descrição: nomccuc_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 113 - Descrição: CodRatc_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 114 - Descrição: Adicional_EVENTO_FOLHA_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 115 - Descrição: Adicional_EVENTO_FOLHA_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 116 - Descrição: Descricao017_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 117 - Descrição: numempe_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 118 - Descrição: codevee_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 119 - Descrição: aTipNat_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 120 - Descrição: Desceve_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 121 - Descrição: aTipEVE_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 122 - Descrição: FatorM_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 123 - Descrição: Adicional_RELOGIO_PONTO_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 124 - Descrição: Adicional_RELOGIO_PONTO_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 125 - Descrição: Descricao018_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 126 - Descrição: numempR_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 127 - Descrição: CodfilR_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 128 - Descrição: DescRLG_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 129 - Descrição: CodRLGR_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 130 - Descrição: DescDispo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 131 - Descrição: Adicional_DEPENDENTE_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 132 - Descrição: Adicional_DEPENDENTE_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 133 - Descrição: StatusD_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 134 - Descrição: EstcivD_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 135 - Descrição: CrecheD_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 136 - Descrição: GrainsD_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 137 - Descrição: DatDesD_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 138 - Descrição: EscolarD_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 139 - Descrição: NomDep_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 140 - Descrição: StatusD2_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 141 - Descrição: numempD_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 142 - Descrição: coddepd_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 143 - Descrição: DatNasD_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 144 - Descrição: DEPIRRD_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 145 - Descrição: Descricao035_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 146 - Descrição: numcadd_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 147 - Descrição: TipSexD_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 148 - Descrição: GraparD_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 149 - Descrição: NaturalD_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 150 - Descrição: FretecD_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 151 - Descrição: Adicional_HIST_SALARIAL_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 152 - Descrição: Adicional_HIST_SALARIAL_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 153 - Descrição: NumCadHS_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 154 - Descrição: NumEmpHS_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 155 - Descrição: DatAltHS_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 156 - Descrição: Descricao027_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 157 - Descrição: ModSalHS_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 158 - Descrição: TipSalHS_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 159 - Descrição: vsalHS_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 160 - Descrição: ValSalHS_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 161 - Descrição: Adicional_HIST_FUNCAO_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 162 - Descrição: Adicional_HIST_FUNCAO_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 163 - Descrição: numcadHF_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 164 - Descrição: NumEmpHF_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 165 - Descrição: DataltHF_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 166 - Descrição: HFUN_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 167 - Descrição: codcarHF_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 168 - Descrição: CodfunHF_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 169 - Descrição: Adicional_HIST_LOTACAO_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 170 - Descrição: Adicional_HIST_LOTACAO_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 171 - Descrição: NumCadHL_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 172 - Descrição: NumEmpHL_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 173 - Descrição: DatAltHL_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 174 - Descrição: Descricao022_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 175 - Descrição: CodCCUHL_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 176 - Descrição: CodfilHL_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 177 - Descrição: Adicional_HIST_HORARIO_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 178 - Descrição: Adicional_HIST_HORARIO_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 179 - Descrição: NumCadHH_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 180 - Descrição: NumempHH_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 181 - Descrição: datAltHH_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 182 - Descrição: Descricao023_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 183 - Descrição: Codeschh_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 184 - Descrição: Codtmahh_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 185 - Descrição: Adicional_HIST_AFASTAMENTO_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 186 - Descrição: Adicional_HIST_AFASTAMENTO_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 187 - Descrição: NumCadHA_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 188 - Descrição: NumEmpHA_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 189 - Descrição: DatTerHA_Na Impressão
+--------------------------------------------------------------------------------
+
+definir alfa aauxafa;
+valstr = aauxafa;
+cancel(2);
+
+--------------------------------------------------------------------------------
+Código: 190 - Descrição: Descricao024_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 191 - Descrição: SitAfaHA_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 192 - Descrição: DatAFAHA_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 193 - Descrição: Adicional_HIST_RESCISAO_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 194 - Descrição: Adicional_HIST_RESCISAO_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 195 - Descrição: Descricao025_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 196 - Descrição: NumEmpHR_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 197 - Descrição: NumCadHR_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 198 - Descrição: DatDemHR_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 199 - Descrição: CauDemHR_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 200 - Descrição: CauDe2HR_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 201 - Descrição: Adicional_PERIODO_FERIAS_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 202 - Descrição: Adicional_PERIODO_FERIAS_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 203 - Descrição: Descricao019_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 204 - Descrição: NumEmpHP_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 205 - Descrição: NumCadHP_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 206 - Descrição: IniPerHP_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 207 - Descrição: FimPerHP_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 208 - Descrição: Adicional_HIST_FERIAS_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 209 - Descrição: Adicional_HIST_FERIAS_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 210 - Descrição: Diaabohfe_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 211 - Descrição: DiaFerhfe_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 212 - Descrição: fimperhfe_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 213 - Descrição: FimFerhfe_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 214 - Descrição: Descricao030_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 215 - Descrição: NumEmpHFe_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 216 - Descrição: NumCadHFE_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 217 - Descrição: iniperhfe_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 218 - Descrição: iniFerhfe_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 219 - Descrição: PER13_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 220 - Descrição: Adicional_FOLHA_COLABORADOR_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 221 - Descrição: Adicional_FOLHA_COLABORADOR_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 222 - Descrição: Descricao020_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 223 - Descrição: NumCadFF_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 224 - Descrição: NumEmpFF_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 225 - Descrição: CodCalFF_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 226 - Descrição: Tipcalff_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 227 - Descrição: PerrefFF_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 228 - Descrição: DatPAGFF_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 229 - Descrição: TotVANFF_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 230 - Descrição: TotDesFF_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 231 - Descrição: LiqFolFF_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 232 - Descrição: Adicional_LINHA_FOLHA_COLAB_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 233 - Descrição: Adicional_LINHA_FOLHA_COLAB_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 234 - Descrição: Descricao021_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 235 - Descrição: NumcadFL_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 236 - Descrição: NumempFL_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 237 - Descrição: CodcalFL_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 238 - Descrição: RefeveFL_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 239 - Descrição: ValEVeFl_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 240 - Descrição: CodEveFF1_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 241 - Descrição: Adicional_AUTONOMO_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 242 - Descrição: Adicional_AUTONOMO_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 243 - Descrição: CidResTE_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 244 - Descrição: NomPesTE_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 245 - Descrição: NumempTe_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 246 - Descrição: CodpesTE_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 247 - Descrição: NomMaeTE_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 248 - Descrição: Descricao041_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 249 - Descrição: NumCadTE_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 250 - Descrição: NumCPFTE_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 251 - Descrição: NumRGTE_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 252 - Descrição: DesEndTe_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 253 - Descrição: NumEndTE_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 254 - Descrição: CmpEndTE_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 255 - Descrição: NomBaiTE_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 256 - Descrição: endCEPTE_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 257 - Descrição: NumTelTE_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 258 - Descrição: EmaparTE_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 259 - Descrição: codESTTE_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 260 - Descrição: SitafaTE_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 261 - Descrição: DatnasTE_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 262 - Descrição: Adicional_COLABORADOR_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 263 - Descrição: Adicional_COLABORADOR_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 264 - Descrição: EstcivCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 265 - Descrição: NomFunCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 266 - Descrição: numemCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 267 - Descrição: DeslSNCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 268 - Descrição: GraInsCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 269 - Descrição: Descricao033_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 270 - Descrição: NumcadCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 271 - Descrição: DatnasCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 272 - Descrição: NomePai_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 273 - Descrição: NumCPFCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 274 - Descrição: NumPisCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 275 - Descrição: DCDPISCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 276 - Descrição: NumCTPCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 277 - Descrição: cmpendCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 278 - Descrição: NomBaiCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 279 - Descrição: EndCEPCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 280 - Descrição: CodEstCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 281 - Descrição: TipSexCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 282 - Descrição: NAturalCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 283 - Descrição: DatcheCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 284 - Descrição: Descricao026_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 285 - Descrição: NomePAisNasCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 286 - Descrição: NomeMAe_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 287 - Descrição: NumCIDCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 288 - Descrição: EmiCIdCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 289 - Descrição: EstCIDCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 290 - Descrição: dexcidCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 291 - Descrição: SerCTPCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 292 - Descrição: estCTPCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 293 - Descrição: DexCTPCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 294 - Descrição: CerREvCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 295 - Descrição: NUmAbCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 296 - Descrição: NumEleCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 297 - Descrição: ZonELECo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 298 - Descrição: SECELECO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 299 - Descrição: desEndCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 300 - Descrição: NumEndCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 301 - Descrição: CidEnd_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 302 - Descrição: DDDTELCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 303 - Descrição: NumTelCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 304 - Descrição: RamTel_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 305 - Descrição: NumTe2CO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 306 - Descrição: EmaComCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 307 - Descrição: EmaParCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 308 - Descrição: RasCorCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 309 - Descrição: DefFisCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 310 - Descrição: DatAdmCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 311 - Descrição: DatATSCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 312 - Descrição: CodVinCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 313 - Descrição: PriEmpCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 314 - Descrição: EmpTrasCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 315 - Descrição: ForPagCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 316 - Descrição: CodRegCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 317 - Descrição: CodBanco_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 318 - Descrição: CodAgeCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 319 - Descrição: digageCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 320 - Descrição: NumConCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 321 - Descrição: DigConCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 322 - Descrição: DesINSCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 323 - Descrição: AdqSalCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 324 - Descrição: CodsinCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 325 - Descrição: Descricao028_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 326 - Descrição: SinSNCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 327 - Descrição: DesSinSNCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 328 - Descrição: DesAnoSinCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 329 - Descrição: CodFilCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 330 - Descrição: CodccuCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 331 - Descrição: CodcarCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 332 - Descrição: CodfunCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 333 - Descrição: TipSal_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 334 - Descrição: SalHorCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 335 - Descrição: valsalco_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 336 - Descrição: CodEscCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 337 - Descrição: tmaESCCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 338 - Descrição: BatPonCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 339 - Descrição: NumCraCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 340 - Descrição: EMPCHECO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 341 - Descrição: CadCheco_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 342 - Descrição: PonNEtCO_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 343 - Descrição: NivSalSup_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 344 - Descrição: NivSalFun_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 345 - Descrição: NivSalTer_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 346 - Descrição: AdiTit_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 347 - Descrição: AdiPerCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 348 - Descrição: AdiinsCo_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 349 - Descrição: AssEmp_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 350 - Descrição: NivSalTec_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 351 - Descrição: Uniprev_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 352 - Descrição: EnqSalSup_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 353 - Descrição: EnqSalFun_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 354 - Descrição: EnqSalTec_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 355 - Descrição: EnqSalTer_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 356 - Descrição: ABCAT_Na Impressão
+--------------------------------------------------------------------------------

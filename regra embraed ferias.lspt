@@ -1,0 +1,150 @@
+Definir Numero EValVale;
+Definir Numero xvalmes;
+Definir Numero xvalsind;
+Definir Numero xvaldia;
+Definir Numero xQtdDia;
+Definir Numero xConRho;
+Definir Data xDatIni;
+Definir Data xDatFim;
+Definir Data EDatRef;
+Definir Data ddatafa;
+Definir Alfa xSocSinEmp;
+Definir Cursor c_r038afa;
+Definir Cursor c_r066sit;
+Definir Cursor c_r034fun;
+Definir Cursor c_r066sit2;
+
+Se(FDirVal = 0)
+  Cancel(1);
+
+xnumemp = R034Fun.NumEmp;
+xtipcol = R034Fun.Tipcol;
+xnumcad = R034Fun.Numcad;
+xDatIni = IniCmp;
+xDatFim = FimCmp;
+xQtdDia = 0;
+xvalmes = 600;
+xvalsind = 0;
+xvaldia = 0;
+xSocSinEmp = "";
+xcodsit = 1;
+xConRho = 0;
+xTabFer = 3;
+xqtdfaltas = 0;
+xdesligamento = 0;
+
+c_r038afa.sql "SELECT SITAFA, DATAFA FROM R038AFA WHERE NUMEMP = :XNUMEMP AND \
+                                                TIPCOL = :XTIPCOL AND \
+                                                NUMCAD = :XNUMCAD AND \
+                                                DATAFA <= :XDATFIM AND \
+                                                DATAFA >= :XDATINI AND \
+                                                SITAFA = 7"
+                                                
+c_r066sit.sql "SELECT DATAPU FROM R066SIT WHERE NUMEMP = :XNUMEMP AND \
+                                                       TIPCOL = :XTIPCOL AND \
+                                                       NUMCAD = :XNUMCAD AND \
+                                                       (CODSIT = 910 OR CODSIT = 913 OR CODSIT = 1 )AND \
+                                                       DATAPU >= :XDATINI AND \
+                                                       DATAPU <= :XDATFIM \
+                                                       GROUP BY DATAPU"
+
+c_r066sit2.sql "SELECT NUMCAD FROM R066SIT WHERE NUMEMP = :XNUMEMP AND \
+                                                       TIPCOL = :XTIPCOL AND \
+                                                       NUMCAD = :XNUMCAD AND \
+                                                       CODSIT = 115      AND \
+                                                       DATAPU >= :XDATINI AND \
+                                                       DATAPU <= :XDATFIM AND \
+                                                       QTDHOR > 400"
+                                                       
+c_r034fun.sql "SELECT CONRHO FROM R034FUN WHERE  NUMEMP = :XNUMEMP AND \
+                                                 TIPCOL = :XTIPCOL AND \
+                                                 NUMCAD = :XNUMCAD AND \
+                                                 CONRHO = 4"
+                                                 
+                                                 
+c_r034fun.AbrirCursor();
+  Se(c_r034fun.Achou)
+    xconrho = c_r034fun.CONRHO;
+c_r034fun.FecharCursor();
+                                                
+c_r038afa.AbrirCursor();
+  Se(c_r038afa.Achou)
+    Inicio
+      ddatafa = c_r038afa.DatAfa - 1;
+      Se(c_r038afa.sitafa = 7)
+        Inicio
+          xdesligamento = c_r038afa.SitAfa;
+        Fim
+      /*Senao
+        Inicio          
+          RetQtdDiasUtil (xDatIni, ddatafa, xTabFer, xQtdDiasUtil);
+           xvaldia = 4.88(antigamente era 4.36) * xQtdDiasUtil;
+        Fim  */
+    Fim
+c_r038afa.FecharCursor();
+
+RetSinEmp (xNumEmp, xTipCol, xNumCad, xDatFim);
+xSocSinEmp = SocSinEmp;
+
+Se(xSocSinEmp = 'S')
+  xvalsind = 100;
+
+@BuscaDiaSit(xNumEmp, xTipCol, xNumCad, xDatIni, DatHoj, xcodsit, xQtdDia);@
+
+c_r066sit.AbrirCursor();
+  Enquanto(c_r066sit.Achou)
+    Inicio
+      xQtdDia++;
+      c_r066sit.Proximo();
+    Fim
+c_r066sit.FecharCursor();
+
+Se (xvaldia = 0)
+  xvaldia = 4.88 * xQtdDia;
+
+/*RetQtdDiasUtil (xDatIni, xDatFim, xTabFer, xQtdDiasUtil);
+     xvaldia = 4.36(atualmente 4.88) * xQtdDiasUtil; */
+
+Se((xConRho = 4) e (xvaldia = 0))
+   Inicio   
+     RetQtdDiasUtil (xDatIni, xDatFim, xTabFer, xQtdDiasUtil);
+     xvaldia = 4.88 * xQtdDiasUtil;
+   Fim
+   
+Se((R034Fun.DatAdm > xDatIni) e (R034Fun.DatAdm < xDatFim))
+  Inicio
+      RetornaMesData(R034Fun.DatAdm,xmes);
+      RetornaMesData(R034Fun.DatAdm,xano);
+      BusQtdDiasMes (xmes, xano, xnrdias);
+      xqtdvalor = 600/xnrdias;
+     @BuscaDiaSit(xNumEmp, xTipCol, xNumCad, R034Fun.DatAdm, xDatFim, xcodsit, xQtdDia);@
+     CalculaDias(1, 1, 1, 1, 1, 1, 1, 0, R034Fun.DatAdm, xDatFim, xQtdDias);
+     xvalmes = xqtdvalor * xQtdDias;
+  Fim
+  
+Se(xfaltou = 1)
+  Inicio
+      xqtdvalor = 600/30;
+     c_r066sit2.abrircursor();
+       Enquanto(c_r066sit2.Achou)
+        Inicio
+          xqtdfaltas++;
+          c_r066sit2.Proximo();
+        Fim
+     c_r066sit2.fecharcursor();
+     xvalmes = xqtdvalor * (30 - xqtdfaltas);
+     xfaltou = 0;
+  Fim
+  
+
+Se(xdesligamento = 7)
+  Inicio
+     BuscaDiaSit(xNumEmp, xTipCol, xNumCad, xDatIni, ddatafa, xcodsit, xQtdDia);
+     xQtdDia = xQtdDia + 1; @Soma o dia do desligamento@
+     xvaldia = 4.88 * xQtdDia;
+     xqtdvalor = 600/30;
+     xvalmes = xqtdvalor * xQtdDia;
+     xvalsind = 0;
+  Fim   
+  
+FValVale = xvalmes + xvalsind + xvaldia;

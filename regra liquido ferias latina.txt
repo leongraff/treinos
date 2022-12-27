@@ -1,0 +1,25 @@
+Se ((ETipRel = "E"))   @---- Férias ----@
+inicio
+  Cur_R040Fem.Sql " SELECT GERADT,DATPAG FROM R040FEM WHERE NUMEMP = :vnumemp AND TIPCOL = :vtipcol \
+                    AND NUMCAD = :vnumcad AND INIFER >= :EDatIni AND INIFER <= :EDatFim ";
+  Cur_R040Fem.AbrirCursor();
+  se (Cur_R040Fem.Achou)
+  inicio
+    xDatPag = Cur_R040Fem.DatPag;
+    se ((Cur_R040Fem.GerAdt = 'N') ou (xDatPag <> EDatGra)){
+    xvalliq = 0;
+    };
+    senao
+      @LiquidoFerias (vnumemp, vtipcol, vnumcad, EDatIni, EDatFim, EAbrNev, xvalliq, EPerLiq, 0);@ 
+      LiquidoFerias (vnumemp, vtipcol, vnumcad, EDatIni, EDatFim, EAbrNev, xvalliq, EPerLiq, EDatGra); 
+  fim;
+  senao
+    @LiquidoFerias (vnumemp, vtipcol, vnumcad, EDatIni, EDatFim, EAbrNev, xvalliq, EPerLiq, 0); @
+    LiquidoFerias (vnumemp, vtipcol, vnumcad, EDatIni, EDatFim, EAbrNev, xvalliq, EPerLiq, EDatGra);
+  Cur_R040Fem.FecharCursor();
+fim;
+
+
+
+
+47991259968
