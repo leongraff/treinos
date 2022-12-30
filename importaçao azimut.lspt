@@ -1,0 +1,244 @@
+/* ----------------------------------------------------------------------------------------
+    S = Somar ao já existente
+    C = Considerar o novo lançamento (desconsidera o valor anterior)
+    D = Desprezar o novo lançamento (se existir não importa, permanecendo o lançamento anterior)
+------------------------------------------------------------------------------------------- */
+@=== CONVERSOR DO VALOR ===@
+Definir Alfa aValor;
+Definir Alfa aValorAux;
+Definir Alfa aValorAux2;
+Definir Numero vPos;
+Definir Numero xValor;
+
+xValor = 0;
+xValorAux = 0;
+xValorAux2 = 0;
+xTam = 0;
+xTamAux = 0;
+vPos = 0;
+vPosAux = 0;
+vPosAux2 = 0;
+aValorAux = "";
+aValorAux2 = "";
+
+TiraEspacos (aValor, aValor);
+PosicaoAlfa (",", aValor, vPos);
+
+Se (vPos = 0)
+  AlfaParaInt(aValor, xValor);
+
+Senao
+Se (vPos <> 0)
+INICIO
+
+  aValorAux = aValor;
+  aValorAux2 = aValor;
+  vPosAux = vPos - 1;
+  vPosAux2 = vPos + 1; 
+  TamanhoAlfa (aValorAux, xTam);
+  CopiarAlfa (aValorAux, 1, vPosAux);
+  
+  xTamAux = xTam - vPos;
+  CopiarAlfa (aValorAux2, vPosAux2, xTamAux);
+
+  
+  AlfaParaInt(aValorAux, xValorAux);
+  AlfaParaInt(aValorAux2, xValorAux2);
+  
+  Se (xTamAux = 2)
+  {
+    xValorAux2 = xValorAux2;
+  }
+  Senao
+  Se (xTamAux = 1)
+  {
+    xValorAux2 = xValorAux2 * 10; 
+  }
+  
+  xValor = (xValorAux + (xValorAux2 / 100));
+FIM;
+@=== FIM CONVERSOR DO VALOR ===@
+
+@--------- Definicao dos campos ----------@
+Definir Alfa x1;
+Definir Numero x2;
+Definir Alfa vNomFun;
+Definir Alfa VMensagemLog;
+Definir Cursor Cur_R034Fun;
+Definir Cursor Cur_R044MOV;
+Definir Alfa Eorimov;
+Definir Alfa ETipSit;      @--- Entrada ---@    
+Definir Alfa vAbrangencia;
+Definir Alfa ANomCol;
+Definir Numero Vnumemp;
+Definir Numero Vtipcol;
+Definir Numero Vnumcad;
+Definir Numero Vcodcal;
+Definir Numero Vtabeve;
+Definir Numero Vcodeve;
+Definir Numero Vcodrat;
+Definir Numero Vseqeve;
+Definir numero XREFEVE;
+Definir Numero XVALEVE; 
+Definir numero vSitAfa;
+Definir numero vTipSit;
+Definir data   vDatAfa;
+Definir alfa   vStrTipSit;
+Definir alfa   vStrTipSit2;
+Definir cursor Cur_R010SIT;
+Definir cursor Cur_R038AFA;
+Definir data   vDatZer; 
+
+Definir Numero xCodEve;
+
+
+@-------- Carrega as variaveis -------------@
+
+XREFAUX = 0;
+XVALAUX = 0;
+XTEMREG = 0;
+vDatZer = 0;
+ynumemp = 1;
+ycodcal = 0;
+ytabeve = 0;
+Vnumemp = ECodEmp;
+VtipCol = 1;
+VcodCal = EabrCodcal;
+vTabEve = ETabEve;
+vcodeve = EcodEve;
+Vseqeve = 1;
+XRefeve = 1;
+xValor = xValor; 
+
+@---------- Origem do movimento vem da seleção feita pelo usuário na tela de entrada ---------@
+R044MOV.numemp = Vnumemp;
+R044MOV.tipcol = Vtipcol;
+R044MOV.numcad = Vnumcad;
+R044MOV.codcal = Vcodcal;
+R044MOV.tabeve = vtabeve;
+R044MOV.codeve = Vcodeve;
+R044MOV.codrat = Vcodrat;
+R044MOV.seqeve = Vseqeve;
+R044MOV.refeve = XRefeve;
+R044MOV.valeve = xValor;
+R044Mov.OriMov = EOriMov;
+
+@---------- Verifica se colaborador existe ----------------@
+vSitAfaFun = 0;
+Cur_R034FUN.Sql "SELECT NUMCAD,SITAFA FROM R034FUN WHERE NUMEMP=:vNumEmp AND TIPCOL=:vTipCol AND NUMCAD=:vNumCad";
+Cur_R034FUN.AbrirCursor ();
+Se    (Cur_R034Fun.NaoAchou)
+      Inicio
+      Cur_R034Fun.FecharCursor ();
+      vMensagemLog = "Colaborador " + Formatar(vNumCad,"%9.0f") +  " não cadastrado.";
+      MensagemLog (VMensagemLog);
+      Cancel (1);
+      Fim;
+Cur_R034Fun.FecharCursor ();
+
+@ -- Verifica na guia Cálculos do Evento Processado se o Tipo do Cálculo Processado está cadastrado na Guia -- @
+Definir Cursor Cur_R008CAL;
+Definir Cursor Cur_R044CAL;
+Definir Numero vTipCal;
+
+vTipCal = 0;
+Cur_R044CAL.SQL " SELECT TIPCAL FROM R044CAL \
+                  WHERE NUMEMP = :vNumEmp \
+                    AND CODCAL = :vCodCal ";
+Cur_R044CAL.AbrirCursor();
+Se (Cur_R044CAL.Achou)
+  vTipCal = Cur_R044CAL.TIPCAL;
+Cur_R044CAL.FecharCursor();
+
+Cur_R008CAL.SQL " SELECT TIPCAL FROM R008CAL \
+                  WHERE CODTAB = :vtabeve \
+                    AND CODEVE = :vCodEve \
+                    AND TIPCAL = :vTipCal ";
+Cur_R008CAL.AbrirCursor();
+Se (Cur_R008CAL.NaoAchou)
+  Cancel(1);
+Cur_R008CAL.FecharCursor();
+
+
+Se    ( ETipSit<>"" )    @--- Abrangência pelo Tipo da Situação ---@
+      inicio 
+
+      @------------ Pega SitAfa na data especificada ------------@
+      vSitAfa = 0;
+      vDatAfa = DatHoj;  
+      Cur_R038AFA.Sql "SELECT SITAFA, DATAFA FROM R038AFA WHERE NUMEMP=:vNumEmp AND TIPCOL=:vTipCol AND NUMCAD=:vNumCad AND \
+                       DATAFA<=:vDatAfa AND (DATTER >=:vDatAfa OR DATTER=:vDatZer) ORDER BY DATAFA DESC";
+      Cur_R038AFA.AbrirCursor();
+      Se    (Cur_R038AFA.Achou)
+            vSitAfa=Cur_R038AFA.SitAfa;
+      Senao vSitAfa=1;     @--- Colaborador não possui afastamento portanto esta trabalhando ---@
+      Cur_R038AFA.FecharCursor();
+
+      @------------  Verifica Abrangência de Situação -----------@
+      Cur_R010SIT.Sql "SELECT TIPSIT FROM R010SIT WHERE CODSIT=:vSitAfa";
+      Cur_R010SIT.AbrirCursor();
+      Se    (Cur_R010SIT.Achou)
+            inicio   
+            vNumero = Cur_R010SIT.TipSit;
+            vAbrangencia = ETipSit;
+            VerNumAbr(vNumero, vAbrangencia, vAchou);  
+            Se (vAchou <> 1)  
+                  inicio
+                  Cur_R010SIT.FecharCursor();
+                  Cancel(1);
+                  fim; 
+            fim;
+      Senao inicio
+            Cur_R010SIT.FecharCursor();
+            IntParaAlfa(vSitAfa, vStrTipSit);
+            vMensagemLog = "Colaborador" + Formatar(vNumCad,"%9.0f") + " - Situação " + vStrTipSit + " não existe." ;
+            MensagemLog(vMensagemLog); 
+            Cancel(1);
+            fim;
+      Cur_R010SIT.FecharCursor();
+
+      fim; 
+
+
+@--------------- Leitura do registro do arquivo ----------------@
+Cur_R044MOV.Sql "SELECT REFEVE,VALEVE FROM R044MOV WHERE NUMEMP=:Vnumemp AND TIPCOL=:Vtipcol \
+                 AND NUMCAD=:Vnumcad AND CODCAL=:Vcodcal AND TABEVE=:Vtabeve \
+                 AND CODEVE=:Vcodeve AND CODRAT=:Vcodrat AND SEQEVE=:Vseqeve"; 
+
+Cur_R044MOV.AbrirCursor();
+Enquanto (Cur_R044MOV.Achou)
+    Inicio
+        XREFAUX = XREFAUX + Cur_R044MOV.refeve;
+        XVALAUX = XVALAUX + Cur_R044MOV.valeve; 
+        XTEMREG = 1;   
+        Cur_R044MOV.Proximo();
+    Fim;
+Cur_R044MOV.FecharCursor();
+
+
+@---------- Se ja existe desconsidera --------------@
+se ((CDACAO = 'D') e (XTEMREG = 1)) 
+   Cancel(1);
+
+
+@---------- Função para retornar referencia --------@ 
+RetRefMin(R044MOV.tabeve,R044MOV.codeve,R044MOV.refeve,XREFEVE);
+
+/*
+ExecSQL "DELETE FROM R044MOV WHERE NUMEMP=:Vnumemp AND TIPCOL=:Vtipcol \
+         AND NUMCAD=:Vnumcad AND CODCAL=:Vcodcal AND TABEVE=:Vtabeve \
+         AND CODEVE=:Vcodeve AND CODRAT=:Vcodrat AND SEQEVE=:Vseqeve";  */
+
+se (CDACAO = 'S')
+    inicio
+    XREFEVE = XREFEVE + XREFAUX;
+    xValor = xValor + XVALAUX;    
+    R044MOV.refeve = XREFEVE;
+    R044MOV.valeve = xValor;
+    fim;
+
+se ((CDACAO = 'C') ou (CDACAO = 'D'))
+   inicio
+   R044MOV.refeve = XREFEVE;
+   R044MOV.valeve = xValor;
+   fim;

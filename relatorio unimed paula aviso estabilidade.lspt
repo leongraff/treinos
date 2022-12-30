@@ -1,0 +1,1266 @@
+
+--------------------------------------------------------------------------------
+Código: 1 - Descrição: ModeloGerador_Funções Globais
+--------------------------------------------------------------------------------
+
+Definir Funcao DefinirListas();
+
+Funcao DefinirListas();
+inicio
+  Definir Lista Indenizacoes;
+  Indenizacoes.DefinirCampos();
+  Indenizacoes.AdicionarCampo("NumCad", alfa);
+  Indenizacoes.AdicionarCampo("NomFun", alfa);  
+  Indenizacoes.AdicionarCampo("MesDis", numero);
+  Indenizacoes.AdicionarCampo("CodSin", numero);
+  Indenizacoes.EfetivarCampos();
+  Indenizacoes.Chave("NumCad");
+  
+  Definir Lista LstAviso;
+  LstAviso.DefinirCampos();
+  LstAviso.AdicionarCampo("NumCad", Alfa);
+  LstAviso.AdicionarCampo("NomFun", Alfa);
+  LstAviso.AdicionarCampo("DatAfa", Data);
+  LstAviso.AdicionarCampo("DatTer", Data);
+  LstAviso.EfetivarCampos();
+  LstAviso.Chave("NumCad");
+fim;
+
+
+
+--------------------------------------------------------------------------------
+Código: 2 - Descrição: ModeloGerador_Inicialização
+--------------------------------------------------------------------------------
+
+DefinirListas();
+
+--------------------------------------------------------------------------------
+Código: 3 - Descrição: ModeloGerador_Pré-Seleção
+--------------------------------------------------------------------------------
+
+Definir Alfa ESomAdm;
+Definir Alfa EResCalc;
+Definir Data EResIni;
+Definir Data EDatFim;
+Definir Data EDatDoc;
+Definir Alfa xStrDatIni;
+Definir Alfa EVerEst; 
+
+Definir Data EResIniAux;
+EResIniAux = EResIni;
+
+/* 
+   Rescisão Calculada  
+  'N': Gera para todos os colaboradores que não tenham rescisão calculada, 
+       ignora "Data inicial" e "Data Final" informadas na entrada;
+  'S': Gera para todos os colaboradores que tenham data de demissão no período
+       especificado na entrada, ignora "Data do Documento" informada na entrada;
+  Data do Documento: Quando recibo calculado = 'S' pega a data do aviso, se a data do aviso = 0 
+                     então retorna a data de demissão do colaborador;
+                     Quando recibo calculado = 'N' paga a data de entrada: "Data do documento";
+*/
+
+Se (EResCalc = 'S')
+Inicio
+  Se ((EResIni > EDatFim) ou (EResIni = 0) ou (EDatFim = 0))
+  Inicio
+    Mensagem(Retorna," A Data 'Período Resc. Inicial' deve ser menor que 'Período Resc. Final' e ambas diferentes de '00/00/0000' [Ok]");
+    Cancel(1);
+  Fim;
+Fim
+Senao 
+Inicio
+  Se (EDatDoc = 0)
+  Inicio
+    Mensagem(Retorna,"Se 'Rescisão Calculada' = 'N', o campo 'Data Documento' deve ser diferente de '00/00/0000' [Ok]");
+    Cancel(1);
+  Fim;
+  /*Se (EDatPag = 0)
+  Inicio
+    Mensagem(Retorna,"Se 'Rescisão Calculada' = 'N', o campo 'Data Pagamento' deve ser diferente de '00/00/0000' [Ok]");
+    Cancel(1);
+  Fim;*/
+Fim;
+ 
+/****************/
+
+
+Definir alfa AuxSQL;
+Definir alfa AuxRelac;
+Definir alfa AuxSQLHist;
+Definir alfa AuxSQLAbr;
+Definir alfa AuxRel;
+Definir data EDatFim;
+Definir Alfa vDatFim;
+Definir Alfa EAbrSit;
+
+
+Se (EResCalc = 'N')
+Inicio
+  EDatFim = DatSis;
+  EResIni = DatSis;
+Fim
+
+ConverteDataBanco(EDatFim,vDatFim);
+ConverteDataBanco(EResIni,xStrDatIni);
+AuxRelac = "";
+
+Se  (ESomAdm = 'S')
+Inicio
+  AuxSQL = AuxRelac + " R034FUN.DATADM >= " + xStrDatIni + " AND R034FUN.DATADM <= " + vDatFim;
+  InsClauSQLWhere("Detalhe_1", AuxSQL);
+  AuxRelac = " AND ";
+Fim;
+
+
+@ -------- Relacionamento Histórico Vínculo (FIXO) -------- @
+  MontarSqlHistorico( "R038HVI", EDatFim, AuxSQLHist );
+  AuxSQL = AuxRelac + AuxSQLHist;
+  InsClauSqlWhere( "Detalhe_1", AuxSQL );
+  AuxRelac = " AND ";
+
+  AuxSQL = AuxRelac + " R022VIN.CalFol = 'S' ";
+  InsClauSQLWhere( "Detalhe_1", AuxSQL );
+  AuxRelac = " AND ";
+  
+@ -------- Relacionamento Histórico Local (FIXO) -------- @
+MontarSqlHistorico( "R038HLO", EDatFim, AuxSQLHist );
+AuxSQL = AuxRelac + AuxSQLHist;
+InsClauSqlWhere( "Detalhe_1", AuxSQL );
+AuxRelac = " AND ";
+
+
+@ -------- Relacionamento Histórico Filial (FIXO) -------- @
+@ não pode ser feito através da função MontaHistorico porque existem os campos EpAtu, CadAtu @
+AuxSQL = AuxRelac+" R038HFI.DATALT = (SELECT MAX (DATALT) FROM R038HFI TAB2 WHERE \
+           (TAB2.NUMEMP = R038HFI.NUMEMP) AND \
+           (TAB2.TIPCOL = R038HFI.TIPCOL) AND \
+           (TAB2.NUMCAD = R038HFI.NUMCAD) AND \
+           (TAB2.NUMEMP = TAB2.EMPATU) AND \
+           (TAB2.NUMCAD = TAB2.CADATU) AND \
+           (TAB2.DATALT <= " + vDatFim + ")) ";
+InsClauSQLWhere( "Detalhe_1", AuxSQL );
+AuxRelac = " AND ";
+
+
+@ -------- Relacionamento Histórico Situação (DINÂMICO) -------- @
+Se (EAbrSit <> "")
+Inicio
+  Definir Alfa AuxAFA;
+  Definir Alfa DataZero;
+  ConverteDataBanco( 0, DataZero );
+      
+  @ -- Monta a restrição para campo de abrangência -- @
+  MontaAbrangencia( "R038AFA.SITAFA", EAbrSit, AuxSQLAbr );
+
+/*
+      Este comando SQL seleciona todos os afastamentos que terminam depois do período 
+      indicado e/ou não tem previsão de término e, inciaram antes da data final informada.          
+*/      
+
+  AuxAFA = " SELECT 1 FROM R038AFA WHERE"
+           + " R038AFA.NUMEMP = R034FUN.NUMEMP"
+           + " AND R038AFA.TIPCOL = R034FUN.TIPCOL"
+           + " AND R038AFA.NUMCAD = R034FUN.NUMCAD"
+           + " AND (R038AFA.DATTER >= " + vDatFim + " OR R038AFA.DATTER = " + DataZero + ")"
+           + " AND R038AFA.DATAFA = (SELECT MAX(R038AFA.DATAFA) FROM R038AFA, R010SIT"
+           + " WHERE R038AFA.NUMEMP = R034FUN.NUMEMP"
+           + " AND R038AFA.TIPCOL = R034FUN.TIPCOL"
+           + " AND R038AFA.NUMCAD = R034FUN.NUMCAD"
+           + " AND R038AFA.DATAFA <= " + vDatFim
+           + " AND R038AFA.SITAFA = R010SIT.CODSIT"
+           + " AND R010SIT.TIPSIT <> 15)";
+
+  @ -- TESTA SE EXISTE SITUAÇÃO TIPO "1" NA ABRANGÊNCIA E, SE ELA É ÚNICA -- @
+  Sit1NaAbr (EAbrSit, xOutSit, xSit1);
+  Se ( xSit1 > 0 )
+  Inicio
+    @ --  Se encontrar situação tipo "1", deve desconsiderar os registros encontrados em AuxAFA -- @
+    AuxSQL = " NOT EXISTS ( " + AuxAFA;
+
+    Se ( xOutSit > 0 )
+      @ -- Se existirem outras situações informadas, leva em consideração -- @
+      AuxSQL = AuxSQL + ") OR EXISTS (" + AuxAFA + " AND " + AuxSQLAbr;
+  Fim
+  Senao
+    @ -- Se não encontrar situação tipo "1", seleciona somente os encontrados em AuxAFA -- @
+    AuxSQL = " EXISTS (" + AuxAFA + " AND " + AuxSQLAbr;
+
+    AuxSQL = AuxRelac + "(" + AuxSQL + "))";
+    InsSqlWhereSimples("Detalhe_1", AuxSQL);
+    AuxRelac = " AND ";
+Fim;
+
+--------------------------------------------------------------------------------
+Código: 4 - Descrição: ModeloGerador_Seleção
+--------------------------------------------------------------------------------
+
+Definir Alfa EMosLog;
+Definir Alfa EResCalc;
+Definir Data EResIni;
+Definir Data EDatRef;
+Definir cursor Rcm;
+Definir Cursor xR038AFA;
+Definir data xDatDem;
+Definir data xDatEtb;
+Definir data xDatPag;
+Definir data xDatAvi;
+Definir data xDatIni;
+Definir data xDatFim;
+Definir numero xAchou;
+Definir cursor Etb;
+Definir alfa Msg;
+Definir Numero xEstabilidade;
+Definir numero xEstabCodigo;
+Definir data xEstabInicio;
+Definir data xEstabFim;
+Definir Numero xIndenizacao;
+Definir data EDatDoc; 
+Definir Numero xTemAfa; 
+Definir Lista LstAviso; 
+
+
+xEstabilidade = cFalso;
+xIndenizacao  = cVerdadeiro;
+
+xAchou = 0;
+xDatPag = EDatPag;
+
+xNumEmp = R034fun.NumEmp;
+xTipCol = R034fun.TipCol;
+xNumCad = R034FUN.NumCad;
+
+se ((xTipCol = 2) ou (xTipCol = 3))
+  cancel(1);
+
+Rcm.SQL " SELECT DATDEM, DATPAG, DATAVI \
+            FROM R042RCM \ 
+          WHERE NUMEMP = :xNumEmp \
+            AND TIPCOL = :xTipCol \
+            AND NumCad = :xNumCad ";
+Rcm.AbrirCursor();
+Se (Rcm.Achou)
+Inicio
+  xAchou = 1;
+  xDatDem = rcm.DatDem;
+  xDatPag = rcm.DatPag;
+  xDatAvi = rcm.DatAvi;
+Fim;
+Rcm.FecharCursor(); 
+
+Se (EResCalc = 'S')
+Inicio
+  Se (xAchou = 1)
+  Inicio
+    xdatini = EResIni;
+    xdatfim = EDatFim;
+    Se ((xDatDem < xdatini) ou (xDatDem > xdatfim))
+      Cancel(2);
+    Se (EDatPag = 0)
+      xDataPag = xDatPag;
+    Se (EDatDoc = 0)    
+      xDataDoc = xDatAvi;  
+
+    Se (xDatAvi > 0)
+      xdata = xDatAvi;
+    Senao
+      xdata = xDatDem;
+  Fim
+  Senao 
+    Cancel(2);
+Fim
+Senao 
+Inicio
+  Se (xAchou = 1)
+    Cancel(2);
+  xdata = EDatDoc;
+Fim;
+
+@ -- SOMENTE TESTA A ESTABILIDADE CASO NÃO TENHA SIDO CALCULADA A RESCISAO DO COLABORADOR -- @
+Se (xAchou = 0)
+Inicio
+  @---------------------------- Verifica se Colaborador tem Estabilidade ---------------------------------------------@
+  Definir alfa txtCadastro;
+  Definir Alfa txtNome;
+  Definir alfa txtEstabCod;
+  Definir alfa txtEstabDesc;
+  Definir alfa txtEstabInicio;
+  Definir alfa txtEstabFim;
+  Definir alfa txtLog;
+
+  Etb.SQL " SELECT CODETB, INIETB, FIMETB \
+                 FROM R038HEB \
+             WHERE NUMEMP = :xNumEmp \
+               AND TIPCOL = :xTipCol \
+               AND NumCad = :xNumCad \
+               AND CODETB <> 0 "; 
+  Etb.AbrirCursor();                        
+
+  Enquanto (Etb.Achou)                          
+  Inicio
+    Se ((xdata >= Etb.IniEtb) e ((xdata <= Etb.FimEtb) ou (Etb.FimEtb=0)))
+    Inicio
+      xEstabilidade = cVerdadeiro;
+
+      Se ((EMosLog = 'S') e (EResCalc ='N'))    @--- Verifica se usuário deseja gerar Log ---@
+      Inicio 
+        xEstabCodigo  = Etb.CodEtb;                                                                              
+        xEstabInicio  = Etb.IniEtb;                                                                              
+        xEstabFim     = Etb.FimEtb;        
+
+        ConverteMascara(1, xNumCad, txtCadastro, "999999999");                            @--- Cadastro Colaborador   ---@
+
+        txtNome = R034Fun.NomFun;
+        ConverteMascara(5, 0, txtNome,"AAAAAAAAAAAAAAAAAAAAAAAAAAAAA");                   @--- Nome Colaborador       ---@
+  
+        ConverteMascara(1, xEstabCodigo, txtEstabCod, "99");                              @--- Código Estabilidade    ---@
+
+        DescItemLista("LCodEtb", txtEstabCod, txtEstabDesc);                              @--- Descrição Estabilidade ---@
+        ConverteMascara(5, 0, txtEstabDesc,"AAAAAAAAAAAA");
+
+        ConverteMascara(3, xEstabInicio, txtEstabInicio, "DD/MM/YYYY");                   @--- Início Estabilidade    ---@ 
+
+        Se (xEstabFim <> 0)
+          ConverteMascara(3, xEstabFim, txtEstabFim,"DD/MM/YYYY");                        @--- Fim Estabilidade       ---@
+        Senao txtEstabFim = "     -    ";
+
+        txtLog = txtCadastro +" "+ txtNome +"  "+ txtEstabCod +"-"+ txtEstabDesc +"  "+ txtEstabInicio +"  "+ txtEstabFim;
+
+        cNaoRepete = 1;
+        InsLog(cNaoRepete, txtLog);
+           
+        /* -----------------------------------------------------------------------------------------------------
+           Só pode cancelar na seção detalhe, antes de imprimir, porque se não tiver nenhum colaborador os Logs 
+           não são impressos devido a propriedade "Relatório em Branco" estar setada como False.
+        ----------------------------------------------------------------------------------------------------- */
+        @---  Cancel(1); ---@
+      Fim;
+    Fim;            
+    Etb.Proximo();
+  Fim;
+  Etb.FecharCursor();  
+Fim;
+  @---------------------------- Verifica se Colaborador tem Direito a Indenização----------------------------------------@
+  Definir alfa SqlSin;
+  Definir numero MesDis;
+  Definir alfa sAuxi;
+  Definir Alfa AuxSQLHist;
+  Definir Alfa EVerInd;
+
+@  ConverteDataBanco(xData, sAuxi);@ 
+  definir data iData;
+  iData = EDatDoc; 
+
+
+  MontarSqlHistorico( "R038HSI", xData, AuxSQLHist );
+             
+  Definir Cursor Cur_014SIN;   
+  Cur_014SIN.SQL " SELECT * FROM R014SIN WHERE CODSIN = ( SELECT CODSIN FROM R038HSI HSI WHERE \
+           HSI.NUMEMP = :xNumEmp \
+           AND HSI.TIPCOL = :xTipCol \ 
+           AND HSI.NUMCAD = :xNumCad \
+           AND HSI.DATALT = (SELECT MAX (DATALT) FROM R038HSI HSI2 \ 
+					                    WHERE HSI2.NUMEMP = HSI.NUMEMP AND HSI2.TIPCOL = HSI.TIPCOL \
+                    					AND HSI2.NUMCAD = HSI.NUMCAD \
+                         			AND HSI2.DATALT <= :iData))";
+                    
+  Cur_014SIN.AbrirCursor();   
+  se(Cur_014SIN.Achou)
+  Inicio
+    definir numero datbas; 
+    definir numero diaavi;
+    definir numero mesavi; 
+    definir numero anoavi;
+    definir alfa EIndRcs; 
+    definir Alfa txtNomFun;
+    definir alfa txtNumCad;
+    MesDis = Cur_014SIN.MesDis;
+    xIndenizacao = cFalso;
+    
+
+    se (( EIndRcs = "S" ) ou ( EIndRcs = "A" ))
+    inicio
+      se ( EIndRcs = "S" )    
+        iData = iData + ENroDia;
+      
+      DesMontaData (iData, diaavi, mesavi, anoavi);
+  
+      se ((mesavi = 12) e (MesDis <> 12)) 
+        anoavi = anoavi + 1;
+      
+      MontaData (1, MesDis, anoavi, datbas);
+      
+      se ((datbas > iData) e ((datbas - iData) <= Cur_014SIN.DiaAnd))
+      inicio    
+        xIndenizacao = cVerdadeiro;
+
+        ConverteMascara(1, xNumCad, txtNumCad, "999999999");                            @--- Cadastro Colaborador   ---@  
+        txtNomFun = R034Fun.NomFun;
+        ConverteMascara(5, 0, txtNomFun,"AAAAAAAAAAAAAAAAAAAAAAAAAAAAA");               @--- Nome Colaborador       ---@
+
+        Indenizacoes.SetarChave();
+        Indenizacoes.NumCad = txtNumCad;
+        
+        Se (Indenizacoes.VaiParaChave() = 0)
+        Inicio
+          Indenizacoes.Adicionar();
+          Indenizacoes.NumCad = txtNumCad;
+          Indenizacoes.NomFun = txtNomFun;
+          Indenizacoes.MesDis = MesDis;
+          Indenizacoes.CodSin = Cur_014SIN.CodSin;
+          Indenizacoes.Gravar();    
+        Fim;                
+      Fim;      
+    Fim;                                                                                                       
+  Fim;
+
+xdia = 0;
+xmes = 0;
+xano = 0;
+RetornaDiaData(xdata,xdia);
+RetornaMesData(xdata,xmes);
+RetornaAnoData(xdata,xano);
+
+@ -- Cursor para verificar se o Colaborador está afastado na data do aviso -- @
+
+Se (EResCalc = 'N')
+Inicio
+  xR038AFA.SQL " SELECT DATAFA, DATTER \ 
+            FROM R038AFA \
+            WHERE \
+            NUMEMP = :xNumEmp AND \
+            TIPCOL = :xTipCol AND \
+            NUMCAD = :xNumCad AND \
+            ((:EDatDoc >= DATAFA) AND (:EDatDoc <= DatTer))";
+  xR038AFA.AbrirCursor(); 
+  Se (xR038AFA.Achou)
+  Inicio
+    Definir Alfa aNumCad;
+    Definir Alfa aNomFun;
+    Definir Data xDatAfa;
+    Definir Data xDatTer; 
+    
+    xTemAfa = 1;
+    xDatAfa = xR038AFA.DatAfa;
+    xDatTer = xR038AFA.DatTer;
+    
+    ConverteMascara(1, xNumCad, aNumCad, "999999999");                            @--- Cadastro Colaborador   ---@  
+    aNomFun = R034Fun.NomFun;
+    ConverteMascara(5, 0, aNomFun,"AAAAAAAAAAAAAAAAAAAAAAAAAAAAA");               @--- Nome Colaborador       ---@
+    
+    LstAviso.SetarChave();
+    LstAviso.NumCad = aNumCad;
+    
+    Se (LstAviso.VaiParaChave() = 0)
+    Inicio
+      LstAviso.Adicionar();
+      LstAviso.NumCad = aNumCad;
+      LstAviso.NomFun = aNomFun;
+      LstAviso.DatAfa = xDatAfa;
+      LstAviso.DatTer = xDatTer;
+      LstAviso.Gravar();
+    Fim;
+  Fim;
+Fim;
+
+--------------------------------------------------------------------------------
+Código: 5 - Descrição: ModeloGerador_Finalização
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 6 - Descrição: ModeloGerador_Imprimir Página
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 7 - Descrição: Cabecalho_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 8 - Descrição: Cabecalho_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 9 - Descrição: Descricao001_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 10 - Descrição: Detalhe_1_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 11 - Descrição: Detalhe_1_Antes Imprimir
+--------------------------------------------------------------------------------
+
+Se   (((xEstabilidade = cVerdadeiro) e (EVerEst = 'S')) ou ( ( xIndenizacao = cVerdadeiro ) e ( EVerInd = 'S' )) )
+     Cancel(1);
+
+--------------------------------------------------------------------------------
+Código: 12 - Descrição: Descricao005_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 13 - Descrição: Descricao003_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 14 - Descrição: Cadastro002_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 15 - Descrição: Descricao030_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 16 - Descrição: Cadastro007_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 17 - Descrição: Descricao026_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 18 - Descrição: Formula001_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir numero xdia;
+
+Se (xDataDoc = 0)
+  xDataDoc = EDatDoc;
+  
+Se (xDataDoc = 0)
+  xDataDoc = DatSis;
+
+Se (xDataDoc > 0)
+     RetornaDiaData(xDataDoc,xdia);
+senao
+     Cancel(1);
+Formula001 = xdia;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+Código: 19 - Descrição: Descricao017_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 20 - Descrição: Descricao027_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir Alfa auxmes;
+Definir numero xmes;
+
+Se (xDataDoc = 0)
+  xDataDoc = EDatDoc;
+  
+Se (xDataDoc = 0)
+  xDataDoc = DatSis;  
+
+Se (xDataDoc > 0)
+     RetornaMesData(xDataDoc,xmes);
+senao
+     Cancel(1);
+ExtensoMes(xmes, auxmes);
+ValStr = auxmes;
+Cancel(2);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+Código: 21 - Descrição: Descricao018_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 22 - Descrição: Formula002_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir numero xano;
+
+Se (xDataDoc = 0)
+  xDataDoc = EDatDoc;
+  
+Se (xDataDoc = 0)
+  xDataDoc = DatSis;
+
+Se (xDataDoc > 0)
+     RetornaAnoData(xDataDoc,xano);
+senao
+     Cancel(1);
+Formula002 = xano;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+Código: 23 - Descrição: Descricao028_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 24 - Descrição: Cadastro009_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 25 - Descrição: Cadastro014_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 26 - Descrição: Especial001_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 27 - Descrição: Cadastro012_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 28 - Descrição: Cadastro010_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 29 - Descrição: Cadastro011_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 30 - Descrição: Cadastro013_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 31 - Descrição: Cadastro004_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 32 - Descrição: Cadastro005_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 33 - Descrição: Cadastro015_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 34 - Descrição: Descricao002_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 35 - Descrição: Descricao004_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 36 - Descrição: Descricao015_Na Impressão
+--------------------------------------------------------------------------------
+
+Se (ETipAvi = 'I')
+  Cancel(1);
+
+--------------------------------------------------------------------------------
+Código: 37 - Descrição: Descricao014_Na Impressão
+--------------------------------------------------------------------------------
+
+Se (ETipAvi = 'I')
+  Cancel(1);
+
+--------------------------------------------------------------------------------
+Código: 38 - Descrição: Descricao012_Na Impressão
+--------------------------------------------------------------------------------
+
+Se (ETipAvi = 'I')
+  Cancel(1);
+
+--------------------------------------------------------------------------------
+Código: 39 - Descrição: Descricao011_Na Impressão
+--------------------------------------------------------------------------------
+
+Se (ETipAvi = 'I')
+  Cancel(1);
+
+--------------------------------------------------------------------------------
+Código: 40 - Descrição: Descricao031_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 41 - Descrição: Descricao009_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 42 - Descrição: Formula004_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir Data EResIni;
+xQtdDif = 0;
+xQtdDiaAvi = 0;
+
+RetDifDat (3, R034FUN.DATADM, EResIni, xQtdDif);
+
+xQtdDiaAvi = 30 + (xQtdDif * 3);
+
+Formula004 = xQtdDiaAvi;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+Código: 43 - Descrição: Descricao010_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 44 - Descrição: Descricao025_Na Impressão
+--------------------------------------------------------------------------------
+
+Se   (ETipAvi = 'T')
+     ValStr = "Trabalhado";
+senao
+Se   (ETipAvi = 'I')
+     ValStr = "Indenizado";
+Cancel(2);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+Código: 45 - Descrição: Descricao029_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 46 - Descrição: Descricao008_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 47 - Descrição: Descricao007_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 48 - Descrição: Descricao016_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 49 - Descrição: Descricao041_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 50 - Descrição: Descricao040_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 51 - Descrição: Descricao022_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 52 - Descrição: Cadastro006_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 53 - Descrição: Descricao023_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 54 - Descrição: Descricao013_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 55 - Descrição: Cadastro008_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 56 - Descrição: Cadastro003_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 57 - Descrição: Descricao020_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 58 - Descrição: Descricao019_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 59 - Descrição: Descricao021_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 60 - Descrição: Cadastro001_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 61 - Descrição: Formula003_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir Alfa EResCalc;
+Definir Data EResIniAux;
+
+Se (EResCalc = "S")
+INICIO
+  Se (EDatPag > 0)
+    Formula003 = EDatPag;
+  Senao
+    Formula003 = xDataPag;
+FIM;
+
+Senao
+Se (EResCalc = "N")
+INICIO
+  Definir Data xDatPagAux;
+  Definir Alfa xDesSemana;
+  
+  xDatPagAux = EResIniAux + 10;
+  xDesSemana = "";
+  
+  ExtensoSemana (xDatPagAux, xDesSemana);
+  
+  Se (xDesSemana = "Domingo")
+    xDatPagAux = xDatPagAux - 2;
+  Se ((xDesSemana = "Sabado") ou (xDesSemana = "Sábado")) 
+    xDatPagAux = xDatPagAux - 1; 
+    
+  Formula003 = xDatPagAux;  
+  
+FIM;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+Código: 62 - Descrição: Descricao006_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 63 - Descrição: Total_Geral_Depois Imprimir
+--------------------------------------------------------------------------------
+
+Definir Alfa EVerInd;
+Definir Alfa EMosLog;
+Definir Numero indlog;     @--- Declaracao Criada na Conversao ---@
+Definir Numero FlagUltReg; @--- Declaracao Criada na Conversao ---@
+Definir Alfa   vMenLog;
+Definir Alfa EResCalc;
+Definir Numero xTemAfa;
+Definir Data xDatAfa; @ -- Data do Afastamento -- @
+Definir Data xDatTer; @ -- Data do Termino do Afastamento -- @
+
+@------ lista na tela o log, mesmo que todos colaboradores cancelados ------@
+
+UltimoRegistro("Detalhe_1",  FlagUltReg);
+Se (FlagUltReg = cVerdadeiro)
+Inicio
+  Se (EMosLog = 'S')
+  Inicio
+    indlog = 1;
+    Enquanto (indlog <= LogQtd)
+    Inicio
+      vMenLog = LogLin[indlog];      
+      ListaSecao("Adic_Log");
+      indlog = indlog + 1;
+    Fim;
+    @-- Lista as Indenizaçções --@
+    definir numero Tem;
+    definir alfa sAuxi;
+    definir numero xMesDis;
+    definir alfa xNome;
+    definir alfa xCod;
+    definir alfa sMesDis;
+    definir alfa sCodSin;
+    definir numero xCodSin;
+    
+    Tem = Indenizacoes.Primeiro();
+    se (Tem = 1)
+      ListaSecao("Adic_Cab_Ind");
+      
+    enquanto (Tem = 1)
+    Inicio
+      xMesDis = Indenizacoes.MesDis; 
+      NumeroParaAlfa (xMesDis, sMesDis);
+      xCodSin = Indenizacoes.CodSin; 
+      NumeroParaAlfa (xCodSin, sCodSin);
+      xNome = Indenizacoes.NomFun;
+      xCod  = Indenizacoes.NumCad;    
+      ConverteMascara(5, 0, sMesDis,"AAAAAA");                  
+      ConverteMascara(5, 0, sCodSin,"AAAAAA");                                  
+      sAuxi = xCod + " " + xNome + "       " + sMesDis + "       " + sCodSin;       
+      AlteraControle ("DesInd", "Descrição", sAuxi);
+      ListaSecao( "Adic_ind" );      
+      Tem = Indenizacoes.Proximo();
+    Fim;   
+  Fim;
+Fim;
+
+@ -- Lista os Aviso se houve Colaborador afastado na Data do aviso -- @
+Se (xTemAfa = 1)
+Inicio
+  Definir Numero xTem;
+  Definir Alfa aAux;
+  Definir Alfa aNome;
+  Definir Alfa aCod;
+  Definir Data xDatAfa;
+  Definir Alfa aDatAfa;
+  Definir Data xDatTer;
+  Definir Alfa aDatTer;
+  
+  xTem = LstAviso.Primeiro();
+  Se (xTem = 1)
+    ListaSecao("Adic_Cab_Aviso");
+    
+  Enquanto (xTem = 1)
+  Inicio
+    xDatAfa = LstAviso.DatAfa;
+    ConverteMascara (3, xDatAfa, aDatAfa, "DD/MM/YYYY");
+    xDatTer = LstAviso.DatTer;
+    ConverteMascara (3, xDatTer, aDatTer, "DD/MM/YYYY");
+    aNome = LstAviso.NomFun;
+    aCod = LstAviso.NumCad;
+   @ aAux = aCod + "       " + aNome + "                                 " + aDatAfa + "                                  " + aDatTer;@
+   @ AlteraControle ("DesAviso", "Descrição", aAux);@
+    AlteraControle("aCod", "Descrição", aCod);
+    AlteraControle("aNomFun", "Descrição", aNome);
+    AlteraControle("aDatAfa", "Descrição", aDatAfa);
+    AlteraControle("aDatTer", "Descrição", aDatTer);
+    ListaSecao("Adic_Aviso");
+    xTem = LstAviso.Proximo();   
+  Fim;     
+Fim;
+
+--------------------------------------------------------------------------------
+Código: 64 - Descrição: Total_Geral_Antes Imprimir
+--------------------------------------------------------------------------------
+
+Definir Alfa EMosLog;
+Se   ((EMosLog = 'N') ou (LogQtd <=0))
+     Cancel(1);
+
+--------------------------------------------------------------------------------
+Código: 65 - Descrição: Descricao037_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 66 - Descrição: Descricao035_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 67 - Descrição: Descricao038_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 68 - Descrição: Descricao033_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 69 - Descrição: Descricao032_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 70 - Descrição: Descricao034_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 71 - Descrição: Adic_Log_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 72 - Descrição: Adic_Log_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 73 - Descrição: Descricao039_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir alfa vMenLog;
+ValStr = vMenLog;
+cancel(2);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+Código: 74 - Descrição: Adic_Ind_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 75 - Descrição: Adic_Ind_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 76 - Descrição: DesInd_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 77 - Descrição: Adic_Cab_Ind_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 78 - Descrição: Adic_Cab_Ind_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 79 - Descrição: Descricao036_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 80 - Descrição: Descricao042_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 81 - Descrição: Descricao043_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 82 - Descrição: Descricao044_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 83 - Descrição: Descricao045_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 84 - Descrição: Adic_Aviso_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 85 - Descrição: Adic_Aviso_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 86 - Descrição: aDatAfa_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 87 - Descrição: aDatTer_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 88 - Descrição: aNomFun_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 89 - Descrição: aCod_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 90 - Descrição: Adic_Cab_Aviso_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 91 - Descrição: Adic_Cab_Aviso_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 92 - Descrição: Descricao046_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 93 - Descrição: Descricao047_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 94 - Descrição: Descricao048_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 95 - Descrição: Descricao049_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 96 - Descrição: Descricao050_Na Impressão
+--------------------------------------------------------------------------------

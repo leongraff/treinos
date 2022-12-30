@@ -422,10 +422,10 @@ Inicio
       }
       Senao {
         HorSit[900] = 60;
-        Se ((x2Extras > HorSit[301]) e (x2Extras > 10) e (HorSit[301] > 0))
+        Se ((x2Extras > HorSit[301]) e (x2Extras > 10) e (HorSit[301] > 0) )
           HorSit[301] = x2Extras;
         
-        @ HorSit[301] = HorSit[301]; @
+         HorSit[301] = HorSit[301];
         @ HorSit[301] = 0; @
       }
     }   
@@ -462,8 +462,9 @@ Inicio
         HorSit[901] = 60;
        
        @      ZERA AQUI      @
-       
+       Se(CodFil <> 1){
         HorSit[301] = 0;
+       }
       }
     };
     Senao Se(ApuDiu[17] <> 0){
@@ -481,10 +482,11 @@ Inicio
         
         Se ((x2Extras >= HorSit[301]) e (x2Extras > 10) e (HorSit[301] > 0))
           HorSit[301] = x2Extras;
-        Senao
+        Senao Se(CodFil <> 1){
 
         @     ZERA AQUI    @
           HorSit[301] = 0;
+        }
       }
     }
     Senao Se(ApuNot[17] <> 0){
@@ -506,7 +508,9 @@ Inicio
       }
       Senao Se((ApuDiu[8] + ApuNot[8]) = 60){
         HorSit[901] = 60; 
+      Se(CodFil <> 1){  
         HorSit[301] = 0;
+      }
       }
     }
     Senao Se(ApuDiu[8] <> 0) {
@@ -526,7 +530,9 @@ Inicio
       }
       Senao Se(ApuDiu[8] = 60){
         HorSit[900] = 60;
+      Se(CodFil <> 1){  
         HorSit[301] = 0;
+      }
       }
     }
     Senao Se(ApuNot[8] <> 0){
