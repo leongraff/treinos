@@ -1,0 +1,555 @@
+@ ---------------------------------------------------------------------------- @ 
+@ --                      Escalonamento de Horas Extras                     -- @ 
+@ --                                Sintratuh                               -- @ 
+@ --                               Até 30HE 50%                             -- @ 
+@ --                            Acima disso, 100%                           -- @ 
+@ ---------------------------------------------------------------------------- @ 
+@ --  Versão 1.1 - 12/2022 - JC @
+@ >> Situações << @
+@  301 - Horas Extras 50% Diurnas;  @
+@  302 - Horas Extras 50% Noturnas; @
+@  305 - Horas Extras 100% Diurnas; @
+@  306 - Horas Extras 100% Noturnas;@
+
+Definir Cursor Cur_R070ACC;
+Definir Cursor Cur_R004MHR;
+Definir Cursor Cur_R066APU;
+Definir Cursor Cur_R006ESC;
+
+Definir Alfa aCur_R066SIT;
+Definir Alfa aCur_R006ESC;
+
+Definir Data dIniApu;
+Definir Data dFimApu;
+Definir Data dDatPro;
+
+xNumEmp = R034FUN.NumEmp;
+xTipCol = R034FUN.TipCol;
+xNumCad = R034FUN.NumCad;
+
+dIniApu = IniApu;
+dFimApu = FimApu;
+dDatPro = DatPro;
+xCodHor = CodHor;
+xEscEmp = EscEmp;
+
+xCodSit = 0;
+xQtdHor = 0;
+xTot50HED = 0;
+xTot50HEN = 0;
+
+@ -- Verifica em que Sindicato o colaborador se encontra -- @
+RetSinEmp(xNumEmp, xTipCol, xNumCad, dDatPro);
+
+Se(SitEmp <> 1)
+  Cancel(1);
+  
+xDiaFer = VerDatFer (R034Fun.NumEmp, R034Fun.TipCol, R034Fun.NumCad, Datpro);
+Se (xDiaFer = 1){
+    Horsit[904] = Horsit[900];
+    Horsit[905] = Horsit[901];
+    Horsit[900] = 0;
+    Horsit[901] = 0;
+}
+  
+Se(CodSinEmp = 1)
+Inicio
+  @ -- Cursor para verificar as horas 50% que o colaborador já possui no período de apuração -- @
+  Sql_Criar(aCur_R066SIT);
+  
+  Sql_DefinirComando(aCur_R066SIT, " SELECT CODSIT, SUM(QTDHOR) AS QTDHOR      \
+                                       FROM R066SIT                            \
+                                      WHERE NUMEMP = :XNUMEMP                  \
+                                        AND TIPCOL = :XTIPCOL                  \
+                                        AND NUMCAD = :XNUMCAD                  \
+                                        AND DATAPU >= :DINIAPU                 \
+                                        AND DATAPU < :DDATPRO                  \
+                                        AND CODSIT IN (301, 302)               \
+                                      GROUP BY CODSIT ");
+  
+    Sql_DefinirInteiro(aCur_R066SIT, "xNumEmp", xNumEmp);
+    Sql_DefinirInteiro(aCur_R066SIT, "xTipCol", xTipCol);
+    Sql_DefinirInteiro(aCur_R066SIT, "xNumCad", xNumCad);
+    Sql_DefinirData(aCur_R066SIT, "dIniApu", dIniApu);
+    Sql_DefinirData(aCur_R066SIT, "dDatPro", dDatPro);
+    
+  Sql_AbrirCursor(aCur_R066SIT);
+  Se(SQL_EOF(aCur_R066SIT) = 0)
+  Inicio
+    Sql_RetornarInteiro(aCur_R066SIT, "CodSit", xCodSit);
+    Sql_RetornarInteiro(aCur_R066SIT, "QtdHor", xQtdHor);
+    
+    Se(xCodSit = 301)         @ -- Horas Extras 50% Diurnas -- @
+      xTot50HED = xQtdHor;
+    Senao Se(xCodSit = 302)   @ -- Horas Extras 50% Noturnas -- @
+      xTot50HEN = xQtdHor;    
+                   
+      Sql_Proximo(aCur_R066SIT);
+                   
+  Fim;
+  Sql_FecharCursor(aCur_R066SIT);
+  
+  Sql_Destruir(aCur_R066SIT);
+    
+    @ -- Já possui 30HE no mês, apenas converte para 100% -- @
+    Se((xTot50HED + xTot50HEN) = 1800)
+    Inicio
+      HorSit[305] = HorSit[305] + HorSit[301];
+      HorSit[301] = 0;
+      HorSit[306] = HorSit[306] + HorSit[302];
+      HorSit[302] = 0;
+    Fim
+
+    @ -- Verifica se a quantidade de horas feitas + as horas do dia, somadas passam de 30HE no mês -- @
+    Senao Se(((xTot50HED + xTot50HEN) + HorSit[301] + HorSit[302]) > 1800)
+    Inicio
+      xAuxDifQtdHor = 0;
+      @ -- Possui HE Diu e HE Not no mesmo dia -- @
+
+      Se((HorSit[301] <> 0) e (HorSit[302] <> 0))
+      {
+        xAuxDifQtdHor = (xTot50HED + xTot50HEN) + HorSit[301] + HorSit[302] - 1800;   
+        Se(xAuxDifQtdHor <= HorSit[301]){
+          HorSit[301] = HorSit[301] - xAuxDifQtdHor;
+          HorSit[305] = xAuxDifQtdHor;  
+        }
+        Senao { 
+          HorSit[305] = HorSit[301];
+          HorSit[301] = 0;
+          HorSit[306] = xAuxDifQtdHor - HorSit[305];
+          HorSit[302] = HorSit[302] - HorSit[306];
+        }
+      }
+      @ -- Possui apenas HE Diu -- @
+      Senao Se(HorSit[301] <> 0){
+        xAuxDifQtdHor = (xTot50HED + xTot50HEN) + HorSit[301] - 1800;
+        HorSit[301] = HorSit[301] - xAuxDifQtdHor;
+        HorSit[305] = xAuxDifQtdHor;
+      }
+      @ -- Possui apenas HE Not -- @
+      Senao Se(HorSit[302] <> 0){
+        xAuxDifQtdHor = (xTot50HED + xTot50HEN) + HorSit[302] - 1800;
+        HorSit[302] = HorSit[302] - xAuxDifQtdHor;
+        HorSit[306] = xAuxDifQtdHor;      
+      }
+    Fim;
+Fim;
+
+
+
+@ -- Regra Intrajornada -- @
+RetEscEmp(xNumEmp, xTipCol, xNumCad, DatPro);
+xHorDsr = 0;
+
+Sql_Criar(aCur_R006ESC);
+Sql_DefinirComando(aCur_R006ESC, " SELECT HORDSR, TURESC FROM R006ESC WHERE CODESC = :XESCEMP ");
+Sql_DefinirInteiro(aCur_R006ESC, "xEscEmp", EscEmp);
+Sql_AbrirCursor(aCur_R006ESC);
+Se(Sql_EOF(aCur_R006ESC) = 0)
+Inicio
+  Sql_RetornarInteiro(aCur_R006ESC, "HorDsr", xHorDsr);
+  Sql_RetornarInteiro(aCur_R006ESC, "TurEsc", xTurEsc);
+Fim;
+Sql_FecharCursor(aCur_R006ESC);
+Sql_Destruir(aCur_R006ESC);
+
+@##############################################################################@
+@##############################################################################@
+@##############################################################################@
+
+xContador = 0;
+xbat1 = 0;
+xbat2 = 0;
+xbat3 = 0;
+xbat4 = 0;
+xbat5 = 0;
+xbat6 = 0;
+xbat7 = 0;
+xbat8 = 0;
+xbat9 = 0;
+xbat10 = 0;
+xJornada = 0;
+xHorBatIni = 0;
+xHorBatFim = 0;
+xHorPrv = 0;
+xHorDat = 0;
+xEscDat = 0;
+x2Extras = 0;
+xTemRegistro = 0;
+xHorSem = 0;
+xHorDsr = 0;
+xTipJor = 0;
+
+Cur_R006ESC.sql"  SELECT HORSEM,HORDSR,TIPJOR \
+                    FROM R006ESC \
+                      WHERE CODESC = :xEscEmp";
+Cur_R006ESC.AbrirCursor();
+Se (Cur_R006ESC.Achou)
+INICIO
+  xTipJor = Cur_R006ESC.TIPJOR;
+  xHorSem = Cur_R006ESC.HorSem;
+  xHorDsr = Cur_R006ESC.HorDsr;
+FIM;
+Cur_R006ESC.FecharCursor();
+
+Se ((xTipJor = 2) e (xHorDsr = 360))
+  xHorDsr = xHorDsr * 2;
+  
+Cur_R070ACC.SQL"  select datacc,numcad,datapu,horacc \
+                    from r070acc \
+                      where numemp = :XNUMEMP and \
+                            tipcol = :XTIPCOL and \
+                            numcad = :XNUMCAD and \
+                            datapu = :dDatPro and \
+                            usomar = 2 \
+                            order by datacc,datapu,horacc";
+Cur_R070ACC.AbrirCursor();
+Enquanto(Cur_R070ACC.Achou)
+INICIO
+  xContador = xContador + 1;    
+    Se (xContador = 1)
+    {
+      xBat1 = Cur_R070ACC.HorAcc;
+    }
+    Se (xContador = 2)
+    {
+      xBat2 = Cur_R070ACC.HorAcc;
+    }
+    Se (xContador = 3)
+    {
+      xBat3 = Cur_R070ACC.HorAcc;
+    }
+    Se (xContador = 4)
+    {
+      xBat4 = Cur_R070ACC.HorAcc;
+    }
+    Se (xContador = 5)
+    {
+      xBat5 = Cur_R070ACC.HorAcc;
+    }
+    Se (xContador = 6)
+    {
+      xBat6 = Cur_R070ACC.HorAcc;
+    }
+    Se (xContador = 7)
+    {
+      xBat7 = Cur_R070ACC.HorAcc;
+    }
+    Se (xContador = 8)
+    {
+      xBat8 = Cur_R070ACC.HorAcc;
+    }
+    Se (xContador = 9)
+    {
+      xBat9 = Cur_R070ACC.HorAcc;
+    }
+    Se (xContador = 10)
+    {
+      xBat10 = Cur_R070ACC.HorAcc;
+    }    
+Cur_R070ACC.Proximo();
+FIM;
+Cur_R070ACC.FecharCursor();
+
+Se (xContador = 0)
+  cancel(3);
+
+Se (xContador = 2)
+INICIO
+  Se (xbat2 < xbat1)
+    xJornada = (1440 - xbat1) + xbat2;
+  Senao
+    xJornada = xbat2 - xbat1;  
+FIM;
+
+Se (xContador = 4)
+INICIO
+  Se (xbat4 < xbat3)
+    xJornada = (1440 - xbat3) + xbat4;
+  Senao
+    xJornada = xbat4 - xbat3;
+    
+  Se (xbat2 < xbat1)
+    xJornada = xJornada + ((1440 - xbat1) + xbat2);
+  Senao
+    xJornada = xJornada + (xbat2 - xbat1);   
+FIM;
+
+Se (xContador = 6)
+INICIO
+  Se (xbat6 < xbat5)
+    xJornada = (1440 - xbat5) + xbat6;
+  Senao
+    xJornada = xbat6 - xbat5;
+  
+  Se (xbat4 < xbat3)
+    xJornada = xJornada + ((1440 - xbat3) + xbat4);
+  Senao
+    xJornada = xJornada + (xbat4 - xbat3);
+    
+  Se (xbat2 < xbat1)
+    xJornada = xJornada + ((1440 - xbat1) + xbat2);
+  Senao
+    xJornada = xJornada + (xbat2 - xbat1);   
+FIM;
+
+Se (xContador = 8)
+INICIO
+  Se (xbat8 < xbat7)
+    xJornada = (1440 - xbat7) + xbat8;
+  Senao
+    xJornada = xbat8 - xbat7;
+
+  Se (xbat6 < xbat5)
+    xJornada = xJornada + ((1440 - xbat5) + xbat6);
+  Senao
+    xJornada = xJornada + (xbat6 - xbat5);
+  
+  Se (xbat4 < xbat3)
+    xJornada = xJornada + ((1440 - xbat3) + xbat4);
+  Senao
+    xJornada = xJornada + (xbat4 - xbat3);
+    
+  Se (xbat2 < xbat1)
+    xJornada = xJornada + ((1440 - xbat1) + xbat2);
+  Senao
+    xJornada = xJornada + (xbat2 - xbat1);   
+FIM;
+
+Se (xContador = 10)
+INICIO
+  Se (xbat10 < xbat9)
+    xJornada = (1440 - xbat9) + xbat10;
+  Senao
+    xJornada = xbat10 - xbat9;
+
+  Se (xbat8 < xbat7)
+    xJornada = xJornada +((1440 - xbat7) + xbat8);
+  Senao
+    xJornada = xJornada +(xbat8 - xbat7);
+
+  Se (xbat6 < xbat5)
+    xJornada = xJornada + ((1440 - xbat5) + xbat6);
+  Senao
+    xJornada = xJornada + (xbat6 - xbat5);
+  
+  Se (xbat4 < xbat3)
+    xJornada = xJornada + ((1440 - xbat3) + xbat4);
+  Senao
+    xJornada = xJornada + (xbat4 - xbat3);
+    
+  Se (xbat2 < xbat1)
+    xJornada = xJornada + ((1440 - xbat1) + xbat2);
+  Senao
+    xJornada = xJornada + (xbat2 - xbat1);   
+FIM;
+
+Cur_R004MHR.SQL"  SELECT SEQMAR,HORBAT \
+                    FROM R004MHR \
+                      WHERE CODHOR = :xCodHor"
+Cur_R004MHR.AbrirCursor();
+Se (Cur_R004MHR.Achou)
+INICIO
+  xHorBatIni = Cur_R004MHR.HORBAT;
+FIM;
+Cur_R004MHR.FecharCursor();
+
+Cur_R004MHR.SQL"  SELECT SEQMAR,HORBAT \
+                    FROM R004MHR \
+                   WHERE CODHOR = :xCodHor \
+                   ORDER BY SEQMAR DESC"
+Cur_R004MHR.AbrirCursor();
+Se (Cur_R004MHR.Achou)
+INICIO
+  xHorBatFim = Cur_R004MHR.HORBAT;
+FIM;
+Cur_R004MHR.FecharCursor();
+
+Se (xHorBatFim < xHorBatIni)
+{
+  RetHorPrvTrb(xNumEmp, xTipCol, xNumCad, dDatPro, xHorBatIni, dDatPro+1, xHorBatFim, dDatPro, xhorprv, xdiaint);
+}
+Senao
+  Se (xHorBatFim > xHorBatIni)
+    RetHorPrvTrb(xNumEmp, xTipCol, xNumCad, dDatPro, 0, dDatPro, 1440, dDatPro, xhorprv, xdiaint);
+  
+Se ((xDiaInt = 1) e (xHorPrv = 0))
+  xHorPrv = xHorDsr;
+
+x2Extras = xJornada - xHorPrv;
+/*#####################################################################################################################################################
+#####################################################################################################################################################
+#####################################################################################################################################################*/
+
+
+
+
+Se(xHorDsr > 360)
+Inicio 
+  @ >> Intrajornada Fixa << @
+  Definir Alfa aCur_USU_TIntInt;
+  
+  xAuxInt = 0;
+  
+  Sql_Criar(aCur_USU_TIntInt);
+  
+  Sql_DefinirComando(aCur_USU_TIntInt, " SELECT * FROM USU_TINTINT \
+                                          WHERE USU_NUMEMP = :XNUMEMP \
+                                            AND USU_TIPCOL = :XTIPCOL \
+                                            AND USU_NUMCAD = :XNUMCAD \
+                                            AND USU_DATALT <= :DFIMAPU \
+                                            AND USU_RECINT = 'S' \
+                                          ORDER BY USU_DATALT DESC ");
+  
+    Sql_DefinirInteiro(aCur_USU_TIntInt, "xNumEmp", xNumEmp);
+    Sql_DefinirInteiro(aCur_USU_TIntInt, "xTipCol", xTipCol);
+    Sql_DefinirInteiro(aCur_USU_TIntInt, "xNumCad", xNumCad);
+    Sql_DefinirData(aCur_USU_TIntInt, "dFimApu", dFimApu);
+  
+  Sql_AbrirCursor(aCur_USU_TIntInt);
+  
+  Se(Sql_EOF(aCur_USU_TIntInt) = 0){
+    Se(CodHor < 9000){
+
+      Se(HorSit[51] > HorSit[1]){
+        HorSit[901] = 60;
+        
+        Se ((x2Extras > HorSit[302]) e (x2Extras > 10) e (HorSit[302] > 0))
+          HorSit[302] = x2Extras;
+        
+        @ HorSit[302] = HorSit[302]; @
+        @ HorSit[302] = 0; @
+      }
+      Senao {
+        HorSit[900] = 60;
+        Se ((x2Extras > HorSit[301]) e (x2Extras > 10) e (HorSit[301] > 0))
+          HorSit[301] = x2Extras;
+        
+        @ HorSit[301] = HorSit[301]; @
+        @ HorSit[301] = 0; @
+      }
+    }   
+    xAuxInt = 1;
+  }
+  
+  Sql_FecharCursor(aCur_USU_TIntInt);
+  
+  Sql_Destruir(aCur_USU_TIntInt);
+  
+  @ >> Intrajornada Variável << @
+  @ >> Diferença de 60min. - refeição realizada << @
+  Se((xAuxInt <> 1) e (CodHor < 9000)){
+  @ -- Horas Refeição Realizadas -- @
+    Se((ApuDiu[17] <> 0) e (ApuNot[17] <> 0)){
+      Se((ApuDiu[17] + ApuNot[17]) < 60){
+
+        HorSit[901] = 60 - (ApuDiu[17] + ApuNot[17]);
+        HorSit[301] = HorSit[301] - HorSit[900];
+      }
+      Senao Se((ApuDiu[17] + ApuNot[17]) = 60){
+        HorSit[901] = 60;
+        HorSit[301] = 0;
+      }
+    };
+    Senao Se(ApuDiu[17] <> 0){
+      Se(ApuDiu[17] < 60)
+      {
+        HorSit[900] = 60 - ApuDiu[17];
+        
+        Se ((x2Extras > HorSit[301]) e (x2Extras > 10) e (HorSit[301] > 0))
+          HorSit[301] = x2Extras - HorSit[900];
+        Senao  
+          HorSit[301] = HorSit[301] - HorSit[900];
+      }
+      Senao Se(ApuDiu[17] = 60){
+        HorSit[900] = 60 - ApuDiu[17];
+        
+        Se ((x2Extras >= HorSit[301]) e (x2Extras > 10) e (HorSit[301] > 0))
+          HorSit[301] = x2Extras;
+        Senao
+          HorSit[301] = 0;
+      }
+    }
+    Senao Se(ApuNot[17] <> 0){
+      Se(ApuNot[17] < 60){
+        HorSit[901] = 60 - ApuNot[17];
+        HorSit[302] = HorSit[302] - HorSit[901];
+      }
+      Senao Se(ApuNot[17] = 60){
+        HorSit[901] = 60;
+        HorSit[302] = 0;
+      }
+    }
+    
+    @ -- Extras na Refeição -- @
+    Se((ApuDiu[8] <> 0) e (ApuNot[8] <> 0)){
+      Se((ApuDiu[8] + ApuNot[8]) < 60){
+        HorSit[901] = 60 - (ApuDiu[8] + ApuNot[8]); 
+        HorSit[301] = HorSit[301] - HorSit[901];
+      }
+      Senao Se((ApuDiu[8] + ApuNot[8]) = 60){
+        HorSit[901] = 60; 
+        HorSit[301] = 0;
+      }
+    }
+    Senao Se(ApuDiu[8] <> 0) {
+      Se(ApuDiu[8] < 60){
+        Se (ApuDiu[17] > 60){
+          Se ((x2Extras > HorSit[301]) e (x2Extras > 10) e (HorSit[301] > 0)){
+              HorSit[301] = x2Extras;
+              HorSit[900] = 0;
+            }
+        }
+        Senao {
+          HorSit[900] = ApuDiu[8];
+          HorSit[301] = HorSit[301] - HorSit[900];
+        }
+        /*HorSit[900] = 60 - ApuDiu[8];
+        HorSit[301] = HorSit[301] - HorSit[900];*/
+      }
+      Senao Se(ApuDiu[8] = 60){
+        HorSit[900] = 60;
+        HorSit[301] = 0;
+      }
+    }
+    Senao Se(ApuNot[8] <> 0){
+      Se(ApuNot[8] < 60){
+        HorSit[901] = 60 - ApuNot[8];
+        HorSit[302] = HorSit[302] - HorSit[901];
+      }
+      Senao Se(ApuNot[8] = 60){
+        HorSit[901] = 60;
+        HorSit[302] = 0;
+      }
+    };
+  Fim;
+Fim;
+Senao Se(xHorDsr <= 360){
+  Se (xExtras2 < 10){
+    Se (HorSit[302] < 10)
+      HorSit[302] = 0;
+    Se (HorSit[301] < 10)
+      HorSit[301] = 0;
+  };  
+};
+
+@Jardel Cunha - 12/2022 - Feriados Escala noturna@
+Se (xTurEsc = 3){
+  xDiaFer = 0;
+  xDiaFer = VerDatFer (R034Fun.NumEmp, R034Fun.TipCol, R034Fun.NumCad, DatPro);
+  xDiaFerAnt = VerDatFer (R034Fun.NumEmp, R034Fun.TipCol, R034Fun.NumCad, DatPro - 1);
+  Se ((xDiaFer = 1) e (HorSit[305] > 0)) {
+    HorSit[905] = HorSit[306] - 60;
+    HorSit[306] = 60;
+    HorSit[51] = HorSit[304];
+    HorSit[304] = 0;
+  }
+  xDiaFerSeg = 0;
+  xDiaFerSeg = VerDatFer (R034Fun.NumEmp, R034Fun.TipCol, R034Fun.NumCad, DatPro + 1);
+  Se ((xDiaFerSeg = 1) e (HorSit[1] > 0)){
+    HorSit[306] = HorSit[51] - 60 - HorSit[901];
+    HorSit[51] = 60;
+    @HorSit[905] = HorSit[901];@  
+    @HorSit[901] = 0; @    
+  }
+}
