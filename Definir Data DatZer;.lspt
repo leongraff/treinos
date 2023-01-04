@@ -1,0 +1,192 @@
+Definir Data DatZer;
+DatZer = 0;
+EmpresaAtiva = EmpAtu;
+
+Se(CodOpe = "DepoisExcluir")
+{
+ xcodpro = TProEmb_CodPro;
+ ExecSQL "Delete USU_TProDet2 where USU_Codpro = :xcodpro ";
+
+}
+
+Se(CodOpe = "DepoisInserir")
+{
+ Definir Cursor Cur_r087Qua;
+ Definir Cursor Cur_R034fun;
+ Definir Data xDatEmb;
+ Definir Data xDatDes;
+ Definir Alfa xCodCcu;
+ Definir ALfa xCodCar;
+ Definir numero xEstCar;
+ Definir Alfa xCarAlf;
+ 
+ xNumemp = EmpAtu;
+ xDatEmb = TProEmb_DatEmb;
+ xCodCcu = TProEmb_CodCcu;
+ xcodpro = TProEmb_CodPro;
+ xDatDes = TProEmb_DatDes; 
+/*
+Cur_r087Qua.SQL "Select EstCar, CodCar, VagGer, VAgGet, USU_Ordem From R087Qua     \
+                                                  where Numemp = :xNumEmp \
+                                                    and CodCcu = :xCodCcu \
+                                                    and CmpQua = (Select MAX(b.CmpQua) From  R087Qua b    \
+                                                                                    where b.Numemp = :xNumEmp \
+                                                                                      and b.CodCcu = :xCodCcu \
+                                                                                      and b.EstCAr = R087Qua.EstCar \
+                                                                                      and b.CodCar = R087Qua.CodCar \
+                                                                                      and b.CmpQua <= :xDatEmb) order by USU_Ordem ";
+*/                                                                                      
+                                                                                      
+                                                                                      
+Cur_r087Qua.SQL " Select *                  \
+                  From usu_tabqua           \
+                  where                     \
+                      USU_Numemp = :xNumEmp \
+                  and USU_codccu = :xCodCcu \
+                  order by usu_seqfunc      ";
+                  
+                                                                                      
+ Cur_R034fun.SQL "Select R034fun.Numemp, R034fun.TipCol, R034fun.Numcad,  \
+                        R038Hca.EstCar, R038Hca.CodCar, R038hcc.Codccu    \
+                   From R034fun, r038hca, R038Hcc, R024Car where R034fun.Numemp = :xNumemp \
+                                      and r034fun.numemp = r038hca.NumEmp \
+                                      and R034fun.Tipcol = R038hca.Tipcol \
+                                      and R034fun.Numcad = R038Hca.Numcad \
+                                      and R038Hca.DatAlt  = (Select Max(DatAlt) From r038hca b where b.numemp = r038hca.NumEmp \
+                                                                                                 and b.Tipcol = R038hca.Tipcol \
+                                                                                                 and b.Numcad = R038Hca.Numcad \
+                                                                                                 and b.DatAlt  <= :xDatEmb)    \
+                                      and R038hca.EstCar = R024car.EstCar \
+                                      and R038hca.CodCar = R024car.CodCar \
+                                      and R024car.CarAlf = :xCarAlf \
+                                      and R038Hcc.numemp = r038hca.NumEmp \
+                                      and R038Hcc.Tipcol = R038hca.Tipcol \
+                                      and R038Hcc.Numcad = R038Hca.Numcad \
+                                      and R038Hcc.DatAlt  = (Select Max(DatAlt) From r038hcc c where c.numemp = r038hca.NumEmp \
+                                                                                                 and c.Tipcol = R038hca.Tipcol \
+                                                                                                 and c.Numcad = R038Hca.Numcad \
+                                                                                                 and c.DatAlt  <= :xDatEmb)    \
+                                     and R038Hcc.CodCcu = :xCodCcu \   
+                                     and not exists (Select 1 From r038afa where r038afa.Numemp = r034fun.numemp \
+                                                                             and r038afa.tipcol = r034fun.tipcol \
+                                                                             and r038afa.numcad = r034fun.numcad \
+                                                                             and r038afa.datafa <= :xDatEmb      \
+                                                                             and Sitafa = 7)";                       
+
+Cur_r087Qua.AbrirCursor();
+
+Enquanto (Cur_r087Qua.Achou)
+  Inicio
+    xCarAlf = Cur_r087Qua.USU_CarAlf;
+    xQtdCar = Cur_r087Qua.USU_QtdCts + Cur_r087Qua.USU_QtdCon + USU_QtdSta;
+    xSeqCar = 1;
+    xNumordem =  Cur_r087Qua.USU_SeqFunc;
+
+        Enquanto(xSeqCar <=  xQtdCar)
+         {
+         
+/*            ExecSql "Insert Into USU_TProDet ( USU_CodPro, USU_NumEmp, USU_EstCar, USU_CodCar, USU_SeqCar, USU_TipCol, USU_Numcad, USU_StaHis, USU_DatEmb, USU_Ordem, USU_DatDes)   \
+                                  values     ( :xCodPro,:xNumemp, :xEstCar, :xCodCar, :xSeqCar, 1, 0, 0, :xDatEmb, :xNumordem, :xDatDes)"; 
+*/
+                                  
+            ExecSQL "Insert Into USU_TProDet2 ( USU_CodPro, USU_NumEmp, USU_CarAlf, USU_SeqCar, USU_TipCol, USU_Numcad, USU_StaHis, USU_DatEmb,  USU_Ordem, USU_DatDes)   \  
+                                   values     ( :xCodPro,    :xNumemp,    :xCarAlf,   :xSeqCar,          1,         0,          0,    :xDatEmb, :xNumordem,   :xDatDes)";                                
+         
+             xSeqCar = xSeqCar + 1;          
+         }
+         
+                        @Cadastra os funcionario que ja estao alocados nos Centro de Custos Corretos@
+                           xseqCol = 0;
+                           Cur_R034fun.AbrirCursor();
+                            Enquanto (Cur_R034fun.Achou)
+                            Inicio
+                              xTipcol  = Cur_R034fun.TipCol;
+                              xNumcad  = Cur_R034fun.Numcad;
+                              xseqCol = xseqCol + 1;
+                                 Se( xseqCol <= xSeqCar)
+                                 {
+                                   ExecSql "Update USU_TProDet2 set USU_TipCol = :xTipCol, USU_NumCad = :xNumcad where USU_CodPro = :xCodPro\
+                                                                                                                  and USU_NumEmp = :xNumEmp \
+                                                                                                                  and USU_CarAlf = :xCarAlf \
+                                                                                                                  and USU_SeqCar = :xseqCol";                  
+                                 
+                                 }                                               
+                            Cur_R034fun.Proximo();
+                            Fim;
+                            Cur_R034fun.FecharCursor();
+  Cur_r087Qua.Proximo();
+  Fim;
+Cur_r087Qua.FecharCursor();     
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                  
+Se(CodOpe = "AntesInserir")
+{
+
+Definir Cursor Cur_TabQua;
+Definir Cursor Cur_Tprodet2;
+Definir Alfa xCarAlf;
+Definir Alfa xCodCcu;
+
+ xNumemp = EmpAtu;
+ xDatEmb = TProdet2_DatEmb;
+ xCodCcu = TProEmb_CodCcu;
+ xcodpro = TProdet2_CodPro;
+ xDatDes = TProdet2_DatDes; 
+ xCarAlf = TProdet2_CarAlf;
+ xseqCar = 0;
+ xordem =  99;
+ TProDet2_USU_CodCal = CalAtu;
+ Cur_TabQua.SQL " Select USU_SeqFunc       \
+                  From usu_tabqua           \
+                  where                     \
+                      USU_Numemp = :xNumEmp \
+                  and USU_codccu = :xCodCcu \
+                  and USU_CarAlf = :xCarAlf ";
+                  
+Cur_Tprodet2.SQL "Select USU_SeqCar From USU_Tprodet2 where 1 = 2 union \ 
+                  Select MAX(USU_SeqCar) From USU_Tprodet2 \
+                        where                       \
+                              USU_Numemp = :xNumEmp \
+                          and USU_CodPro = :xcodpro \
+                          and USU_CarAlf = :xCarAlf ";      
+ 
+                  
+
+@### Busca  a Ordem do Cargo na Embarcação ##@
+  Cur_TabQua.AbrirCursor();
+  Se (Cur_TabQua.Achou)
+    Inicio
+     xordem = Cur_TabQua.USU_SeqFunc;
+    Fim;
+  Cur_TabQua.FecharCursor();  
+@############################################@  
+  
+
+@### Busca a Sequencia do Cargo na programação ###@
+  Cur_Tprodet2.AbrirCursor();
+  Se (Cur_Tprodet2.Achou)
+    Inicio
+     xseqCar = Cur_Tprodet2.USU_SeqCar + 1;
+    Fim;
+  Cur_Tprodet2.FecharCursor();
+@################################################@
+TProdet2_SeqCar = xseqCar;
+TProdet2_Ordem = xordem;
+
+
+}

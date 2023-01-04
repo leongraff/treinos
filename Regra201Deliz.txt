@@ -1,0 +1,69 @@
+@Adicionado por Wilker Chamado 32977@
+Definir Alfa GERAMODULO;
+Definir Alfa GERATABELA;
+Definir Numero GERNCODDFS;
+Definir Numero GERNBASAJS;
+Definir Numero GERNPERAJS;
+Definir Numero GERNVLRAJS;
+Definir Numero GERNPRXAJS;
+Definir Numero YCodEmp;
+Definir Alfa sCodTns;
+
+Definir Cursor Cur_E001TVE;
+Definir Cursor Cur_E051DIS;
+
+Se(GERAMODULO = "C") @Comercial/Suprimentos@
+Inicio
+  Se(GERATABELA = "E140IPV")
+  Inicio
+      GERNPRXAJS = 1;
+      YCodEmp = E140ISV.CodEmp;
+      sCodTns = E140ISV.TnsSer;
+      @Busca a transacao que ICMS diminui na base do PIS/COFINS@
+      Cur_E001TVE.sql "SELECT CODDFS               \
+                       FROM E001TVE                \
+                       WHERE CODEMP = :YCodEmp AND \
+                             CODTNS = :sCodTns AND \
+                             DESICP = 'U'"
+      Cur_E001TVE.AbrirCursor();
+      Se(Cur_E001TVE.Achou)
+      Inicio
+            Cur_E051DIS.sql "SELECT E051DIS.CODDFS,      \
+                                  E051DIS.TIPAJS       \ 
+                            FROM E051DIS                \
+                            WHERE CODEMP = :YCodEmp AND \
+                                 APLDIS = 2 AND        \
+                                 DOCFIS = 'S' AND      \
+                                 CODMSG > 0 AND        \
+                                 AJSSPC = 1 AND        \
+                                    TIPAJS IN ('P','H')"
+            Cur_E051DIS.AbrirCursor();
+            Enquanto(Cur_E051DIS.Achou)
+            Inicio
+                @PIS@
+                Se (Cur_E051DIS.TipAjs = "P")
+                Inicio
+                    GERNCODDFS = Cur_E051DIS.CODDFS;
+                    GERNBASAJS = E140ISV.VlrBpf;@Base = Base PIS - Valor ICMS@
+                    GERNPERAJS = E140ISV.PerPif;@Percentual do ajuste = % ICMS@
+                    GERNVLRAJS = E140ISV.VlrPif;@Valor do ajuste@                
+                Fim;
+                
+                @COFINS@
+                Se (Cur_E051DIS.TipAjs = "H")
+                Inicio
+                    GERNCODDFS = Cur_E051DIS.CODDFS;  
+                    GERNBASAJS = E140ISV.VlrBcf;@Base = Base PIS - Valor ICMS@
+                    GERNPERAJS = E140ISV.PerCff;@Percentual do ajuste = % ICMS@
+                    GERNVLRAJS = E140ISV.VlrCff;@Valor do ajuste@                
+                Fim;
+        
+          Cur_E051DIS.Proximo();
+          Fim;@Fim se encontrou dispositivo@
+          Cur_E051DIS.FecharCursor();
+      
+      Fim;@Fim transacao@
+      Cur_E001TVE.FecharCursor();
+      GERNPRXAJS = 0;
+    Fim;
+Fim;
