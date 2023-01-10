@@ -1,0 +1,286 @@
+xNumEmp = R034FUN.NumEmp;
+xTipCol = R034FUN.TipCol;
+xNumCad = R034FUN.NumCad;
+
+@ -- Busca Dados do Recibo de Férias -- @
+Definir Cursor Cur_R040FEM;
+Definir Cursor Cur_R040FEV;    
+Definir Alfa vDatIni;
+Definir Alfa vDatFim;
+Definir Alfa vDatPag;
+Definir Alfa vDiaFer;
+Definir Alfa vDiaAbo;
+Definir Alfa vValTot;
+Definir Alfa vMes;
+Definir Alfa vMes2;
+Definir Alfa vValMes1;
+Definir Alfa vValMes2;
+Definir Alfa vTxtMes1;
+Definir Alfa vTxtMes2;
+Definir Alfa vDiasMes1;
+Definir Alfa vDiasMes2;
+
+Definir Data AuxIniFer;
+Definir Data AuxFimFer;
+Definir Data AuxUltimoDia;
+
+Definir Data xIniMesFer;
+
+
+Definir Data vDDatPag;
+Definir Data vDIniFer;
+Definir Data vDFimFer;
+
+AuxIniFer = 0;
+AuxFimFer = 0;
+AuxUltimoDia = 0;
+vDDatPag=0;
+vDIniFer=0;
+vDIniFer=0;
+vDatIni = "";
+vDatFim = "";
+vDatPag = "";
+vDiaFer = "";
+vDiaAbo = "";
+vValTot = "";
+vMes = "";
+vMes2 = "";
+vValMes1 = "";
+vValMes2 = "";
+vTxtMes1 = "";
+vTxtMes2 = "";
+xValTot = 0;
+xDia = 0;
+xMes = 0;
+xAno = 0;
+xDia2 = 0;
+xMes2 = 0;
+xAno2 = 0;
+
+xMesPag = 0;
+xMesIni = 0;
+xMesFim = 0;
+  @ limpando dias@
+vDiasMes2="0";
+vValMes2="0";
+xDiasMes1 = 0;
+xDiasMes2 = 0;
+xValMes1 = 0;
+xValMes2 = 0;
+
+Cur_R040FEM.Sql " SELECT INIFER, DATPAG, DIAFER, DIAABO, FimFer FROM R040FEM \
+                   WHERE NUMEMP = :XNUMEMP \
+                     AND TIPCOL = :XTIPCOL \
+                     AND NUMCAD = :XNUMCAD \
+                     AND INIFER >= :EDATINI \
+                     AND DATPAG <= :EDATREF "
+
+Cur_R040FEM.AbrirCursor();
+Se(Cur_R040FEM.Achou)
+{
+  @ -- Inicio -- @
+  ConverteMascara(3,Cur_R040FEM.IniFer,vDatIni,"DD/MM/YYYY");
+  AuxIniFer = Cur_R040FEM.IniFer;
+  
+  DesMontaData (AuxIniFer, Dia, xMesIni, Ano);
+  
+  @ -- Fim -- @
+  AuxFimFer = (Cur_R040FEM.IniFer + Cur_R040FEM.DiaFer - 1);
+  ConverteMascara(3,AuxFimFer,vDatFim,"DD/MM/YYYY");
+  vDIniFer=Cur_R040FEM.IniFer;
+  vDFimFer=Cur_R040FEM.FimFer;
+  
+  
+  DesMontaData (AuxFimFer, Dia, xMesFim, Ano);
+  
+  @ -- Data Pagto -- @
+  ConverteMascara(3,Cur_R040FEM.DatPag,vDatPag,"DD/MM/YYYY");
+  vDDatPag=Cur_R040FEM.DatPag;
+  
+  DesMontaData (Cur_R040FEM.DatPag, Dia, xMesPag, Ano);
+ 
+  
+  @ -- Dias de Férias -- @
+  ConverteMascara(1,Cur_R040FEM.DiaFer,vDiaFer,"99");
+  
+  @ -- Dias Abono -- @
+  ConverteMascara(1,Cur_R040FEM.DiaAbo,vDiaAbo,"99");
+  
+  @ -- Valor Total -- @
+  Cur_R040FEV.Sql " SELECT R040FEV.VALEVE, R008EVC.TIPEVE FROM R040FEV, R008EVC \
+                     WHERE R040FEV.NUMEMP = :XNUMEMP \
+                       AND R040FEV.TIPCOL = :XTIPCOL \
+                       AND R040FEV.NUMCAD = :XNUMCAD \
+                       AND R040FEV.INIFER = :AUXINIFER \
+                       AND R040FEV.TABEVE = R008EVC.CODTAB \
+                       AND R040FEV.CODEVE = R008EVC.CODEVE "
+  
+  Cur_R040FEV.AbrirCursor();
+  Enquanto(Cur_R040FEV.Achou)
+  {
+    Se((Cur_R040FEV.TipEve = 1) ou (Cur_R040FEV.TipEve = 5))
+    {
+      xValTot = xValTot + Cur_R040FEV.ValEve;
+    }
+    Se((Cur_R040FEV.TipEve = 3) ou (Cur_R040FEV.TipEve = 6))
+    {
+      xValTot = xValTot - Cur_R040FEV.ValEve;
+    }
+  
+  
+  
+    Cur_R040FEV.Proximo();
+  }
+  Cur_R040FEV.FecharCursor();
+  ConverteMascara(1,xValTot,vValTot,"zzz.z99,99");
+  
+  /*@ -- Verifica a Proporção dos valores -- @
+  DesmontaData(AuxIniFer,xDia,xMes,xAno);
+  MontaData(1,xMes,xAno,xIniMesFer);
+  DesmontaData(AuxFimFer,xDia2,xMes2,xAno2);
+  
+  ExtensoMes (xMes, vMes);
+  ExtensoMes (xMes2, vMes2);
+  
+  Se(xMes = xMes2)
+  {
+    IntParaAlfa(Cur_R040FEM.DiaFer,vDiasMes1);
+    xValMes1 = xValTot;
+    ConverteMascara(1,xValMes1,vValMes1,"zzz.z99,99");
+    Formula001 = xValMes1;
+    
+    AlteraControle("DDias2","Imprimir","Falso");
+    AlteraControle("DVal2","Imprimir","Falso");
+  }
+  Senao
+  {
+    AlteraControle("DDias2","Imprimir","Verdadeiro");  
+    AlteraControle("DVal2","Imprimir","Verdadeiro");  
+    @UltimoDia(xIniMesFer); @
+    xDiasMes1 = Cur_R040FEM.DiaFer - xDia2;
+    xDiasMes2 = xDia2;
+    
+    IntParaAlfa(xDiasMes1,vDiasMes1);
+    IntParaAlfa(xDiasMes2,vDiasMes2);
+    
+    xValMes1 = (xValTot / Cur_R040FEM.DiaFer) * xDiasMes1;
+    ConverteMascara(1,xValMes1,vValMes1,"zzz.z99,99");
+    Formula001 = xValMes1;
+    xValMes2 = (xValTot / Cur_R040FEM.DiaFer) * xDiasMes2;
+    ConverteMascara(1,xValMes2,vValMes2,"zzz.z99,99");
+    Formula002 = xValMes2;
+  } */
+  
+@ -- Verifica a Proporção dos valores -- @
+DesmontaData(AuxFimFer,xDia2,xMes2,xAno2);
+Se(xMesPag < xMesIni)
+{
+	Se(xMesIni = xMesFim)
+	{
+		IntParaAlfa(Cur_R040FEM.DiaFer,vDiasMes2);
+		xValMes2 = xValTot;
+		ConverteMascara(1,xValMes2,vValMes2,"zzz.z99,99");
+		Formula002 = xValMes2;
+	}
+	Senao
+	{
+		@UltimoDia(xIniMesFer); @
+		xDiasMes1 = Cur_R040FEM.DiaFer - xDia2;
+		xDiasMes2 = xDia2;
+    
+		IntParaAlfa(xDiasMes1,vDiasMes1);
+		IntParaAlfa(xDiasMes2,vDiasMes2);
+    
+		xValMes1 = (xValTot / Cur_R040FEM.DiaFer) * xDiasMes1;
+		ConverteMascara(1,xValMes1,vValMes1,"zzz.z99,99");
+		Formula001 = xValMes1;
+		xValMes2 = (xValTot / Cur_R040FEM.DiaFer) * xDiasMes2;
+		ConverteMascara(1,xValMes2,vValMes2,"zzz.z99,99");
+		Formula002 = xValMes2;
+	}
+}
+Se((xMesPag = 12) e (xMesIni = 1))
+{
+	Se(xMesIni = xMesFim) @ se 12 = 12 @
+	{
+		IntParaAlfa(Cur_R040FEM.DiaFer,vDiasMes2);@ pega o total de dias e larga na vdiasmes2 @
+		xValMes2 = xValTot;   @  valtot = valor liquido(valor1) @
+		ConverteMascara(1,xValMes2,vValMes2,"zzz.z99,99");  @ dval2 = xvalmes2 @
+		Formula002 = xValMes2;   
+		@----------------------------------------@
+		xDiasMes1 = Cur_R040FEM.DiaFer - xDia2;
+		xDiasMes2 = xDia2;
+    
+		IntParaAlfa(xDiasMes1,vDiasMes1);
+		IntParaAlfa(xDiasMes2,vDiasMes2); 
+		@------------------------------------------@
+	}   
+	Senao
+	{
+		@UltimoDia(xIniMesFer); @
+		xDiasMes1 = Cur_R040FEM.DiaFer - xDia2;
+		xDiasMes2 = xDia2;
+    
+		IntParaAlfa(xDiasMes1,vDiasMes1);
+		IntParaAlfa(xDiasMes2,vDiasMes2);
+    
+		xValMes1 = (xValTot / Cur_R040FEM.DiaFer) * xDiasMes1;
+		ConverteMascara(1,xValMes1,vValMes1,"zzz.z99,99");
+		Formula001 = xValMes1;
+		xValMes2 = (xValTot / Cur_R040FEM.DiaFer) * xDiasMes2;
+		ConverteMascara(1,xValMes2,vValMes2,"zzz.z99,99");
+		Formula002 = xValMes2;
+	}
+}
+Senao
+{
+  Se(xMesPag < xMesIni)
+  {
+		xDiasMes1 = Cur_R040FEM.DiaFer - xDia2;
+		xDiasMes2 = xDia2;
+    
+		IntParaAlfa(xDiasMes1,vDiasMes1);
+		IntParaAlfa(xDiasMes2,vDiasMes2);
+
+	  xValMes2 = (xValTot / Cur_R040FEM.DiaFer) * xDiasMes2;
+		ConverteMascara(1,xValMes2,vValMes2,"zzz.z99,99");
+		Formula002 = xValMes2;
+	  
+  }
+  Se(xMesIni = xMesFim)
+  { 
+    DDias2 = 0;
+    DVal2 = 0;
+    Formula002 = 0;
+  }
+  Senao
+  {
+		xDiasMes1 = Cur_R040FEM.DiaFer - xDia2;
+		xDiasMes2 = xDia2;
+    
+		IntParaAlfa(xDiasMes1,vDiasMes1);
+		IntParaAlfa(xDiasMes2,vDiasMes2);
+
+	  xValMes2 = (xValTot / Cur_R040FEM.DiaFer) * xDiasMes2;
+		ConverteMascara(1,xValMes2,vValMes2,"zzz.z99,99");
+		Formula002 = xValMes2;
+	  
+  }
+}
+  
+}
+Cur_R040FEM.FecharCursor();
+
+AlteraControle("DDatIni","Descrição",vDatIni);
+AlteraControle("DDatFim","Descrição",vDatFim);
+AlteraControle("DDatPag","Descrição",vDatPag);
+AlteraControle("DDiaFer","Descrição",vDiaFer);
+AlteraControle("DDiaAbo","Descrição",vDiaAbo);
+AlteraControle("DValTot","Descrição",vValTot);
+AlteraControle("DDias1","Descrição",vDiasMes1);
+AlteraControle("DDias2","Descrição",vDiasMes2);
+AlteraControle("DVal1","Descrição",vValMes1);
+AlteraControle("DVal2","Descrição",vValMes2);
+
+
+@ListaSecao("Adicional_1");@

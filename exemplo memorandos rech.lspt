@@ -1,0 +1,1454 @@
+
+--------------------------------------------------------------------------------
+Código: 1 - Descrição: ModeloGerador_Funções Globais
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 2 - Descrição: ModeloGerador_Inicialização
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 3 - Descrição: ModeloGerador_Pré-Seleção
+--------------------------------------------------------------------------------
+
+Definir alfa AuxSQL;
+Definir alfa AuxSQLAbr;
+Definir alfa AuxSQLHist;
+Definir alfa AuxRelac;
+Definir data EDatRef;
+Definir alfa xDatRef;
+Definir alfa xDatIni;
+Definir alfa EAbrLoc;
+Definir alfa EAbrSit;
+Definir alfa EAbrSin;
+Definir alfa EAbrTsa;
+Definir alfa EAbrGPe;
+
+DatRef = EDatRef;
+
+ConverteDataBanco(EDatRef, xDatRef);
+ConverteDataBanco(EDatIni, xDatIni);
+
+AuxRelac = "";
+
+Se ((EAbrGPe = "S") e (EAbrTDc = 0))
+inicio
+  Mensagem(Retorna, "Para Gerar Pendência deve-se informar o Tipo do Documento.");
+  Cancel(2);
+fim;
+
+Se (ESomAdm = 'S')
+Inicio
+  Se ((EDatIni > EDatRef) ou (EDatIni = 0) ou (EDatRef = 0))
+  Inicio
+     Mensagem(Retorna, "Com a entrada Somente Admitidos = 'S', a data inicial deve ser menor que a data final e ambas devem ser diferentes de '00/00/0000'.");
+     Cancel(1);
+  Fim;
+
+  AuxSQL = AuxRelac + "( R034FUN.DATADM >= " + xDatIni + " AND R034FUN.DATADM <= " + xDatRef + " )";
+  InsClauSQLWhere("Detalhe_1", AuxSQL);
+  AuxRelac = " AND ";
+Fim;
+
+@ - Tratamento para Demitidos - @
+AuxSQL = AuxRelac + " R034FUN.SITAFA = R010SIT.CODSIT AND ((R010SIT.TIPSIT <> 7) OR (R010SIT.TIPSIT = 7 AND R034FUN.DATAFA > " + xDatRef + ")) ";
+InsClauSQLWhere( "Detalhe_1", AuxSQL );
+AuxRelac = " AND ";
+
+@ -------------- Relacionamento com Histórico de Vínculo (FIXO)--------------- @
+MontarSqlHistorico("R038HVI", EDatRef, AuxSQL);
+AuxSQL = AuxRelac + AuxSQL;
+InsClauSqlWhere("Detalhe_1", AuxSQL);
+AuxRelac = " AND ";
+
+Se (EVinTel = 'S')
+Inicio
+  AuxSQL = AuxRelac + "R022VIN.TelTra = 'S' ";
+  InsClauSQLWhere("Detalhe_1", AuxSQL);
+  AuxRelac = " AND ";
+Fim;
+
+@ ------------- Relacionamento Histórico Cargo (FIXO) ------------- @
+MontarSqlHistorico ("R038HCA", EDatRef, AuxSQLHist);
+AuxSQL = AuxRelac + AuxSQLHist;
+InsClauSqlWhere("Detalhe_1", AuxSQL);
+AuxRelac = " AND ";
+
+@ -------- Relacionamento Histórico Situação (DINÂMICO) -------- @
+Se (EAbrSit <> "")
+Inicio
+  Definir Alfa AuxAFA;
+  Definir Alfa DataZero;
+  ConverteDataBanco(0, DataZero);
+      
+  @ Monta a restrição para campo de abrangência @
+  MontaAbrangencia( "R038AFA.SITAFA", EAbrSit, AuxSQLAbr );
+
+  /*
+  Este comando SQL seleciona todos os afastamentos que terminam depois do período 
+  indicado e/ou não tem previsão de término e, inciaram antes da data final informada.          
+  */      
+
+  AuxAFA = " SELECT 1 FROM R038AFA WHERE"
+              + " R038AFA.NUMEMP = R034FUN.NUMEMP"
+              + " AND R038AFA.TIPCOL = R034FUN.TIPCOL"
+              + " AND R038AFA.NUMCAD = R034FUN.NUMCAD"
+              + " AND (R038AFA.DATTER >= " + xDatRef + " OR R038AFA.DATTER = " + DataZero + ")"
+              + " AND R038AFA.DATAFA = (SELECT MAX(R038AFA.DATAFA) FROM R038AFA, R010SIT"
+              + " WHERE R038AFA.NUMEMP = R034FUN.NUMEMP"
+              + " AND R038AFA.TIPCOL = R034FUN.TIPCOL"
+              + " AND R038AFA.NUMCAD = R034FUN.NUMCAD"
+              + " AND R038AFA.DATAFA <= " + xDatRef
+              + " AND R038AFA.SITAFA = R010SIT.CODSIT"
+              + " AND R010SIT.TIPSIT <> 15)";
+
+  @ TESTA SE EXISTE SITUAÇÃO TIPO "1" NA ABRANGÊNCIA E, SE ELA É ÚNICA @
+  Sit1NaAbr (EAbrSit, xOutSit, xSit1);
+  Se ( xSit1 > 0 )
+  Inicio
+    @ Se encontrar situação tipo "1", deve desconsiderar os registros encontrados em AuxAFA @
+    AuxSQL = " NOT EXISTS ( " + AuxAFA;
+
+    Se (xOutSit > 0)
+      @ Se existirem outras situações informadas, leva em consideração @
+      AuxSQL = AuxSQL + ") OR EXISTS (" + AuxAFA + " AND " + AuxSQLAbr;
+  Fim
+  Senao
+    @ Se não encontrar situação tipo "1", seleciona somente os encontrados em AuxAFA @
+    AuxSQL = " EXISTS (" + AuxAFA + " AND " + AuxSQLAbr;
+
+  AuxSQL = AuxRelac + "(" + AuxSQL + "))";
+  InsSqlWhereSimples("Detalhe_1", AuxSQL);
+  AuxRelac = " AND ";
+Fim;
+
+@ -------------- Relacionamento com Histórico de Filial (FIXO)--------------- @
+@ Não pode ser utilizado o comando MontarSQLHistórico, motivo: transferencia de filial @
+AuxSql = AuxRelac + "(R038HFI.DATALT = (SELECT MAX (DATALT) FROM R038HFI TAB2 WHERE "
+                  + "(TAB2.NUMEMP = R038HFI.NUMEMP) AND "
+                  + "(TAB2.TIPCOL = R038HFI.TIPCOL) AND "
+                  + "(TAB2.NUMCAD = R038HFI.NUMCAD) AND "
+                  + "(TAB2.NUMEMP = TAB2.EMPATU) AND "
+                  + "(TAB2.NUMCAD = TAB2.CADATU) AND "
+                  + "(TAB2.DATALT <= " + xDatRef + ")))";
+InsClauSQLWhere("Detalhe_1", AuxSql);
+AuxRelac = " AND ";
+
+
+@ -------------- Relacionamento Histórico Local (DINÂMICO) -------------- @
+Se (EAbrLoc <> "")
+Inicio
+  @ Monta a restrição para data de alteração @
+  MontarSqlHistorico ("R038HLO",EDatRef,AuxSQLHist);
+  @ Monta a restrição para campo de abrangência @
+  MontaAbrangencia("R038HLO.NumLoc", EAbrLoc, AuxSQLAbr);
+  AuxSql = AuxRelac + " R038HLO.NUMEMP = R034FUN.NUMEMP "
+                + " AND R038HLO.TIPCOL = R034FUN.TIPCOL "
+                + " AND R038HLO.NUMCAD = R034FUN.NUMCAD "
+                + " AND " + AuxSQLHist
+                + " AND " + AuxSQLAbr;
+  InsClauSqlWhere("Detalhe_1", AuxSql);
+  AuxRelac = " AND ";
+Fim;
+
+@ -------------- Relacionamento Histórico Sindicato (DINÂMICO) -------------- @
+Se (EAbrSin <> "")
+Inicio
+  @ Monta a restrição para data de alteração @
+  MontarSqlHistorico ("R038HSI", EDatRef, AuxSQLHist);
+  @ Monta a restrição para campo de abrangência @
+  MontaAbrangencia("R038HSI.CodSin", EAbrSin, AuxSQLAbr);
+  AuxSql = AuxRelac + " R038HSI.NUMEMP = R034FUN.NUMEMP "
+                + " AND R038HSI.TIPCOL = R034FUN.TIPCOL "
+                + " AND R038HSI.NUMCAD = R034FUN.NUMCAD "
+                + " AND " + AuxSQLHist
+                + " AND " + AuxSQLAbr;
+  InsClauSqlWhere("Detalhe_1", AuxSql);
+  AuxRelac = " AND ";
+Fim;
+
+@ -------------- Relacionamento Histórico Tipo Salário (DINÂMICO) -------------- @
+Se (EAbrTsa <> "")
+Inicio
+  @ Monta a restrição para data de alteração @
+  MontarSqlHistoricoSeq ("R038HSA", EDatRef, AuxSQLHist);
+  @ Monta a restrição para campo de abrangência @
+  MontaAbrangencia("R038HSA.TipSal", EAbrTsa, AuxSQLAbr);
+  AuxSql = AuxRelac + " R038HSA.NUMEMP = R034FUN.NUMEMP "
+                + " AND R038HSA.TIPCOL = R034FUN.TIPCOL "
+                + " AND R038HSA.NUMCAD = R034FUN.NUMCAD "
+                + " AND " + AuxSQLHist
+                + " AND " + AuxSQLAbr;
+  InsClauSqlWhere("Detalhe_1", AuxSql);
+  AuxRelac = " AND ";
+Fim;
+
+@ -------------- Relacionamento com Histórico de Teletrabalho --------------- @
+
+AuxSQL = " AND R038HTT.DATINI >= " + xDatIni + " AND R038HTT.DATINI <= " + xDatRef;
+InsClauSqlWhere("Detalhe_1", AuxSQL);
+
+/*
+MontarSqlHistorico("R038HTT", EDatRef, AuxSQL);
+AuxSQL = AuxRelac + AuxSQL;
+InsClauSqlWhere("Detalhe_1", AuxSQL);
+AuxRelac = " AND ";
+*/   
+
+--------------------------------------------------------------------------------
+Código: 4 - Descrição: ModeloGerador_Seleção
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 5 - Descrição: ModeloGerador_Finalização
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 6 - Descrição: ModeloGerador_Imprimir Página
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 7 - Descrição: Detalhe_1_Depois Imprimir
+--------------------------------------------------------------------------------
+
+Definir Data xDataInicioTeletrabalho;
+Definir Data xDataAdmissao;
+Definir Numero xDuracaoContrato;      
+Definir Numero xProrrogacaoContrato;
+
+xDataInicioTeletrabalho = R038HTT.DatIni;
+xDataAdmissao = R034FUN.DATADM;                     
+xDuracaoContrato = R034CPL.DURCON;
+xProrrogacaoContrato = R034CPL.PROCON;
+
+ListaSecao("Adicional_TituloCaracter");
+
+Se (xDataInicioTeletrabalho = xDataAdmissao) {
+  Se(xDuracaoContrato > 0){
+     Se(xProrrogacaoContrato > 0) {
+       ListaSecao("Adicional_PrazoContratoCPror");
+     } Senao {
+       ListaSecao("Adicional_PrazoContratoSPror");
+     } 
+  } Senao {
+    ListaSecao("Adicional_PrazoIndeterminado");
+  }
+}
+
+ListaSecao("Adicional_Caracteristicas");
+
+ListaSecao("Adicional_AmbienteTrabalho");
+ListaSecao("Adicional_Prevencao");
+ListaSecao("Adicional_TituloHorarioTrab");
+ListaSecao("Adicional_HorTrabArtigo62CLT");
+ListaSecao("Adicional_Horario");
+ListaSecao("Adicional_CargosFuncoes");
+ListaSecao("Adicional_AjudaCusto");
+ListaSecao("Adicional_Remuneracao");
+ListaSecao("Adicional_AcessoMonitoramento");
+
+ListaSecao("Adicional_LocalData");
+
+--------------------------------------------------------------------------------
+Código: 8 - Descrição: Detalhe_1_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 9 - Descrição: Descricao001_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 10 - Descrição: Cadastro001_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 11 - Descrição: Cadastro003_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 12 - Descrição: Cadastro005_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 13 - Descrição: Cadastro006_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 14 - Descrição: Cadastro007_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 15 - Descrição: Cadastro008_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 16 - Descrição: Cadastro009_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 17 - Descrição: Memoran001_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir Alfa xTexto;
+
+Definir Alfa xNumCgc;
+Definir Alfa xTipoLogradouro;
+Definir Alfa xCodCep;
+Definir Alfa xEnderecoEmpregador;
+Definir Alfa xEnderecoEmpregado;
+Definir Alfa xEstCiv;
+Definir Alfa xEstadoCivil;
+Definir Alfa xNumPis;
+Definir Alfa xNumCpf;
+Definir Alfa xNumCtp;
+Definir Alfa xDexCtp;
+Definir Alfa Cur_R038HFI;
+Definir Alfa xSqlFilial;
+Definir Alfa xTipLgr;
+Definir Alfa xEndFil;
+Definir Alfa xEndNum;
+Definir Alfa xCplFil;
+Definir Alfa xCodEst;
+Definir Alfa xRazSoc; 
+Definir Numero vNumEmp;
+Definir Numero vTipCol;
+Definir Numero vNumCad;
+Definir Data   vDatAdmi;
+Definir Cursor Cur_R074BAI;
+Definir Cursor Cur_R074CID;
+Definir Cursor Cur_R074PAI;
+/* Informações do Empregador */
+
+NumeroParaAlfa(R030FIL.NumCgc, xNumCgc);
+
+xEnderecoEmpregador = "";
+
+EstaNulo(R030FIL.EndFil, xNulo);
+Se (xNulo = 0)
+Inicio
+  EstaNulo(R030FIL.TipLgr, xNulo);
+  Se (xNulo = 0)
+  Inicio
+    DescItemLista("LTipLgd", R030FIL.TipLgr, xTipoLogradouro);
+    xEnderecoEmpregador = xEnderecoEmpregador + xTipoLogradouro + " ";
+  Fim;
+  
+  xEnderecoEmpregador = xEnderecoEmpregador + R030FIL.EndFil;
+  
+  EstaNulo(R030FIL.EndNum, xNulo);
+  Se (xNulo = 0)
+    xEnderecoEmpregador = xEnderecoEmpregador + " " + R030FIL.EndNum;
+  
+  EstaNulo(R030FIL.CplFil, xNulo);
+  Se (xNulo = 0)
+    xEnderecoEmpregador = xEnderecoEmpregador + ", " + R030FIL.CplFil;        
+Fim;
+xRazSoc = R030FIL.RazSoc;
+xCodPai = R030FIL.CodPai;
+xCodCid = R030FIL.CodCid;
+xCodBai = R030FIL.CodBai;
+xCodEst = R030FIL.CodEst;
+NumeroParaAlfa(R030FIL.CodCep, xCodCep);
+
+/*Histórico da Filial*/
+vNumEmp = R034FUN.NUMEMP;
+vTipCol = R034FUN.TIPCOL;
+vNumCad = R034FUN.NUMCAD;
+vDatAdmi = R034FUN.DATADM;
+xSqlFilial = "SELECT R030FIL.RazSoc RAZSOC, R030FIL.NumCgc NUMCGC, R030FIL.CodPai CODPAI, R030FIL.CodCid CODCID, R030FIL.CodBai CODBAI, \
+                     R030FIL.TipLgr TIPLGR, R030FIL.EndFil ENDFIL, R030FIL.EndNum ENDNUM, R030FIL.CplFil CPLFIL, \
+                     R030FIL.CodCep CODCEP, R030FIL.CodEst CODEST \ 
+                FROM R038HFI, R030FIL           \
+               WHERE R038HFI.NUMEMP = :vNumEmp  \ 
+                 AND R038HFI.TIPCOL = :vTipCol  \ 
+                 AND R038HFI.NUMCAD = :vNumCad  \   
+                 AND R038HFI.DATALT = :vDatAdmi \
+                 AND R038HFI.NUMEMP = R030FIL.NUMEMP \ 
+                 AND R038HFI.CODFIL = R030FIL.CODFIL";
+                      
+SQL_Criar(Cur_R038HFI);
+SQL_UsarAbrangencia(Cur_R038HFI,0);
+SQL_USARSQLSENIOR2(Cur_R038HFI,0);
+SQL_DefinirComando(Cur_R038HFI, xSqlFilial);
+SQL_DefinirInteiro(Cur_R038HFI, "vNumEmp", vNumEmp);
+SQL_DefinirInteiro(Cur_R038HFI, "vTipCol", vTipCol);
+SQL_DefinirInteiro(Cur_R038HFI, "vNumCad", vNumCad);    
+SQL_DefinirData(Cur_R038HFI, "vDatAdmi", vDatAdmi);
+SQL_AbrirCursor(Cur_R038HFI);
+Se(SQL_EOF(Cur_R038HFI) = 0)
+Inicio
+  SQL_RetornarAlfa(Cur_R038HFI, "RAZSOC", xRazSoc);
+  SQL_RetornarAlfa(Cur_R038HFI, "NUMCGC", xNumCgc);
+  SQL_RetornarInteiro(Cur_R038HFI, "CODPAI", xCodPai);
+  SQL_RetornarInteiro(Cur_R038HFI, "CODCID", xCodCid);
+  SQL_RetornarInteiro(Cur_R038HFI, "CODBAI", xCodBai);
+  SQL_RetornarAlfa(Cur_R038HFI, "TIPLGR", xTipLgr);
+  SQL_RetornarAlfa(Cur_R038HFI, "ENDFIL", xEndFil);
+  SQL_RetornarAlfa(Cur_R038HFI, "ENDNUM", xEndNum);
+  SQL_RetornarAlfa(Cur_R038HFI, "CPLFIL", xCplFil);                                           
+  xEnderecoEmpregador = xTipLgr +  " " + xEndFil + " " + xEndNum + ", " +  xCplFil;
+  SQL_RetornarAlfa(Cur_R038HFI, "CODCEP", xCodCep);
+  SQL_RetornarAlfa(Cur_R038HFI, "CODEST", xCodEst);
+Fim; 
+
+SQL_FecharCursor(Cur_R038HFI);    
+SQL_Destruir(Cur_R038HFI); 
+
+Se (xCodCid > 0)
+Inicio
+  Se (xCodBai > 0)
+  Inicio
+    Cur_R074BAI.SQL "SELECT NOMBAI FROM R074BAI WHERE CODCID = :xCodCid AND CODBAI = :xCodBai";
+    Cur_R074BAI.AbrirCursor();
+    Se (Cur_R074BAI.Achou)
+      xEnderecoEmpregador = xEnderecoEmpregador + ", " + Cur_R074BAI.NomBai;  
+    Cur_R074BAI.FecharCursor();
+  Fim;
+
+  Cur_R074CID.SQL "SELECT NOMCID FROM R074CID WHERE CODCID = :xCodCid";
+  Cur_R074CID.AbrirCursor();
+  Se (Cur_R074CID.Achou)
+  Inicio
+    xEnderecoEmpregador = xEnderecoEmpregador + ", " + Cur_R074CID.NomCid;
+    EstaNulo(xCodEst, xNulo);    
+    Se (xEstaNulo = 0)
+      xEnderecoEmpregador = xEnderecoEmpregador + "/" + xCodEst;  
+  Fim;
+  Cur_R074CID.FecharCursor();
+Fim;
+
+Se (xCodPai > 0)
+Inicio
+  Cur_R074PAI.SQL "SELECT NOMPAI FROM R074PAI WHERE CODPAI = :xCodPai";
+  Cur_R074PAI.AbrirCursor();
+  Se (Cur_R074PAI.Achou)
+    xEnderecoEmpregador = xEnderecoEmpregador + ", " + Cur_R074PAI.NomPai;  
+  Cur_R074PAI.FecharCursor();
+Fim;
+
+EstaNulo(xCodCep, xNulo);
+Se (xNulo = 0)
+Inicio
+  xEnderecoEmpregador = xEnderecoEmpregador + ", " + xCodCep;
+Fim;
+
+/* Informações do Empregado */
+
+IntParaAlfa(R034FUN.EstCiv, xEstCiv);
+DescItemLista("LEstCiv", xEstCiv, xEstadoCivil);
+
+xEnderecoEmpregado = "";
+
+EstaNulo(R034CPL.EndRua, xNulo);
+Se (xNulo = 0)
+Inicio
+  EstaNulo(R034CPL.TipLgr, xNulo);
+  Se (xNulo = 0)
+  Inicio
+    DescItemLista("LTipLgd", R034CPL.TipLgr, xTipoLogradouro);
+    xEnderecoEmpregado = xEnderecoEmpregado + xTipoLogradouro + " ";
+  Fim;
+
+  xEnderecoEmpregado = xEnderecoEmpregado + R034CPL.EndRua;
+  
+  EstaNulo(R034CPL.EndNum, xNulo);
+  Se (xNulo = 0)
+    xEnderecoEmpregado = xEnderecoEmpregado + " " + R034CPL.EndNum;
+  
+  EstaNulo(R034CPL.EndCpl, xNulo);
+  Se (xNulo = 0)
+    xEnderecoEmpregado = xEnderecoEmpregado + ", " + R034CPL.EndCpl;        
+Fim;
+
+xCodPai = R034CPL.CodPai;
+xCodCid = R034CPL.CodCid;
+xCodBai = R034CPL.CodBai;
+
+Se (xCodCid > 0)
+Inicio
+  Se (xCodBai > 0)
+  Inicio
+    Cur_R074BAI.SQL "SELECT NOMBAI FROM R074BAI WHERE CODCID = :xCodCid AND CODBAI = :xCodBai";
+    Cur_R074BAI.AbrirCursor();
+    Se (Cur_R074BAI.Achou)
+      xEnderecoEmpregado = xEnderecoEmpregado + ", " + Cur_R074BAI.NomBai;
+    Cur_R074BAI.FecharCursor();
+  Fim;
+
+  Cur_R074CID.SQL "SELECT NOMCID FROM R074CID WHERE CODCID = :xCodCid";
+  Cur_R074CID.AbrirCursor();
+  Se (Cur_R074CID.Achou)
+  Inicio
+    xEnderecoEmpregado = xEnderecoEmpregado + ", " + Cur_R074CID.NomCid;
+    Se (R030FIL.CodEst <> "")
+      xEnderecoEmpregado = xEnderecoEmpregado + "/" + R034CPL.CodEst;  
+  Fim;
+  Cur_R074CID.FecharCursor();
+Fim;
+
+Se (xCodPai > 0)
+Inicio
+  Cur_R074PAI.SQL "SELECT NOMPAI FROM R074PAI WHERE CODPAI = :xCodPai";
+  Cur_R074PAI.AbrirCursor();
+  Se (Cur_R074PAI.Achou)
+    xEnderecoEmpregado = xEnderecoEmpregado + ", " + Cur_R074PAI.NomPai;  
+  Cur_R074PAI.FecharCursor();
+Fim;
+
+NumeroParaAlfa(R034CPL.EndCep, xCodCep); 
+EstaNulo(xCodCep, xNulo);
+Se (xNulo = 0)
+Inicio
+  ConverteMascara(5, R034CPL.EndCep, xCodCep, "99999-999");
+  xEnderecoEmpregado = xEnderecoEmpregado + ", " + xCodCep;
+Fim;
+
+NumeroParaAlfa(R034FUN.NumPis, xNumPis);
+ConverteMascara(5, R034FUN.NumPis, xNumPis, "999.99999.99.9");
+
+NumeroParaAlfa(R034FUN.NumCpf, xNumCpf);
+ConverteMascara(5, R034FUN.NumCpf, xNumCpf, "999.999.999-99");
+
+NumeroParaAlfa(R034FUN.NumCtp, xNumCtp);
+ConverteMascara(3, R034FUN.DexCtp, xDexCtp, "DD/MM/YYYY");
+
+xTexto = "          Por este instrumento particular, de um lado " + xRazSoc + ", pessoa jurídica de direito privado, " + 
+         "inscrita no CNPJ/MF sob o nº " + xNumCgc + ", estabelecida no(a) " + xEnderecoEmpregador + ", doravante denominada Empregadora, e, " + 
+         "de outro, " + R034FUN.NomFun + ", " + R023NAC.DesNac + ", " + xEstadoCivil + ", " + xEnderecoEmpregado +
+         ", inscrito(a) no CPF sob o nº " + xNumCpf + 
+         ", doravante denominado(a) Empregado(a), ajustam entre si o presente contrato de trabalho, nos termos e condições que seguem.";
+
+ValStr = xTexto;
+Cancel(2);
+
+--------------------------------------------------------------------------------
+Código: 18 - Descrição: Adicional_Testemunhas_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 19 - Descrição: Adicional_Testemunhas_Antes Imprimir
+--------------------------------------------------------------------------------
+
+ProximaPagina ("Adicional_Testemunhas", xPag);
+Se (xPag = 1)
+  ListaSecao("Adicional_MolduraTopo");
+
+--------------------------------------------------------------------------------
+Código: 20 - Descrição: Desenho001_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 21 - Descrição: Desenho002_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 22 - Descrição: Descricao111_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 23 - Descrição: Descricao012_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir alfa ETes2;
+ValStr = ETes2;
+Cancel(2);
+
+--------------------------------------------------------------------------------
+Código: 24 - Descrição: Descricao028_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir alfa ECpfTes2;
+
+Se ((ECPFTes2 = "") ou (ECPFTes2 = " "))
+  Cancel(1);
+Senao
+Inicio
+  ValStr = "CPF: " + ECPFTes2;
+  Cancel(2);
+Fim;
+
+--------------------------------------------------------------------------------
+Código: 25 - Descrição: Descricao014_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir alfa ECpfTes1;
+
+Se ((ECPFTes1 = "") ou (ECPFTes1 = " "))
+  Cancel(1);
+Senao
+Inicio
+  ValStr = "CPF: " + ECPFTes1;
+  Cancel(2);
+Fim;
+
+--------------------------------------------------------------------------------
+Código: 26 - Descrição: Descricao007_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir Alfa ETes1;
+ValStr = ETes1;
+Cancel(2);
+
+--------------------------------------------------------------------------------
+Código: 27 - Descrição: CodBarra001_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir alfa CodigoBarras;
+
+@ --- Se Gera Pendência então monta e imprime Código de Barras --- @
+
+Se (EAbrGPe = "S")
+Inicio
+  CodigoBarraDoc(R034FUN.NUMEMP, R034FUN.TipCol, R034FUN.NumCad, EAbrTDc, EDatRef, EAbrGPe, CodigoBarras);
+  ValStr = CodigoBarras;
+  Cancel(2);
+Fim;
+
+--------------------------------------------------------------------------------
+Código: 28 - Descrição: Rodape_Cabecalho_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 29 - Descrição: Rodape_Cabecalho_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 30 - Descrição: Sistema001_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 31 - Descrição: Adicional_Caracteristicas_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 32 - Descrição: Adicional_Caracteristicas_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 33 - Descrição: Desenho006_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 34 - Descrição: Desenho007_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 35 - Descrição: Desenho008_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 36 - Descrição: Desenho009_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 37 - Descrição: Desenho010_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 38 - Descrição: Desenho031_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 39 - Descrição: Memoran002_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir Alfa xTexto;
+
+Definir Alfa xQtdHor;
+Definir Alfa xCusCom;
+Definir Alfa xCustoComparecimento;
+
+ConverteMascara(4, R038HTT.QtdHor, xQtdHor, "#Q#hh:mm");
+
+IntParaAlfa(R038HTT.CusCom, xCusCom);
+DescItemLista("LCustoComparecimento", xCusCom, xCustoComparecimento);
+
+Se(xCustoComparecimento = "Colaborador")
+  xCustoComparecimento = "Empregado(a)";
+
+xTexto = "	Quando houver solicitação de comparecimento do Empregado(a) nas dependências da Empregadora ou local indicado, " +
+         "este deverá ser previamente comunicado com mínimo de " + xQtdHor + " de antecedência e os valores decorrentes " +
+         "serão custeados pelo(a) " + xCustoComparecimento + ".";
+
+
+ValStr = xTexto;
+Cancel(2);
+
+--------------------------------------------------------------------------------
+Código: 40 - Descrição: Memoran003_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 41 - Descrição: Memoran006_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 42 - Descrição: Memoran007_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 43 - Descrição: Memoran029_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 44 - Descrição: Memoran005_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 45 - Descrição: Adicional_AmbienteTrabalho_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 46 - Descrição: Adicional_AmbienteTrabalho_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 47 - Descrição: Descricao002_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 48 - Descrição: Desenho011_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 49 - Descrição: Memoran008_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 50 - Descrição: Adicional_Prevencao_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 51 - Descrição: Adicional_Prevencao_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 52 - Descrição: Descricao003_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 53 - Descrição: Desenho013_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 54 - Descrição: Desenho014_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 55 - Descrição: Desenho015_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 56 - Descrição: Desenho016_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 57 - Descrição: Desenho017_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 58 - Descrição: Memoran010_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 59 - Descrição: Memoran011_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 60 - Descrição: Memoran013_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 61 - Descrição: Memoran014_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 62 - Descrição: Memoran015_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 63 - Descrição: Adicional_Horario_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 64 - Descrição: Adicional_Horario_Antes Imprimir
+--------------------------------------------------------------------------------
+
+ProximaPagina ("Adicional_Horario", xPag);
+Se (xpag = 1)
+Inicio
+  ListaSecao("Adicional_MolduraBase"); 
+  ListaSecao("Adicional_MolduraTopo");
+Fim; 
+
+--------------------------------------------------------------------------------
+Código: 65 - Descrição: Desenho020_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 66 - Descrição: Desenho021_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 67 - Descrição: Desenho018_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 68 - Descrição: Memoran017_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 69 - Descrição: Memoran018_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir Alfa xTexto;
+
+xTexto = "Caberá ao(à) Empregado(a) reportar " + R038HTT.RepLid + " ao seu líder direto a execução das atividades previstas no contrato confirmando portanto o cumprimento das suas atividades.";
+
+ValStr = xTexto;
+Cancel(2);
+
+--------------------------------------------------------------------------------
+Código: 70 - Descrição: Memoran009_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 71 - Descrição: Adicional_MolduraBase_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 72 - Descrição: Adicional_MolduraBase_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 73 - Descrição: Adicional_MolduraTopo_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 74 - Descrição: Adicional_MolduraTopo_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 75 - Descrição: Adicional_LocalData_Depois Imprimir
+--------------------------------------------------------------------------------
+
+ProximaPagina("Adicional_Assinaturas", pag);
+Se (pag = 1)
+  ListaSecao("Adicional_MolduraBase");
+
+ListaSecao("Adicional_Assinaturas");
+
+--------------------------------------------------------------------------------
+Código: 76 - Descrição: Adicional_LocalData_Antes Imprimir
+--------------------------------------------------------------------------------
+
+ProximaPagina ("Adicional_LocalData", xPag);
+Se (xpag = 1)
+Inicio
+  ListaSecao("Adicional_MolduraBase"); 
+  ListaSecao("Adicional_MolduraTopo");
+Fim; 
+
+--------------------------------------------------------------------------------
+Código: 77 - Descrição: Cadastro004_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 78 - Descrição: Descricao030_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir Alfa xDataExtenso;
+Definir alfa vDataStr;
+Definir Alfa xNomCid;
+Definir data vDataAux;
+Definir Numero vNumEmp;
+Definir Numero vTipCol;
+Definir Numero vNumCad;
+Definir Data   vDatAdmiss;
+Definir Alfa Curs_R074CID;
+Definir Alfa  xSqlCidade;
+vDataAux = R034FUN.DatAdm;
+
+xNomCid = R074CID.NomCid;
+vNumEmp = R034FUN.NUMEMP;
+vTipCol = R034FUN.TIPCOL;
+vNumCad = R034FUN.NUMCAD;
+vDatAdmiss = R034FUN.DATADM;
+xSqlCidade =  "SELECT R074CID.NOMCID NOMCID \
+                 FROM R038HFI, R030FIL, R074CID \      
+                WHERE R038HFI.NUMEMP = :vNumEmp \   
+                  AND R038HFI.TIPCOL = :vTipCol \  
+                  AND R038HFI.NUMCAD = :vNumCad \    
+                  AND R038HFI.DATALT = :vDatAdmi \
+                  AND R038HFI.NUMEMP = R030FIL.NUMEMP \  
+                  AND R038HFI.CODFIL = R030FIL.CODFIL \ 
+                  AND R030FIL.CODCID = R074CID.CODCID";
+SQL_Criar(Curs_R074CID);
+SQL_UsarAbrangencia(Curs_R074CID,0);
+SQL_USARSQLSENIOR2(Curs_R074CID,0);
+SQL_DefinirComando(Curs_R074CID, xSqlCidade);
+SQL_DefinirInteiro(Curs_R074CID, "vNumEmp", vNumEmp);
+SQL_DefinirInteiro(Curs_R074CID, "vTipCol", vTipCol);
+SQL_DefinirInteiro(Curs_R074CID, "vNumCad", vNumCad);    
+SQL_DefinirData(Curs_R074CID, "vDatAdmi", vDatAdmiss);
+SQL_AbrirCursor(Curs_R074CID);
+
+Se(SQL_EOF(Curs_R074CID) = 0)
+Inicio
+  SQL_RetornarAlfa(Curs_R074CID, "NOMCID", xNomCid);     
+Fim;
+  
+SQL_FecharCursor(Curs_R074CID);    
+SQL_Destruir(Curs_R074CID);                
+cTpData = 3;
+DataExtenso(vDataAux, vDataStr);
+xDataExtenso = xNomCid + ", " + vDataStr + ".";
+
+ValStr = xDataExtenso;
+Cancel(2);
+
+--------------------------------------------------------------------------------
+Código: 79 - Descrição: Memoran019_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 80 - Descrição: Adicional_Assinaturas_Depois Imprimir
+--------------------------------------------------------------------------------
+
+ProximaPagina("Adicional_Testemunhas", xpag);
+Se (xpag = 1)
+  ListaSecao("Adicional_MolduraBase");
+
+ListaSecao("Adicional_Testemunhas");
+
+--------------------------------------------------------------------------------
+Código: 81 - Descrição: Adicional_Assinaturas_Antes Imprimir
+--------------------------------------------------------------------------------
+
+ProximaPagina("Adicional_Assinaturas", pag);
+Se (pag = 1)
+  ListaSecao("Adicional_MolduraTopo");
+
+--------------------------------------------------------------------------------
+Código: 82 - Descrição: Desenho004_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 83 - Descrição: Desenho003_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 84 - Descrição: CNomFunAdi_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 85 - Descrição: Descricao010_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir Alfa xRazSocial;
+Definir Alfa xSqlRazSoc;
+Definir Alfa Cur_R030FIL;
+Definir Numero vNumEmp;
+Definir Numero vTipCol;
+Definir Numero vNumCad;
+Definir Data vDatAdmissao;
+xRazSocial = R030FIL.RAZSOC;
+vNumEmp = R034FUN.NUMEMP;
+vTipCol = R034FUN.TIPCOL;
+vNumCad = R034FUN.NUMCAD;
+vDatAdmissao = R034FUN.DATADM;
+xSqlRazSoc = "SELECT R030FIL.RazSoc RAZSOC \ 
+                FROM R038HFI, R030FIL           \
+               WHERE R038HFI.NUMEMP = :vNumEmp  \ 
+                 AND R038HFI.TIPCOL = :vTipCol  \ 
+                 AND R038HFI.NUMCAD = :vNumCad  \   
+                 AND R038HFI.DATALT = :vDatAdmi \
+                 AND R038HFI.NUMEMP = R030FIL.NUMEMP \ 
+                 AND R038HFI.CODFIL = R030FIL.CODFIL";
+SQL_Criar(Cur_R030FIL);
+SQL_UsarAbrangencia(Cur_R030FIL,0);
+SQL_USARSQLSENIOR2(Cur_R030FIL,0);
+SQL_DefinirComando(Cur_R030FIL, xSqlFilial);
+SQL_DefinirInteiro(Cur_R030FIL, "vNumEmp", vNumEmp);
+SQL_DefinirInteiro(Cur_R030FIL, "vTipCol", vTipCol);
+SQL_DefinirInteiro(Cur_R030FIL, "vNumCad", vNumCad);    
+SQL_DefinirData(Cur_R030FIL, "vDatAdmi", vDatAdmissao);
+SQL_AbrirCursor(Cur_R030FIL);
+Se(SQL_EOF(Cur_R030FIL) = 0)
+Inicio  
+  SQL_RetornarAlfa(Cur_R030FIL, "RAZSOC", xRazSocial);
+Fim; 
+ValStr = xRazSocial;
+Cancel(2);
+
+--------------------------------------------------------------------------------
+Código: 86 - Descrição: Adicional_CargosFuncoes_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 87 - Descrição: Adicional_CargosFuncoes_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 88 - Descrição: Descricao005_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 89 - Descrição: Desenho022_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 90 - Descrição: Memoran020_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir Alfa xTexto;
+Definir Alfa xNomCargo;
+Definir Alfa xCBOCargo;
+Definir Numero vNumEmp;
+Definir Numero vTipCol;
+Definir Numero vNumCad;
+Definir Data   vDatAdmis;
+Definir Alfa Cur_R038HCA;
+Definir Alfa  xSql;
+/*Historico de Cargo*/
+vNumEmp = R034FUN.NUMEMP;
+vTipCol = R034FUN.TIPCOL;
+vNumCad = R034FUN.NUMCAD;
+vDatAdmis = R034FUN.DATADM;
+xNomCargo = R024CAR.TitRed;
+xCBOCargo = R024CAR.CodCb2;
+xSql = "SELECT R024CAR.TitRed NOMCAR, R024CAR.CodCb2 CBO \
+          FROM R038HCA, R024CAR \ 
+         WHERE R038HCA.NUMEMP = :vNumEmp \ 
+           AND R038HCA.TIPCOL = :vTipCol \ 
+           AND R038HCA.NUMCAD = :vNumCad \  
+           AND R038HCA.DATALT = :vDatAdmis \
+           AND R024CAR.ESTCAR = R038HCA.ESTCAR \
+           AND R038HCA.CODCAR = R024CAR.CODCAR";
+                      
+SQL_Criar(Cur_R038HCA);
+SQL_UsarAbrangencia(Cur_R038HCA,0);
+SQL_USARSQLSENIOR2(Cur_R038HCA,0);
+SQL_DefinirComando(Cur_R038HCA, xSql);
+SQL_DefinirInteiro(Cur_R038HCA, "vNumEmp", vNumEmp);
+SQL_DefinirInteiro(Cur_R038HCA, "vTipCol", vTipCol);
+SQL_DefinirInteiro(Cur_R038HCA, "vNumCad", vNumCad);    
+SQL_DefinirData(Cur_R038HCA, "vDatAdmis", vDatAdmis);
+SQL_AbrirCursor(Cur_R038HCA);
+Se(SQL_EOF(Cur_R038HCA) = 0)
+Inicio
+  SQL_RetornarAlfa(Cur_R038HCA, "NOMCAR", xNomCargo);
+  SQL_RetornarAlfa(Cur_R038HCA, "CBO", xCBOCargo);      
+Fim;
+  
+SQL_FecharCursor(Cur_R038HCA);    
+SQL_Destruir(Cur_R038HCA);
+
+xTexto = "O(a) Empregado(a) trabalhará para a Empregadora exercendo o cargo de " + xNomCargo + " - CBO " + xCBOCargo + 
+         ", cujas funções/atribuições encontram-se descritas na Classificação Brasileira de Ocupações do Ministério do Trabalho e Emprego e " + 
+         "demais que lhe forem correlatadas.";
+
+ValStr = xTexto;
+Cancel(2);
+
+--------------------------------------------------------------------------------
+Código: 91 - Descrição: Adicional_AjudaCusto_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 92 - Descrição: Adicional_AjudaCusto_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 93 - Descrição: Descricao006_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 94 - Descrição: Desenho024_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 95 - Descrição: Desenho025_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 96 - Descrição: Memoran022_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir Alfa xTexto;
+
+Definir Alfa xValAju;
+Definir Alfa xLinha1;
+Definir Alfa xLinha2;
+Definir Alfa xLinha3;
+
+ConverteMascara(2, R038HTT.ValAju, xValAju, "zzz.zzz.zz9,99");
+
+xTexto = "Durante o período que o(a) Empregado(a) prestar serviços na modalidade de teletrabalho, " +
+         "ser-lhe-á pago valor mensal a título de ajuda de custo pela Empregadora, no valor de R$ " + xValAju + " com fundamento " +
+         "no que dispõe o parágrafo primeiro do artigo 457 da CLT, com vistas a fazer frente a todas as despesas " + 
+         "decorrentes para a viabilizar o cumprimento de suas atividades profissionais.";
+
+ValStr = xTexto;
+Cancel(2);
+
+--------------------------------------------------------------------------------
+Código: 97 - Descrição: Memoran023_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 98 - Descrição: Adicional_Remuneracao_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 99 - Descrição: Adicional_Remuneracao_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 100 - Descrição: Descricao008_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 101 - Descrição: Desenho026_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 102 - Descrição: Desenho027_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 103 - Descrição: Desenho028_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 104 - Descrição: Memoran024_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir Alfa xTexto;
+
+Definir Alfa xValSal;
+Definir Alfa xValSalExt;
+Definir Alfa xStrAux;
+
+/* Retornar o salário de admissão */
+RetSalEmp(R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, R034FUN.DatAdm);
+
+ConverteMascara(2, SalEmp, xValSal, "zzz.zzz.zz9,99");
+RetExtMoeda (SalEmp, xValSalExt);
+
+/* Exclui a última posição da string pois é um espaço vazio */
+TamanhoAlfa(xValSalExt, xTamanho);
+DeletarAlfa (xValSalExt, xTamanho, 1);
+
+xTexto = "O(a) Empregado(a) receberá, o salário mensal de R$ " + xValSal + " (" + xValSalExt + ").";
+
+ValStr = xTexto;
+Cancel(2);
+
+--------------------------------------------------------------------------------
+Código: 105 - Descrição: Memoran025_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 106 - Descrição: Memoran026_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 107 - Descrição: Adicional_AcessoMonitoramento_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 108 - Descrição: Adicional_AcessoMonitoramento_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 109 - Descrição: Descricao009_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 110 - Descrição: Desenho029_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 111 - Descrição: Desenho030_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 112 - Descrição: Memoran027_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 113 - Descrição: Memoran028_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 114 - Descrição: Adicional_TituloCaracter_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 115 - Descrição: Adicional_TituloCaracter_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 116 - Descrição: Descricao015_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 117 - Descrição: Adicional_PrazoContratoCPror_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 118 - Descrição: Adicional_PrazoContratoCPror_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 119 - Descrição: Desenho005_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 120 - Descrição: Memoran004_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir Alfa xTexto;            
+Definir Alfa xDuracaoContratoAlfa;      
+Definir Alfa xDuracaoContratoEscritoExtenso;
+Definir Alfa xDuracaoContratoEscritoExtensoMinusculo;
+Definir Alfa xProrrogacaoContratoAlfa;      
+Definir Alfa xProrrogacaoContratoEscritoExtenso;     
+Definir Alfa xProrrogacaoContratoEscritoExtensoMinusculo;     
+                               
+intParaAlfa(xDuracaoContrato, xDuracaoContratoAlfa);
+ExtensoNumero(xDuracaoContrato, xDuracaoContratoEscritoExtenso);
+ConverteParaMinusculo(xDuracaoContratoEscritoExtenso, xDuracaoContratoEscritoExtensoMinusculo);
+
+intParaAlfa(xProrrogacaoContrato, xProrrogacaoContratoAlfa);
+ExtensoNumero(xProrrogacaoContrato, xProrrogacaoContratoEscritoExtenso);
+ConverteParaMinusculo(xProrrogacaoContratoEscritoExtenso, xProrrogacaoContratoEscritoExtensoMinusculo);
+
+xTexto = "Este contrato é firmado por um período de experiência de " + xDuracaoContratoAlfa + " ( " + 
+         xDuracaoContratoEscritoExtensoMinusculo +") dias, a contar da data de sua assinatura, findo, " +
+         "o qual, inexistindo manifestação em contrário por qualquer das partes e continuando " +
+         "a prestação de serviços a experiência considerar-se-á automaticamente prorrogada por " +
+         "mais " + xProrrogacaoContratoAlfa + " ( " + xProrrogacaoContratoEscritoExtensoMinusculo +
+         ") dias durante os quais as partes testarão a aptidão e a adaptação para as suas funções .";
+
+ValStr = xTexto;
+Cancel(2);
+
+--------------------------------------------------------------------------------
+Código: 121 - Descrição: Adicional_TituloHorarioTrab_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 122 - Descrição: Adicional_TituloHorarioTrab_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 123 - Descrição: Descricao004_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 124 - Descrição: Adicional_HorTrabArtigo62CLT_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 125 - Descrição: Adicional_HorTrabArtigo62CLT_Antes Imprimir
+--------------------------------------------------------------------------------
+
+Definir Alfa buscarAssinalamentoTeleTrabalho;                   
+Definir Alfa xSql;
+Definir Alfa xAssinalamentoTeleTrabalho;
+
+xSql = "SELECT VIN.TELTRA                                             \
+          FROM R022VIN VIN, R038HVI HVI                               \
+         WHERE HVI.NUMEMP = :nNUMEMP                                  \
+           AND HVI.TIPCOL = :nTIPCOL                                  \
+           AND HVI.NUMCAD = :nNUMCAD                                  \
+           AND HVI.DATALT = (SELECT MAX(DATALT)                       \
+                                   FROM R038HVI                       \
+                                  WHERE R038HVI.NUMEMP = HVI.NUMEMP   \
+                                    AND R038HVI.TIPCOL = HVI.TIPCOL   \
+                                    AND R038HVI.NUMCAD = HVI.NUMCAD)  \
+           AND HVI.CODVIN = VIN.CODVIN                                ";  
+
+Sql_Criar(buscarAssinalamentoTeleTrabalho);
+Sql_UsarSqlSenior2(buscarAssinalamentoTeleTrabalho, 0);
+Sql_UsarAbrangencia(buscarAssinalamentoTeleTrabalho, 0);
+Sql_DefinirComando(buscarAssinalamentoTeleTrabalho, xSql);
+Sql_DefinirInteiro(buscarAssinalamentoTeleTrabalho, "nNUMEMP", R034FUN.NUMEMP);
+Sql_DefinirInteiro(buscarAssinalamentoTeleTrabalho, "nTIPCOL", R034FUN.TIPCOL);
+Sql_DefinirInteiro(buscarAssinalamentoTeleTrabalho, "nNUMCAD", R034FUN.NUMCAD);
+Sql_AbrirCursor(buscarAssinalamentoTeleTrabalho);
+Sql_RetornarAlfa(buscarAssinalamentoTeleTrabalho, "TELTRA", xAssinalamentoTeleTrabalho);
+
+Se(xAssinalamentoTeleTrabalho <> "S")
+  Cancel(1);
+
+Sql_FecharCursor(buscarAssinalamentoTeleTrabalho);
+Sql_Destruir(buscarAssinalamentoTeleTrabalho);
+
+--------------------------------------------------------------------------------
+Código: 126 - Descrição: Desenho019_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 127 - Descrição: Memoran016_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 128 - Descrição: Adicional_PrazoContratoSPror_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 129 - Descrição: Adicional_PrazoContratoSPror_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 130 - Descrição: Desenho012_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 131 - Descrição: Memoran012_Na Impressão
+--------------------------------------------------------------------------------
+
+Definir Alfa xTexto;            
+Definir Alfa xDuracaoContratoAlfa;      
+Definir Alfa xDuracaoContratoEscritoExtenso;
+Definir Alfa xDuracaoContratoEscritoExtensoMinusculo;
+                               
+intParaAlfa(xDuracaoContrato, xDuracaoContratoAlfa);
+ExtensoNumero(xDuracaoContrato, xDuracaoContratoEscritoExtenso);
+ConverteParaMinusculo(xDuracaoContratoEscritoExtenso, xDuracaoContratoEscritoExtensoMinusculo);
+
+xTexto = "Este contrato é firmado por um período de experiência de " + xDuracaoContratoAlfa + " ( " + 
+         xDuracaoContratoEscritoExtensoMinusculo +") dias, a contar da data de sua assinatura, findo, " +
+         "o qual, inexistindo manifestação em contrário por qualquer das partes.";
+         
+ValStr = xTexto;
+Cancel(2);
+
+--------------------------------------------------------------------------------
+Código: 132 - Descrição: Adicional_PrazoIndetermindado_Depois Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 133 - Descrição: Adicional_PrazoIndetermindado_Antes Imprimir
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 134 - Descrição: Desenho023_Na Impressão
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+Código: 135 - Descrição: Memoran021_Na Impressão
+--------------------------------------------------------------------------------
